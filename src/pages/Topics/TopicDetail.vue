@@ -752,11 +752,12 @@ function handleDeleteTopic() {
 
 <style scoped>
 .topic-detail {
-  height: 100%;
+  height: calc(100vh - 64px - 48px); /* 视口 - 顶栏 - app-content padding */
   display: flex;
   flex-direction: column;
-  background: #f1f5f9; /* 恢复浅灰色背景以区分卡片 */
+  background: #f1f5f9;
   position: relative;
+  overflow: hidden;
 }
 
 /* ===== 顶部信息区 ===== */
@@ -766,7 +767,7 @@ function handleDeleteTopic() {
   padding: 0;
   border-bottom: none; /* 移除线段 */
   border-radius: 12px; /* 增加圆角 */
-  margin: 16px 24px 16px 24px; /* 确保与中间部分留有间距 */
+  margin: 12px 24px 8px 24px; /* 紧凑间距 */
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* 轻微阴影 */
   flex-shrink: 0;
 }
@@ -778,14 +779,14 @@ function handleDeleteTopic() {
 .header-content {
   position: relative;
   z-index: 1;
-  padding: 16px 32px 0;
+  padding: 12px 24px 0;
 }
 
 .header-top-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 8px;
 }
 
 .header-actions {
@@ -854,24 +855,24 @@ function handleDeleteTopic() {
 
 /* 标题区 */
 .header-main {
-  margin-bottom: 24px;
+  margin-bottom: 8px;
 }
 
 .title-row {
   display: flex;
   align-items: flex-start;
-  gap: 16px;
+  gap: 12px;
 }
 
 .title-icon-wrap {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   background: linear-gradient(135deg, #3b82f6, #8b5cf6);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 18px;
   color: #fff;
   flex-shrink: 0;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
@@ -885,12 +886,12 @@ function handleDeleteTopic() {
 .title-line {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: 10px;
+  margin-bottom: 4px;
 }
 
 .detail-title {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   color: #0f172a;
   margin: 0;
@@ -944,8 +945,8 @@ function handleDeleteTopic() {
 }
 
 .topic-tags-container {
-  margin-bottom: 12px;
-  min-height: 24px;
+  margin-bottom: 4px;
+  min-height: 22px;
 }
 
 .topic-tags {
@@ -1009,7 +1010,7 @@ function handleDeleteTopic() {
   align-items: center;
   flex-wrap: wrap;
   gap: 16px;
-  padding: 16px 0;
+  padding: 10px 0;
   border-top: 1px solid #f1f5f9;
 }
 
@@ -1090,15 +1091,16 @@ function handleDeleteTopic() {
 /* ===== Tab 内容区 ===== */
 .detail-body {
   flex: 1;
-  padding: 0 24px 80px; /* 调整内边距，底部留出操作栏空间 */
-  background: transparent; /* 背景透明，露出底色 */
+  min-height: 0; /* 关键：允许 flex 子项收缩 */
+  padding: 0 24px 16px;
+  background: transparent;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* 防止外层滚动 */
+  overflow: hidden;
 }
 
 .detail-tabs-container {
-  padding: 20px 24px; /* 内部留白 */
+  padding: 16px 24px; /* 内部留白 */
   background: #fff; /* 白色卡片背景 */
   border-radius: 12px; /* 圆角 */
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* 轻微阴影 */
@@ -1123,7 +1125,7 @@ function handleDeleteTopic() {
 }
 
 .detail-tabs :deep(.ant-tabs-nav) {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   flex-shrink: 0;
 }
 
