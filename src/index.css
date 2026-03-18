@@ -1,0 +1,118 @@
+@import "tailwindcss" layer(tailwind);
+
+@layer tailwind {
+  @layer base {
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+  }
+}
+
+:root {
+  --color-primary: #1677ff;
+  --color-bg-page: #f5f7fa;
+  --color-bg-card: #ffffff;
+  --color-sidebar: #001529;
+  --color-text-title: #1e293b;
+  --color-text-body: #475569;
+  --color-text-muted: #94a3b8;
+  --radius-card: 12px;
+  --radius-btn: 6px;
+  --radius-tag: 4px;
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --spacing-page: 24px;
+  --spacing-card: 16px;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg-page);
+  color: var(--color-text-body);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 公共查看更多按钮样式 */
+.view-more-btn {
+  color: #64748b;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: color 0.2s;
+}
+
+.view-more-btn:hover {
+  color: #1677ff;
+}
+
+.view-more-btn .arrow-icon {
+  font-size: 10px;
+}
+
+/* 自定义分页组件样式 */
+.custom-pagination {
+  font-size: 14px;
+}
+
+.custom-pagination .ant-pagination-total-text {
+  margin-right: 16px;
+  color: #333;
+}
+
+.custom-pagination .ant-pagination-item {
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  min-width: 32px;
+  height: 32px;
+  line-height: 32px;
+}
+
+.custom-pagination .ant-pagination-item a {
+  color: #333;
+}
+
+.custom-pagination .ant-pagination-item-active {
+  border: 1px solid #1677ff;
+  background: #fff;
+}
+
+.custom-pagination .ant-pagination-item-active a {
+  color: #1677ff;
+  font-weight: 600;
+}
+
+.custom-pagination .ant-pagination-prev .ant-pagination-item-link,
+.custom-pagination .ant-pagination-next .ant-pagination-item-link {
+  border: none;
+  background: transparent;
+  color: #333;
+}
+
+.custom-pagination .ant-pagination-disabled .ant-pagination-item-link {
+  color: #bfbfbf;
+}
+
+.custom-pagination .ant-pagination-options {
+  margin-left: 16px;
+}
+
+.custom-pagination .ant-select-selector {
+  border-radius: 4px !important;
+  color: #333 !important;
+  height: 32px !important;
+  align-items: center;
+  border-color: #d9d9d9 !important;
+}
+
+#app {
+  min-height: 100vh;
+}

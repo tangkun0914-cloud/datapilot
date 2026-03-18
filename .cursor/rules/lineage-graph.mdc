@@ -1,0 +1,56 @@
+---
+description: 血缘关系图开发规范 - 修改血缘相关文件时生效
+globs: src/pages/Detail/LineageTab.vue,src/services/lineageService.js,src/mock/lineage.js
+alwaysApply: false
+---
+
+# 血缘关系图 (Lineage Graph) 开发规范
+
+## 技术方案
+- 使用 AntV G6 4.x（不是 G6 5.x）
+- 自定义节点注册：`G6.registerNode()`
+- 布局：dagre LR（从左到右）
+- 交互模式：`drag-canvas`、`zoom-canvas`、`drag-node`
+
+## 两种模式
+1. **表级血缘**：自定义 `table-card-node`（260x110），展示表名、数据库、数据源类型、负责人
+2. **字段级血缘**：自定义 `column-card-node`，展示表名 + 字段列表，支持点击字段高亮关联链路
+
+## 自定义节点关键规则
+- G6 的 `type` 字段控制节点渲染类型，**不要**将业务数据的 `type`（如 `'table'`）直接传给 G6 节点
+- 动态添加节点时必须显式指定 `type: 'table-card-node'`
+```js
+// 正确 ✅
+graph.addItem('node', {
+  id: n.id,
+  label: n.name,
+  type: 'table-card-node',
+  serviceType: n.serviceType,
+  ...
+})
+
+// 错误 ❌ - 展开的 n.type='table' 会覆盖 G6 节点类型
+graph.addItem('node', { ...n, label: n.name })
+```
+
+## 数据源颜色体系
+| 数据源 | 主色 | 浅色 |
+|--------|------|------|
+| MySQL | `#52c41a` | `#f6ffed` |
+| Hive | `#1677ff` | `#e6f7ff` |
+| StarRocks | `#722ed1` | `#f9f0ff` |
+| 分析节点 | `#fa8c16` | `#fff7e6` |
+| Tableau | `#eb2f96` | `#fff0f6` |
+
+颜色配置统一在 `lineageService.js` 的 `SOURCE_TYPE_CONFIG` 导出。
+
+## 展开/收起逻辑
+- 左侧 +/- 控制上游展开
+- 右侧 +/- 控制下游展开
+- 收起时递归移除无其他入边/出边的子节点
+- 展开后调用 `graph.layout()` 重新布局，延迟 `fitView()`
+
+## 注意事项
+- `G6.registerNode` 只能注册一次，重复注册会报错，用 try/catch 包裹
+- ResizeObserver 监听容器尺寸变化，自动 `changeSize` + `fitView`
+- `onBeforeUnmount` 时必须 `graph.destroy()` 和断开 ResizeObserver

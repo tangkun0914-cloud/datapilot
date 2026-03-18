@@ -1,0 +1,41 @@
+---
+description: Git 规范 - 提交代码或创建分支时生效（整合自 global-tech-stack.md）
+globs:
+alwaysApply: false
+---
+
+# Git 规范
+
+## Commit Message 格式
+```
+<type>(<scope>): <subject>
+```
+
+### type 类型
+| type | 说明 |
+|------|------|
+| feat | 新功能 |
+| fix | 修复 Bug |
+| refactor | 重构（不改变功能） |
+| style | 样式调整（不影响逻辑） |
+| docs | 文档变更 |
+| chore | 构建/工具/依赖变更 |
+| test | 测试相关 |
+
+### scope 范围（本项目模块）
+`home` / `search` / `detail` / `lineage` / `copilot` / `topics` / `mytables` / `services` / `mock` / `router` / `components`
+
+### 示例
+```
+feat(lineage): 新增 G6 血缘关系图展开收起交互
+fix(detail): 修复详情页路由参数不响应变化的问题
+refactor(services): 统一 mock 数据加载为服务层动态导入
+style(search): 调整搜索结果卡片间距和圆角
+chore: 升级 @antv/g6 到 4.8.24
+```
+
+## 分支命名
+```
+feature/[模块]-[功能简述]    如 feature/lineage-g6-graph
+bugfix/[模块]-[问题简述]     如 bugfix/detail-route-reactivity
+```

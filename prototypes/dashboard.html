@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataPilot - 资产大盘</title>
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/dayjs@1.11.10/dayjs.min.js"></script>
+    <script src="https://unpkg.com/antd@5.12.2/dist/antd.min.js"></script>
+    <script src="https://unpkg.com/antd@5.12.2/dist/locale/zh_CN.js"></script>
+    <script src="https://unpkg.com/@ant-design/icons@5.2.6/dist/index.umd.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/antd@5.12.2/dist/reset.css">
+    <style>
+        :root { --color-primary: #1677ff; --color-bg-page: #f5f7fa; --color-sidebar: #001529; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: var(--color-bg-page); color: #1f1f1f; overflow: hidden; }
+        .app-layout { display: flex; height: 100vh; overflow: hidden; }
+        .app-sider { width: 220px; min-width: 220px; background: var(--color-sidebar); display: flex; flex-direction: column; flex-shrink: 0; }
+        .logo-area { height: 64px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 0 16px; }
+        .logo-icon-small { width: 28px; height: 28px; background: radial-gradient(circle at center, #722ed1 0%, #1677ff 100%); border-radius: 6px; box-shadow: 0 2px 8px rgba(22, 119, 255, 0.4); flex-shrink: 0; }
+        .logo-title { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
+        .sider-menu { flex: 1; padding: 8px 12px; }
+        .sider-menu-item { height: 44px; display: flex; align-items: center; padding: 0 16px; gap: 12px; border-radius: 8px; color: rgba(255,255,255,0.65); margin-bottom: 4px; cursor: pointer; transition: all 0.2s; font-size: 14px; text-decoration: none; }
+        .sider-menu-item:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .sider-menu-item.active { background: var(--color-primary); color: #fff; }
+        .app-right { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .app-header { background: var(--color-sidebar); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 64px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); z-index: 10; flex-shrink: 0; }
+        .header-left { flex: 1; display: flex; align-items: center; }
+        .top-menu { display: flex; align-items: center; gap: 4px; flex: 1; }
+        .top-menu-item { color: rgba(255,255,255,0.65); font-size: 14px; padding: 0 12px; height: 64px; display: flex; align-items: center; cursor: pointer; border-bottom: 2px solid transparent; text-decoration: none; white-space: nowrap; }
+        .top-menu-item:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        .top-menu-item.active { color: #fff; font-weight: 500; border-bottom-color: var(--color-primary); }
+        .header-right { display: flex; align-items: center; gap: 16px; color: rgba(255,255,255,0.85); flex-shrink: 0; }
+        .header-copilot-btn { color: #fff; background: transparent; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 0 8px; height: 28px; display: flex; align-items: center; gap: 4px; cursor: pointer; font-size: 13px; }
+        .header-divider { width: 1px; height: 16px; background: rgba(255,255,255,0.2); }
+        .header-text { font-size: 13px; cursor: pointer; color: rgba(255,255,255,0.85); }
+        .app-content { flex: 1; background: var(--color-bg-page); padding: 24px; overflow-y: auto; }
+        .page-title { font-size: 20px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }
+        .stat-card { display: flex; align-items: center; gap: 16px; padding: 20px; background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); height: 100%; }
+        .stat-card-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .stat-card-title { font-size: 14px; color: rgba(0,0,0,0.45); margin-bottom: 4px; }
+        .stat-card-value { font-size: 24px; font-weight: 600; color: rgba(0,0,0,0.88); }
+        .stat-card-suffix { font-size: 14px; font-weight: 400; color: rgba(0,0,0,0.45); margin-left: 4px; }
+        .chart-card { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 20px; height: 100%; }
+        .chart-title { font-size: 16px; font-weight: 600; color: rgba(0,0,0,0.88); margin-bottom: 16px; }
+        .hot-card { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 20px; }
+        .source-tag { display: inline-flex; padding: 0 6px; height: 20px; border-radius: 4px; font-size: 12px; font-weight: 600; align-items: center; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState } = React;
+        const { Row, Col, Table, Tag, Avatar } = antd;
+        const { HomeOutlined, DashboardOutlined, SearchOutlined, AppstoreOutlined, FolderOutlined, TableOutlined, RobotOutlined, QuestionCircleOutlined, BellOutlined, DownOutlined, DatabaseOutlined, FireOutlined, FieldNumberOutlined, PlusCircleOutlined } = icons;
+
+        const getSourceTag = (t) => { switch(t?.toUpperCase()) { case 'HIVE': return {c:'#db2777',bg:'#fce7f3',t:'Hive'}; case 'MYSQL': return {c:'#ea580c',bg:'#ffedd5',t:'MySQL'}; case 'STARROCKS': return {c:'#2563eb',bg:'#eff6ff',t:'StarRocks'}; default: return {c:'#64748b',bg:'#f1f5f9',t:t||'DB'}; } };
+
+        const STAT_CARDS = [
+            { title: '表总数', value: '12,856', suffix: '张', iconColor: 'rgba(22,119,255,0.12)', icon: React.createElement(TableOutlined, {style:{fontSize:24,color:'#1677ff'}}) },
+            { title: '字段总数', value: '284,320', suffix: '个', iconColor: 'rgba(82,196,26,0.12)', icon: React.createElement(FieldNumberOutlined, {style:{fontSize:24,color:'#52c41a'}}) },
+            { title: '存储量', value: '48.6', suffix: 'TB', iconColor: 'rgba(250,173,20,0.12)', icon: React.createElement(DatabaseOutlined, {style:{fontSize:24,color:'#faad14'}}) },
+            { title: '日活跃表', value: '3,421', suffix: '张', iconColor: 'rgba(245,34,45,0.12)', icon: React.createElement(FireOutlined, {style:{fontSize:24,color:'#f5222d'}}) },
+            { title: '本周新增', value: '126', suffix: '张', iconColor: 'rgba(114,46,209,0.12)', icon: React.createElement(PlusCircleOutlined, {style:{fontSize:24,color:'#722ed1'}}) },
+        ];
+
+        const LAYER_DATA = [{ name: 'ODS', count: 4280, color: '#1677ff' }, { name: 'DWD', count: 3150, color: '#52c41a' }, { name: 'DWS', count: 2860, color: '#faad14' }, { name: 'ADS', count: 1520, color: '#ff4d4f' }, { name: 'DIM', count: 1046, color: '#722ed1' }];
+        const TREND_DATA = [{m:'7月',v:11200},{m:'8月',v:11600},{m:'9月',v:11900},{m:'10月',v:12300},{m:'11月',v:12856}];
+
+        const HOT_TOP10 = [
+            { rank:1, name:'ods_order_detail', displayName:'订单明细表', serviceType:'Hive', owner:'张三(zhangsan)', dailyViews:3420, weeklyViews:18920 },
+            { rank:2, name:'dwd_user_profile', displayName:'用户画像宽表', serviceType:'StarRocks', owner:'李四(lisi)', dailyViews:2890, weeklyViews:15680 },
+            { rank:3, name:'dws_trade_summary', displayName:'交易汇总表', serviceType:'Hive', owner:'王五(wangwu)', dailyViews:2156, weeklyViews:12450 },
+            { rank:4, name:'ads_daily_report', displayName:'日报表', serviceType:'StarRocks', owner:'赵六(zhaoliu)', dailyViews:1980, weeklyViews:11200 },
+            { rank:5, name:'dim_product', displayName:'商品维表', serviceType:'MySQL', owner:'孙七(sunqi)', dailyViews:1650, weeklyViews:9200 },
+            { rank:6, name:'ods_user_log', displayName:'用户日志表', serviceType:'Hive', owner:'周八(zhouba)', dailyViews:1420, weeklyViews:7850 },
+            { rank:7, name:'dwd_payment_flow', displayName:'支付流水表', serviceType:'Hive', owner:'王五(wangwu)', dailyViews:1280, weeklyViews:6920 },
+            { rank:8, name:'ads_funnel_analysis', displayName:'漏斗分析表', serviceType:'StarRocks', owner:'赵六(zhaoliu)', dailyViews:980, weeklyViews:5340 },
+            { rank:9, name:'ods_inventory', displayName:'库存表', serviceType:'Hive', owner:'孙七(sunqi)', dailyViews:756, weeklyViews:4120 },
+            { rank:10, name:'dws_marketing_effect', displayName:'营销效果表', serviceType:'Hive', owner:'周八(zhouba)', dailyViews:620, weeklyViews:3480 },
+        ];
+
+        const SIDER_ITEMS = [
+            { key: 'home', icon: React.createElement(HomeOutlined), label: '首页', href: 'index.html' },
+            { key: 'dashboard', icon: React.createElement(DashboardOutlined), label: '资产大盘', href: 'dashboard.html' },
+            { key: 'search', icon: React.createElement(SearchOutlined), label: '资产检索', href: 'search.html' },
+            { key: 'catalog', icon: React.createElement(AppstoreOutlined), label: '资产目录', href: 'catalog.html' },
+            { key: 'topics', icon: React.createElement(FolderOutlined), label: '数据专题', href: 'topics.html' },
+            { key: 'mytables', icon: React.createElement(TableOutlined), label: '我的库表', href: 'mytables.html' },
+            { key: 'copilot', icon: React.createElement(RobotOutlined), label: 'AI Copilot', href: 'copilot.html' },
+        ];
+        const TOP_MENU = [{key:'integration',label:'数据集成'},{key:'dev',label:'数据开发'},{key:'publish',label:'发布中心'},{key:'schedule',label:'调度管理'},{key:'ops',label:'监控运维'},{key:'quality',label:'数据质量'},{key:'map',label:'数据地图'},{key:'security',label:'安全中心'},{key:'project',label:'项目管理'}];
+
+        const AppLayout = ({activeSiderKey, children}) => (
+            <div className="app-layout">
+                <div className="app-sider"><div className="logo-area"><div className="logo-icon-small"></div><span className="logo-title">DataPilot</span></div><div className="sider-menu">{SIDER_ITEMS.map(i=><a key={i.key} className={`sider-menu-item ${i.key===activeSiderKey?'active':''}`} href={i.href}>{i.icon}<span>{i.label}</span></a>)}</div></div>
+                <div className="app-right">
+                    <header className="app-header"><div className="header-left"><div className="top-menu">{TOP_MENU.map(i=><a key={i.key} className={`top-menu-item ${i.key==='map'?'active':''}`} href="#">{i.label}</a>)}</div></div><div className="header-right"><button className="header-copilot-btn"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>Copilot</button><div className="header-divider"></div><span className="header-text">Region: SG</span><QuestionCircleOutlined style={{fontSize:16,color:'rgba(255,255,255,0.85)'}} /><BellOutlined style={{fontSize:16,color:'rgba(255,255,255,0.85)'}} /><Avatar size={32} style={{backgroundColor:'#ffb4a2',color:'#fff'}}>王</Avatar></div></header>
+                    <div className="app-content">{children}</div>
+                </div>
+            </div>
+        );
+
+        const PieChart = () => {
+            const total = LAYER_DATA.reduce((s, d) => s + d.count, 0);
+            const cx = 120, cy = 120, r = 90;
+            let cumulative = 0;
+            const slices = LAYER_DATA.map(d => {
+                const start = cumulative / total * 2 * Math.PI - Math.PI / 2;
+                cumulative += d.count;
+                const end = cumulative / total * 2 * Math.PI - Math.PI / 2;
+                const largeArc = (d.count / total) > 0.5 ? 1 : 0;
+                const x1 = cx + r * Math.cos(start), y1 = cy + r * Math.sin(start);
+                const x2 = cx + r * Math.cos(end), y2 = cy + r * Math.sin(end);
+                return { ...d, path: `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z` };
+            });
+            return (
+                <div style={{display:'flex',alignItems:'center',gap:32}}>
+                    <svg width={240} height={240}>
+                        {slices.map(s => <path key={s.name} d={s.path} fill={s.color} stroke="#fff" strokeWidth="2" />)}
+                        <circle cx={cx} cy={cy} r={50} fill="#fff" />
+                        <text x={cx} y={cy-8} textAnchor="middle" fontSize="20" fontWeight="700" fill="#1f1f1f">{total.toLocaleString()}</text>
+                        <text x={cx} y={cy+14} textAnchor="middle" fontSize="12" fill="#8c8c8c">总计</text>
+                    </svg>
+                    <div style={{display:'flex',flexDirection:'column',gap:12}}>
+                        {LAYER_DATA.map(d => (
+                            <div key={d.name} style={{display:'flex',alignItems:'center',gap:8,fontSize:14}}>
+                                <div style={{width:12,height:12,borderRadius:3,background:d.color}}></div>
+                                <span style={{width:36,fontWeight:500}}>{d.name}</span>
+                                <span style={{color:'#8c8c8c'}}>{d.count.toLocaleString()}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const TrendChart = () => {
+            const maxV = Math.max(...TREND_DATA.map(d=>d.v));
+            const w = 400, h = 200, padX = 40, padY = 20;
+            const chartW = w - padX * 2, chartH = h - padY * 2;
+            const points = TREND_DATA.map((d, i) => ({
+                x: padX + (i / (TREND_DATA.length - 1)) * chartW,
+                y: padY + chartH - (d.v / (maxV * 1.1)) * chartH,
+                ...d
+            }));
+            const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+            const areaPath = linePath + ` L ${points[points.length-1].x} ${padY+chartH} L ${points[0].x} ${padY+chartH} Z`;
+            return (
+                <svg width={w} height={h} style={{display:'block'}}>
+                    <defs><linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#1677ff" stopOpacity="0.15" /><stop offset="100%" stopColor="#1677ff" stopOpacity="0.01" /></linearGradient></defs>
+                    <path d={areaPath} fill="url(#areaGrad)" />
+                    <path d={linePath} fill="none" stroke="#1677ff" strokeWidth="2.5" strokeLinecap="round" />
+                    {points.map(p => <g key={p.m}><circle cx={p.x} cy={p.y} r={4} fill="#fff" stroke="#1677ff" strokeWidth="2" /><text x={p.x} y={padY+chartH+16} textAnchor="middle" fontSize="12" fill="#8c8c8c">{p.m}</text><text x={p.x} y={p.y-10} textAnchor="middle" fontSize="11" fill="#1677ff" fontWeight="500">{p.v.toLocaleString()}</text></g>)}
+                </svg>
+            );
+        };
+
+        const DashboardPage = () => {
+            const hotCols = [
+                { title: '排名', dataIndex: 'rank', key: 'rank', width: 60, render: v => <span style={{fontWeight: v<=3?700:400, color: v<=3?'#ff4d4f':'#8c8c8c'}}>{v}</span> },
+                { title: '表名', dataIndex: 'displayName', key: 'name', render: (v, r) => <a style={{color:'#1677ff',fontWeight:500}} href={`detail.html?fqn=${r.name}`}>{v}</a> },
+                { title: '数据源', dataIndex: 'serviceType', key: 'serviceType', width: 100, render: v => { const s=getSourceTag(v); return <span className="source-tag" style={{backgroundColor:s.bg,color:s.c}}>{s.t}</span>; } },
+                { title: '负责人', dataIndex: 'owner', key: 'owner', width: 140 },
+                { title: '日访问量', dataIndex: 'dailyViews', key: 'dailyViews', width: 100, render: v => v.toLocaleString() },
+                { title: '周访问量', dataIndex: 'weeklyViews', key: 'weeklyViews', width: 100, render: v => v.toLocaleString() },
+            ];
+
+            return (
+                <AppLayout activeSiderKey="dashboard">
+                    <div className="page-title">资产大盘</div>
+                    <Row gutter={16} style={{marginBottom:16}}>
+                        {STAT_CARDS.map((c, i) => (
+                            <Col key={i} xs={24} sm={12} md={8} lg={8} xl={4} style={{marginBottom:16}}>
+                                <div className="stat-card">
+                                    <div className="stat-card-icon" style={{background:c.iconColor}}>{c.icon}</div>
+                                    <div><div className="stat-card-title">{c.title}</div><div className="stat-card-value">{c.value}<span className="stat-card-suffix">{c.suffix}</span></div></div>
+                                </div>
+                            </Col>
+                        ))}
+                    </Row>
+                    <Row gutter={16} style={{marginBottom:16}}>
+                        <Col xs={24} lg={12}><div className="chart-card"><div className="chart-title">数仓分层分布</div><PieChart /></div></Col>
+                        <Col xs={24} lg={12}><div className="chart-card"><div className="chart-title">资产增长趋势</div><TrendChart /></div></Col>
+                    </Row>
+                    <div className="hot-card">
+                        <div className="chart-title">热度 Top 10</div>
+                        <Table dataSource={HOT_TOP10} columns={hotCols} rowKey="rank" pagination={false} size="small" onRow={r=>({style:{cursor:'pointer'},onClick:()=>window.location.href=`detail.html?fqn=${r.name}`})} />
+                    </div>
+                </AppLayout>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<antd.ConfigProvider theme={{token:{colorPrimary:'#1677ff',borderRadius:6,fontFamily:'system-ui'}}} locale={antd.locale?.zh_CN}><DashboardPage /></antd.ConfigProvider>);
+    </script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+---
+description: Vue 组件开发规范 - 创建或修改 .vue 文件时生效
+globs: src/**/*.vue
+alwaysApply: false
+---
+
+# Vue 组件开发规范
+
+## SFC 结构顺序
+```vue
+<template>...</template>
+<script setup>...</script>
+<style scoped>...</style>
+```
+
+## Script Setup 内部顺序
+1. `import` 语句（Vue API → 第三方库 → 服务层 → 组件）
+2. `defineProps` / `defineEmits`
+3. 响应式状态 (`ref`, `reactive`, `computed`)
+4. `watch` / `watchEffect`
+5. 生命周期钩子 (`onMounted`, `onBeforeUnmount`)
+6. 方法定义
+
+## 组件设计原则
+- Props 传入数据，Events 向上通信
+- 子 Tab 组件通过 props 接收标识符（如 `fqn`、`tableId`），内部 watch 后自行请求数据
+- 避免 props 直接传递大对象（传 id/fqn，由子组件调服务获取）
+- 列表页组件拆分：入口页（index.vue）+ 子功能组件
+
+## Ant Design Vue 使用
+- 按需使用组件，无需手动注册（已全局注册）
+- 表格使用 `a-table`，表单使用 `a-form`
+- 弹窗使用 `a-modal`，消息提示使用 `message.success/error`
+- 图标从 `@ant-design/icons-vue` 按需导入
+
+## 常用模式
+```vue
+<script setup>
+import { ref, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { getXxx } from '@/services/xxxService.js'
+
+const props = defineProps({
+  id: { type: String, default: '' },
+})
+
+const data = ref(null)
+const loading = ref(false)
+
+watch(() => props.id, async (newId) => {
+  if (!newId) return
+  loading.value = true
+  data.value = await getXxx(newId)
+  loading.value = false
+}, { immediate: true })
+</script>
+```

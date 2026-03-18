@@ -1,0 +1,27 @@
+{
+  "name": "datapilot-datamap",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@ant-design/icons-vue": "^7.0.1",
+    "@antv/g6": "^4.8.25",
+    "@tailwindcss/vite": "^4.2.1",
+    "ant-design-vue": "^4.2.6",
+    "axios": "^1.13.6",
+    "marked": "^17.0.4",
+    "pinia": "^3.0.4",
+    "tailwindcss": "^4.2.1",
+    "vue": "^3.5.30",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.5",
+    "vite": "^7.3.1"
+  }
+}

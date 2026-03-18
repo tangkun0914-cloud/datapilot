@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataPilot - 资产检索</title>
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/dayjs@1.11.10/dayjs.min.js"></script>
+    <script src="https://unpkg.com/antd@5.12.2/dist/antd.min.js"></script>
+    <script src="https://unpkg.com/antd@5.12.2/dist/locale/zh_CN.js"></script>
+    <script src="https://unpkg.com/@ant-design/icons@5.2.6/dist/index.umd.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/antd@5.12.2/dist/reset.css">
+    <style>
+        :root { --color-primary: #1677ff; --color-bg-page: #f5f7fa; --color-sidebar: #001529; --color-text-title: #1e293b; --color-text-body: #475569; --color-text-muted: #94a3b8; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: var(--color-bg-page); color: #1f1f1f; overflow: hidden; }
+        .app-layout { display: flex; height: 100vh; overflow: hidden; }
+        .app-sider { width: 220px; min-width: 220px; background: var(--color-sidebar); display: flex; flex-direction: column; flex-shrink: 0; }
+        .logo-area { height: 64px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 0 16px; }
+        .logo-icon-small { width: 28px; height: 28px; background: radial-gradient(circle at center, #722ed1 0%, #1677ff 100%); border-radius: 6px; box-shadow: 0 2px 8px rgba(22, 119, 255, 0.4); flex-shrink: 0; }
+        .logo-title { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
+        .sider-menu { flex: 1; padding: 8px 12px; }
+        .sider-menu-item { height: 44px; display: flex; align-items: center; padding: 0 16px; gap: 12px; border-radius: 8px; color: rgba(255,255,255,0.65); margin-bottom: 4px; cursor: pointer; transition: all 0.2s; font-size: 14px; text-decoration: none; }
+        .sider-menu-item:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .sider-menu-item.active { background: var(--color-primary); color: #fff; box-shadow: 0 2px 8px rgba(22, 119, 255, 0.4); }
+        .app-right { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .app-header { background: var(--color-sidebar); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 64px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); z-index: 10; flex-shrink: 0; }
+        .header-left { flex: 1; display: flex; align-items: center; overflow: hidden; min-width: 0; }
+        .top-menu { display: flex; align-items: center; gap: 4px; flex: 1; }
+        .top-menu-item { color: rgba(255,255,255,0.65); font-size: 14px; padding: 0 12px; height: 64px; display: flex; align-items: center; cursor: pointer; transition: all 0.3s; border-bottom: 2px solid transparent; text-decoration: none; white-space: nowrap; }
+        .top-menu-item:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        .top-menu-item.active { color: #fff; font-weight: 500; border-bottom-color: var(--color-primary); }
+        .header-right { display: flex; align-items: center; gap: 16px; color: rgba(255,255,255,0.85); flex-shrink: 0; }
+        .header-copilot-btn { color: #fff; background: transparent; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 0 8px; height: 28px; display: flex; align-items: center; gap: 4px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+        .header-copilot-btn:hover { background: #6b9fff; border-color: #6b9fff; }
+        .header-divider { width: 1px; height: 16px; background: rgba(255,255,255,0.2); }
+        .header-text { font-size: 13px; cursor: pointer; display: flex; align-items: center; color: rgba(255,255,255,0.85); }
+        .header-icon-btn { font-size: 16px; cursor: pointer; padding: 4px; color: rgba(255,255,255,0.85); }
+        .app-content { flex: 1; background: var(--color-bg-page); padding: 24px; overflow-y: auto; }
+
+        /* Search page */
+        .search-page { display: flex; flex-direction: column; gap: 16px; min-height: 100%; }
+        .search-bar-wrap { display: flex; gap: 12px; align-items: stretch; }
+        .search-body { display: flex; gap: 16px; flex: 1; min-height: 0; }
+        .filter-panel { width: 240px; flex-shrink: 0; background: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); padding: 12px 16px; overflow-y: auto; max-height: calc(100vh - 220px); }
+        .filter-section { margin-bottom: 16px; }
+        .filter-section-title { font-size: 13px; font-weight: 600; color: #1e293b; margin-bottom: 8px; padding: 4px 0; }
+        .filter-group { display: flex; flex-direction: column; gap: 6px; }
+        .result-area { flex: 1; display: flex; flex-direction: column; min-width: 0; background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+        .result-toolbar { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+        .result-count { margin-left: auto; font-size: 13px; color: #8c8c8c; }
+        .result-card { padding: 16px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #f0f0f0; position: relative; transition: box-shadow 0.2s; }
+        .result-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .card-row-1 { display: flex; align-items: center; flex-wrap: wrap; margin-bottom: 8px; gap: 8px; }
+        .table-name { font-weight: 600; color: #1677ff; cursor: pointer; text-decoration: none; }
+        .table-name:hover { text-decoration: underline; }
+        .source-tag { display: inline-flex; align-items: center; padding: 0 6px; height: 20px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+        .card-row-2 { font-size: 13px; color: #8c8c8c; line-height: 1.5; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .card-row-3 { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: #8c8c8c; }
+        .card-actions { position: absolute; top: 16px; right: 16px; }
+        .pagination-wrap { margin-top: 16px; display: flex; justify-content: flex-end; }
+        .copy-btn { margin-left: 8px; color: #1677ff; cursor: pointer; font-size: 12px; display: none; }
+        .result-card:hover .copy-btn { display: inline-block; }
+        .table-toolbar { display: flex; justify-content: space-between; margin-bottom: 16px; }
+        .table-toolbar-right { display: flex; gap: 8px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useMemo } = React;
+        const { Input, Button, Tabs, Radio, Select, Pagination, Tag, Checkbox, Spin, Empty, Avatar, Collapse, TreeSelect, Table, Dropdown, Menu } = antd;
+        const { SearchOutlined, HomeOutlined, DashboardOutlined, AppstoreOutlined, FolderOutlined, TableOutlined, RobotOutlined, UserOutlined, DownOutlined, QuestionCircleOutlined, BellOutlined, StarOutlined, StarFilled, CopyOutlined, DownloadOutlined, EyeInvisibleOutlined } = icons;
+
+        const getSourceTag = (type) => {
+            switch(type?.toUpperCase()) {
+                case 'HIVE': return { color: '#db2777', bg: '#fce7f3', text: 'Hive' };
+                case 'MYSQL': return { color: '#ea580c', bg: '#ffedd5', text: 'MySQL' };
+                case 'STARROCKS': return { color: '#2563eb', bg: '#eff6ff', text: 'StarRocks' };
+                default: return { color: '#64748b', bg: '#f1f5f9', text: type || 'DB' };
+            }
+        };
+        const SourceTag = ({ type }) => { const s = getSourceTag(type); return <span className="source-tag" style={{ backgroundColor: s.bg, color: s.color }}>{s.text}</span>; };
+
+        const SEARCH_RESULTS = [
+            { id: '1', name: 'ods_order_detail', fqn: 'hive.dm_trade.ods.ods_order_detail', displayName: '订单明细表', serviceType: 'Hive', description: '全渠道订单原子粒度明细数据，T+1 增量同步', tags: [{ tagFQN: '业务域.交易' }, { tagFQN: '数仓分层.ODS' }], owners: [{ name: '张三(zhangsan)' }], updatedAt: 1731542400000, usage: 3420 },
+            { id: '2', name: 'dwd_user_profile', fqn: 'starrocks.dm_user.dwd.dwd_user_profile', displayName: '用户画像宽表', serviceType: 'StarRocks', description: '用户基础属性与行为标签宽表，供 BI 分析使用', tags: [{ tagFQN: '业务域.用户' }, { tagFQN: '数仓分层.DWD' }], owners: [{ name: '李四(lisi)' }], updatedAt: 1731456000000, usage: 2890 },
+            { id: '3', name: 'dws_trade_summary', fqn: 'hive.dm_trade.dws.dws_trade_summary', displayName: '交易汇总表', serviceType: 'Hive', description: '按日/渠道/类目维度的交易汇总指标', tags: [{ tagFQN: '业务域.交易' }, { tagFQN: '数仓分层.DWS' }], owners: [{ name: '王五(wangwu)' }], updatedAt: 1731369600000, usage: 2156 },
+            { id: '4', name: 'ads_daily_report', fqn: 'starrocks.dm_report.ads.ads_daily_report', displayName: '日报表', serviceType: 'StarRocks', description: '经营日报核心指标，供管理层看板使用', tags: [{ tagFQN: '业务域.交易' }, { tagFQN: '数仓分层.ADS' }, { tagFQN: '数据安全.内部' }], owners: [{ name: '赵六(zhaoliu)' }], updatedAt: 1731283200000, usage: 1980 },
+            { id: '5', name: 'dim_product', fqn: 'mysql.product_db.dim.dim_product', displayName: '商品维表', serviceType: 'MySQL', description: '商品基础信息维表，含类目、品牌、SKU 属性', tags: [{ tagFQN: '业务域.商品' }, { tagFQN: '数仓分层.DIM' }], owners: [{ name: '孙七(sunqi)' }], updatedAt: 1731196800000, usage: 1650 },
+            { id: '6', name: 'ods_user_log', fqn: 'hive.dm_user.ods.ods_user_log', displayName: '用户日志表', serviceType: 'Hive', description: '用户行为埋点日志原始数据', tags: [{ tagFQN: '业务域.用户' }, { tagFQN: '数仓分层.ODS' }], owners: [{ name: '周八(zhouba)' }], updatedAt: 1731110400000, usage: 1420 },
+            { id: '7', name: 'dwd_payment_flow', fqn: 'hive.dm_trade.dwd.dwd_payment_flow', displayName: '支付流水表', serviceType: 'Hive', description: '支付成功流水事实表，含支付渠道、金额、状态', tags: [{ tagFQN: '业务域.交易' }, { tagFQN: '数仓分层.DWD' }], owners: [{ name: '王五(wangwu)' }], updatedAt: 1731024000000, usage: 1280 },
+            { id: '8', name: 'ads_funnel_analysis', fqn: 'starrocks.dm_marketing.ads.ads_funnel_analysis', displayName: '漏斗分析表', serviceType: 'StarRocks', description: '转化漏斗各环节统计，供运营分析使用', tags: [{ tagFQN: '业务域.营销' }, { tagFQN: '数仓分层.ADS' }], owners: [{ name: '赵六(zhaoliu)' }], updatedAt: 1730937600000, usage: 980 },
+            { id: '9', name: 'ods_inventory', fqn: 'hive.dm_product.ods.ods_inventory', displayName: '库存表', serviceType: 'Hive', description: '库存日快照表，按 SKU 维度', tags: [{ tagFQN: '业务域.商品' }, { tagFQN: '数仓分层.ODS' }], owners: [{ name: '孙七(sunqi)' }], updatedAt: 1730851200000, usage: 756 },
+            { id: '10', name: 'dws_marketing_effect', fqn: 'hive.dm_marketing.dws.dws_marketing_effect', displayName: '营销效果表', serviceType: 'Hive', description: '营销活动效果汇总，含 ROI、转化率', tags: [{ tagFQN: '业务域.营销' }, { tagFQN: '数仓分层.DWS' }], owners: [{ name: '周八(zhouba)' }], updatedAt: 1730764800000, usage: 620 },
+        ];
+
+        const FILTER_OPTIONS = {
+            dataTypes: [{ label: 'Hive表', value: 'Hive' }, { label: 'StarRocks', value: 'StarRocks' }, { label: 'MySQL', value: 'MySQL' }],
+            databases: [{ label: 'dm_trade', value: 'dm_trade' }, { label: 'dm_user', value: 'dm_user' }, { label: 'dm_report', value: 'dm_report' }, { label: 'product_db', value: 'product_db' }, { label: 'dm_marketing', value: 'dm_marketing' }],
+            owners: [{ label: '张三(zhangsan)', value: '张三(zhangsan)' }, { label: '李四(lisi)', value: '李四(lisi)' }, { label: '王五(wangwu)', value: '王五(wangwu)' }, { label: '赵六(zhaoliu)', value: '赵六(zhaoliu)' }, { label: '孙七(sunqi)', value: '孙七(sunqi)' }, { label: '周八(zhouba)', value: '周八(zhouba)' }],
+            lifeStatus: [{ label: '开发中', value: 'DEVELOPING' }, { label: '已上线', value: 'ONLINE' }, { label: '已下线', value: 'OFFLINE' }],
+            businessLines: [{ label: '数据交易', value: 'trade' }, { label: '数据用户', value: 'user' }, { label: '数据营销', value: 'marketing' }, { label: '数据商品', value: 'product' }],
+        };
+
+        const SIDER_ITEMS = [
+            { key: 'home', icon: React.createElement(HomeOutlined), label: '首页', href: 'index.html' },
+            { key: 'dashboard', icon: React.createElement(DashboardOutlined), label: '资产大盘', href: 'dashboard.html' },
+            { key: 'search', icon: React.createElement(SearchOutlined), label: '资产检索', href: 'search.html' },
+            { key: 'catalog', icon: React.createElement(AppstoreOutlined), label: '资产目录', href: 'catalog.html' },
+            { key: 'topics', icon: React.createElement(FolderOutlined), label: '数据专题', href: 'topics.html' },
+            { key: 'mytables', icon: React.createElement(TableOutlined), label: '我的库表', href: 'mytables.html' },
+            { key: 'copilot', icon: React.createElement(RobotOutlined), label: 'AI Copilot', href: 'copilot.html' },
+        ];
+        const TOP_MENU = [
+            { key: 'integration', label: '数据集成' }, { key: 'dev', label: '数据开发' }, { key: 'publish', label: '发布中心' },
+            { key: 'schedule', label: '调度管理' }, { key: 'ops', label: '监控运维' }, { key: 'quality', label: '数据质量' },
+            { key: 'map', label: '数据地图' }, { key: 'security', label: '安全中心' }, { key: 'project', label: '项目管理' },
+        ];
+
+        const AppLayout = ({ activeSiderKey, children }) => (
+            <div className="app-layout">
+                <div className="app-sider">
+                    <div className="logo-area"><div className="logo-icon-small"></div><span className="logo-title">DataPilot</span></div>
+                    <div className="sider-menu">
+                        {SIDER_ITEMS.map(item => (
+                            <a key={item.key} className={`sider-menu-item ${item.key === activeSiderKey ? 'active' : ''}`} href={item.href}>{item.icon}<span>{item.label}</span></a>
+                        ))}
+                    </div>
+                </div>
+                <div className="app-right">
+                    <header className="app-header">
+                        <div className="header-left">
+                            <div className="top-menu">{TOP_MENU.map(item => (<a key={item.key} className={`top-menu-item ${item.key === 'map' ? 'active' : ''}`} href="#">{item.label}</a>))}</div>
+                        </div>
+                        <div className="header-right">
+                            <button className="header-copilot-btn" onClick={() => window.location.href='copilot.html'}>
+                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                                Copilot
+                            </button>
+                            <div className="header-divider"></div>
+                            <span className="header-text">Region: SG <DownOutlined style={{ fontSize: 10, marginLeft: 4 }} /></span>
+                            <span className="header-text">Space: marketing_dev <DownOutlined style={{ fontSize: 10, marginLeft: 4 }} /></span>
+                            <QuestionCircleOutlined className="header-icon-btn" />
+                            <BellOutlined className="header-icon-btn" />
+                            <Avatar size={32} style={{ backgroundColor: '#ffb4a2', color: '#fff', cursor: 'pointer' }}>王</Avatar>
+                        </div>
+                    </header>
+                    <div className="app-content">{children}</div>
+                </div>
+            </div>
+        );
+
+        const formatTime = (ts) => { if (!ts) return '-'; const d = new Date(ts); const p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+        const tagName = (fqn) => { if (!fqn) return ''; const parts = String(fqn).split('.'); return parts[parts.length - 1] || fqn; };
+
+        const SearchPage = () => {
+            const [keyword, setKeyword] = useState(new URLSearchParams(window.location.search).get('q') || '');
+            const [viewMode, setViewMode] = useState('list');
+            const [sortBy, setSortBy] = useState('relevance');
+            const [currentPage, setCurrentPage] = useState(1);
+            const [pageSize, setPageSize] = useState(10);
+            const [loading, setLoading] = useState(false);
+            const [favorites, setFavorites] = useState(new Set());
+            const [filterDataType, setFilterDataType] = useState([]);
+            const [filterDB, setFilterDB] = useState([]);
+            const [filterOwner, setFilterOwner] = useState([]);
+
+            const [hiddenCols, setHiddenCols] = useState([]);
+
+            const sortedResults = useMemo(() => {
+                let list = [...SEARCH_RESULTS];
+                if (sortBy === 'updatedAt') list.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+                else if (sortBy === 'usage') list.sort((a, b) => (b.usage || 0) - (a.usage || 0));
+                return list;
+            }, [sortBy]);
+
+            const paginatedData = useMemo(() => {
+                const start = (currentPage - 1) * pageSize;
+                return sortedResults.slice(start, start + pageSize);
+            }, [sortedResults, currentPage, pageSize]);
+
+            const toggleFav = (fqn) => {
+                setFavorites(prev => { const s = new Set(prev); if (s.has(fqn)) s.delete(fqn); else s.add(fqn); return s; });
+            };
+
+            const handleCopy = (text) => {
+                navigator.clipboard.writeText(text);
+                message.success('复制成功');
+            };
+
+            const allColumns = [
+                { title: '表名', dataIndex: 'displayName', key: 'displayName', fixed: 'left', width: 200, render: (_, r) => <a className="table-name" href={`detail.html?fqn=${encodeURIComponent(r.fqn)}`}>{r.displayName || r.name}</a> },
+                { title: '数据源', dataIndex: 'serviceType', key: 'serviceType', width: 120, render: (v) => <SourceTag type={v} /> },
+                { title: '负责人', key: 'owner', width: 140, render: (_, r) => r.owners?.[0]?.name || '-' },
+                { title: '描述', dataIndex: 'description', key: 'description', ellipsis: true },
+                { title: '标签', key: 'tags', width: 200, render: (_, r) => (r.tags || []).slice(0, 2).map(t => <Tag key={t.tagFQN} style={{ marginBottom: 2 }}>{tagName(t.tagFQN)}</Tag>) },
+                { title: '热度', dataIndex: 'usage', key: 'usage', width: 80, sorter: (a, b) => a.usage - b.usage },
+                { title: '更新时间', dataIndex: 'updatedAt', key: 'updatedAt', width: 160, render: v => formatTime(v) },
+            ];
+
+            const tableColumns = allColumns.filter(c => !hiddenCols.includes(c.key));
+
+            const colMenu = (
+                <Menu>
+                    {allColumns.map(c => (
+                        <Menu.Item key={c.key}>
+                            <Checkbox checked={!hiddenCols.includes(c.key)} onChange={e => {
+                                if(e.target.checked) setHiddenCols(hiddenCols.filter(k => k !== c.key));
+                                else setHiddenCols([...hiddenCols, c.key]);
+                            }}>{c.title}</Checkbox>
+                        </Menu.Item>
+                    ))}
+                </Menu>
+            );
+
+            return (
+                <AppLayout activeSiderKey="search">
+                    <div className="search-page">
+                        <div className="search-bar-wrap">
+                            <Input
+                                size="large"
+                                placeholder="搜索表名、字段、标签..."
+                                prefix={<SearchOutlined style={{ color: '#8c8c8c' }} />}
+                                value={keyword}
+                                onChange={e => setKeyword(e.target.value)}
+                                onPressEnter={() => { setLoading(true); setTimeout(() => setLoading(false), 300); }}
+                                allowClear
+                                style={{ flex: 1 }}
+                            />
+                            <Button type="primary" size="large" icon={<RobotOutlined />} onClick={() => window.location.href='copilot.html'}>AI 智能搜索</Button>
+                        </div>
+                        <div className="search-body">
+                            {/* Filter Panel */}
+                            <div className="filter-panel">
+                                <div className="filter-section">
+                                    <div className="filter-section-title">数据类型</div>
+                                    <Checkbox.Group value={filterDataType} onChange={setFilterDataType} className="filter-group">
+                                        {FILTER_OPTIONS.dataTypes.map(o => <Checkbox key={o.value} value={o.value}>{o.label}</Checkbox>)}
+                                    </Checkbox.Group>
+                                </div>
+                                <div className="filter-section">
+                                    <div className="filter-section-title">库名</div>
+                                    <Checkbox.Group value={filterDB} onChange={setFilterDB} className="filter-group">
+                                        {FILTER_OPTIONS.databases.map(o => <Checkbox key={o.value} value={o.value}>{o.label}</Checkbox>)}
+                                    </Checkbox.Group>
+                                </div>
+                                <div className="filter-section">
+                                    <div className="filter-section-title">负责人</div>
+                                    <Checkbox.Group value={filterOwner} onChange={setFilterOwner} className="filter-group">
+                                        {FILTER_OPTIONS.owners.map(o => <Checkbox key={o.value} value={o.value}>{o.label}</Checkbox>)}
+                                    </Checkbox.Group>
+                                </div>
+                                <div className="filter-section">
+                                    <div className="filter-section-title">生命状态</div>
+                                    <Radio.Group className="filter-group">
+                                        {FILTER_OPTIONS.lifeStatus.map(o => <Radio key={o.value} value={o.value}>{o.label}</Radio>)}
+                                    </Radio.Group>
+                                </div>
+                                <div className="filter-section">
+                                    <div className="filter-section-title">业务线</div>
+                                    <Checkbox.Group className="filter-group">
+                                        {FILTER_OPTIONS.businessLines.map(o => <Checkbox key={o.value} value={o.value}>{o.label}</Checkbox>)}
+                                    </Checkbox.Group>
+                                </div>
+                                <Button block style={{ marginTop: 8 }} onClick={() => { setFilterDataType([]); setFilterDB([]); setFilterOwner([]); }}>重置筛选</Button>
+                            </div>
+                            {/* Result Area */}
+                            <div className="result-area">
+                                <div className="result-toolbar">
+                                    <Radio.Group value={viewMode} onChange={e => setViewMode(e.target.value)} size="small" optionType="button">
+                                        <Radio.Button value="list">列表模式</Radio.Button>
+                                        <Radio.Button value="table">Excel模式</Radio.Button>
+                                    </Radio.Group>
+                                    <Select value={sortBy} onChange={setSortBy} size="small" style={{ width: 140 }}>
+                                        <Select.Option value="relevance">相关度</Select.Option>
+                                        <Select.Option value="updatedAt">更新时间</Select.Option>
+                                        <Select.Option value="usage">热度</Select.Option>
+                                    </Select>
+                                    <span className="result-count">共 {sortedResults.length} 条结果</span>
+                                </div>
+                                
+                                {viewMode === 'table' && (
+                                    <div className="table-toolbar">
+                                        <div></div>
+                                        <div className="table-toolbar-right">
+                                            <Dropdown overlay={colMenu} trigger={['click']}>
+                                                <Button size="small" icon={<EyeInvisibleOutlined />}>隐藏列</Button>
+                                            </Dropdown>
+                                            <Button size="small" icon={<DownloadOutlined />}>下载</Button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <Spin spinning={loading}>
+                                    {viewMode === 'list' ? (
+                                        <div>
+                                            {paginatedData.map(item => (
+                                                <div key={item.id} className="result-card">
+                                                    <div className="card-row-1">
+                                                        <a className="table-name" href={`detail.html?fqn=${encodeURIComponent(item.fqn)}`}>{item.displayName || item.name}</a>
+                                                        <CopyOutlined className="copy-btn" onClick={() => handleCopy(item.displayName || item.name)} title="复制表名" />
+                                                        <SourceTag type={item.serviceType} />
+                                                        {(item.tags || []).slice(0, 3).map(t => <Tag key={t.tagFQN}>{tagName(t.tagFQN)}</Tag>)}
+                                                    </div>
+                                                    <div className="card-row-2">{item.description || '暂无描述'}</div>
+                                                    <div className="card-row-3">
+                                                        <span>负责人：{item.owners?.[0]?.name || '-'}</span>
+                                                        <span>更新时间：{formatTime(item.updatedAt)}</span>
+                                                        <span>热度：{item.usage || 0}</span>
+                                                    </div>
+                                                    <div className="card-actions">
+                                                        <Button type="text" size="small" icon={favorites.has(item.fqn) ? <StarFilled style={{ color: '#faad14' }} /> : <StarOutlined />} onClick={() => toggleFav(item.fqn)}>收藏</Button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {!loading && paginatedData.length === 0 && <Empty description="暂无结果" />}
+                                        </div>
+                                    ) : (
+                                        <Table dataSource={paginatedData} columns={tableColumns} rowKey="id" pagination={false} size="small" scroll={{ x: 'max-content' }} />
+                                    )}
+                                </Spin>
+                                <div className="pagination-wrap">
+                                    <Pagination current={currentPage} pageSize={pageSize} total={sortedResults.length} showSizeChanger pageSizeOptions={['10','20','50']} showQuickJumper onChange={(p, ps) => { setCurrentPage(p); setPageSize(ps); }} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </AppLayout>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(
+            <antd.ConfigProvider theme={{ token: { colorPrimary: '#1677ff', borderRadius: 6, fontFamily: 'system-ui' } }} locale={antd.locale?.zh_CN}>
+                <SearchPage />
+            </antd.ConfigProvider>
+        );
+    </script>
+</body>
+</html>

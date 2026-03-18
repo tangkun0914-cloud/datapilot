@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataPilot - 我的库表</title>
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/dayjs@1.11.10/dayjs.min.js"></script>
+    <script src="https://unpkg.com/antd@5.12.2/dist/antd.min.js"></script>
+    <script src="https://unpkg.com/antd@5.12.2/dist/locale/zh_CN.js"></script>
+    <script src="https://unpkg.com/@ant-design/icons@5.2.6/dist/index.umd.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/antd@5.12.2/dist/reset.css">
+    <style>
+        :root { --color-primary: #1677ff; --color-bg-page: #f5f7fa; --color-sidebar: #001529; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: var(--color-bg-page); color: #1f1f1f; overflow: hidden; }
+        .app-layout { display: flex; height: 100vh; overflow: hidden; }
+        .app-sider { width: 220px; min-width: 220px; background: var(--color-sidebar); display: flex; flex-direction: column; flex-shrink: 0; }
+        .logo-area { height: 64px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 0 16px; }
+        .logo-icon-small { width: 28px; height: 28px; background: radial-gradient(circle at center, #722ed1 0%, #1677ff 100%); border-radius: 6px; box-shadow: 0 2px 8px rgba(22, 119, 255, 0.4); flex-shrink: 0; }
+        .logo-title { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
+        .sider-menu { flex: 1; padding: 8px 12px; }
+        .sider-menu-item { height: 44px; display: flex; align-items: center; padding: 0 16px; gap: 12px; border-radius: 8px; color: rgba(255,255,255,0.65); margin-bottom: 4px; cursor: pointer; transition: all 0.2s; font-size: 14px; text-decoration: none; }
+        .sider-menu-item:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .sider-menu-item.active { background: var(--color-primary); color: #fff; }
+        .app-right { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .app-header { background: var(--color-sidebar); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 64px; flex-shrink: 0; }
+        .header-left { flex: 1; display: flex; align-items: center; }
+        .top-menu { display: flex; align-items: center; gap: 4px; flex: 1; }
+        .top-menu-item { color: rgba(255,255,255,0.65); font-size: 14px; padding: 0 12px; height: 64px; display: flex; align-items: center; cursor: pointer; border-bottom: 2px solid transparent; text-decoration: none; white-space: nowrap; }
+        .top-menu-item.active { color: #fff; font-weight: 500; border-bottom-color: var(--color-primary); }
+        .header-right { display: flex; align-items: center; gap: 16px; color: rgba(255,255,255,0.85); flex-shrink: 0; }
+        .app-content { flex: 1; background: var(--color-bg-page); padding: 24px; overflow-y: auto; }
+        .page-title { font-size: 20px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }
+        .content-card { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 24px; }
+        .source-tag { display: inline-flex; padding: 0 6px; height: 20px; border-radius: 4px; font-size: 12px; font-weight: 600; align-items: center; }
+        .table-item { display: flex; align-items: center; padding: 16px 8px; border-bottom: 1px solid #f5f5f5; cursor: pointer; transition: background 0.2s; }
+        .table-item:hover { background: #fafafa; }
+        .table-item:last-child { border-bottom: none; }
+        .table-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin-right: 16px; flex-shrink: 0; font-weight: 800; }
+        .table-content { flex: 1; min-width: 0; }
+        .table-name-link { font-size: 15px; font-weight: 600; color: #1677ff; }
+        .table-desc { font-size: 13px; color: #64748b; display: flex; align-items: center; gap: 16px; margin-top: 4px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState } = React;
+        const { Tabs, Tag, Empty, Avatar } = antd;
+        const { HomeOutlined, DashboardOutlined, SearchOutlined, AppstoreOutlined, FolderOutlined, TableOutlined, RobotOutlined, QuestionCircleOutlined, BellOutlined, UserOutlined } = icons;
+
+        const getSource = (t) => { switch(t) { case 'Hive': return {c:'#db2777',bg:'#fce7f3',t:'H'}; case 'MySQL': return {c:'#ea580c',bg:'#ffedd5',t:'M'}; case 'StarRocks': return {c:'#2563eb',bg:'#eff6ff',t:'SR'}; default: return {c:'#64748b',bg:'#f1f5f9',t:'D'}; } };
+        const formatDate = (ts) => { if(!ts) return '-'; const d=new Date(ts); const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; };
+
+        const MY_OWNED = [
+            { id:'1', name:'ods_order_detail', fqn:'hive.dm_trade.ods.ods_order_detail', displayName:'订单明细表', serviceType:'Hive', layer:'ODS', description:'全渠道订单原子粒度明细数据，T+1 增量同步', updatedAt:1731542400000, owner:'张三(zhangsan)' },
+            { id:'13', name:'dwd_trade_order_detail', fqn:'hive.dm_trade.dwd.dwd_trade_order_detail', displayName:'交易订单明细事实表', serviceType:'Hive', layer:'DWD', description:'订单+支付关联后的明细事实表', updatedAt:1731456000000, owner:'张三(zhangsan)' },
+            { id:'3', name:'dws_trade_summary', fqn:'hive.dm_trade.dws.dws_trade_summary', displayName:'交易汇总表', serviceType:'Hive', layer:'DWS', description:'按日/渠道/类目维度的交易汇总指标', updatedAt:1731369600000, owner:'张三(zhangsan)' },
+            { id:'7', name:'dwd_payment_flow', fqn:'hive.dm_trade.dwd.dwd_payment_flow', displayName:'支付流水表', serviceType:'Hive', layer:'DWD', description:'支付成功流水事实表，含支付渠道、金额、状态', updatedAt:1731283200000, owner:'张三(zhangsan)' },
+            { id:'15', name:'ads_order_summary', fqn:'starrocks.dm_report.ads.ads_order_summary', displayName:'订单汇总表', serviceType:'StarRocks', layer:'ADS', description:'订单维度汇总指标', updatedAt:1731196800000, owner:'张三(zhangsan)' },
+        ];
+        const MY_FAV = [
+            { id:'2', name:'dwd_user_profile', fqn:'starrocks.dm_user.dwd.dwd_user_profile', displayName:'用户画像宽表', serviceType:'StarRocks', layer:'DWD', description:'用户基础属性与行为标签宽表', updatedAt:1731456000000, owner:'李四(lisi)' },
+            { id:'5', name:'dim_product', fqn:'mysql.product_db.dim.dim_product', displayName:'商品维表', serviceType:'MySQL', layer:'DIM', description:'商品基础信息维表', updatedAt:1731196800000, owner:'孙七(sunqi)' },
+            { id:'8', name:'ads_funnel_analysis', fqn:'starrocks.dm_marketing.ads.ads_funnel_analysis', displayName:'漏斗分析表', serviceType:'StarRocks', layer:'ADS', description:'转化漏斗各环节统计', updatedAt:1731283200000, owner:'赵六(zhaoliu)' },
+        ];
+        const RECENT = [
+            { id:'1', name:'ods_order_detail', fqn:'hive.dm_trade.ods.ods_order_detail', displayName:'订单明细表', serviceType:'Hive', layer:'ODS', description:'全渠道订单原子粒度明细数据', updatedAt:1731542400000, owner:'张三(zhangsan)' },
+            { id:'2', name:'dwd_user_profile', fqn:'starrocks.dm_user.dwd.dwd_user_profile', displayName:'用户画像宽表', serviceType:'StarRocks', layer:'DWD', description:'用户基础属性与行为标签宽表', updatedAt:1731456000000, owner:'李四(lisi)' },
+            { id:'4', name:'ads_daily_report', fqn:'starrocks.dm_report.ads.ads_daily_report', displayName:'日报表', serviceType:'StarRocks', layer:'ADS', description:'经营日报核心指标', updatedAt:1731283200000, owner:'赵六(zhaoliu)' },
+        ];
+
+        const SIDER_ITEMS = [
+            { key: 'home', icon: React.createElement(HomeOutlined), label: '首页', href: 'index.html' },
+            { key: 'dashboard', icon: React.createElement(DashboardOutlined), label: '资产大盘', href: 'dashboard.html' },
+            { key: 'search', icon: React.createElement(SearchOutlined), label: '资产检索', href: 'search.html' },
+            { key: 'catalog', icon: React.createElement(AppstoreOutlined), label: '资产目录', href: 'catalog.html' },
+            { key: 'topics', icon: React.createElement(FolderOutlined), label: '数据专题', href: 'topics.html' },
+            { key: 'mytables', icon: React.createElement(TableOutlined), label: '我的库表', href: 'mytables.html' },
+            { key: 'copilot', icon: React.createElement(RobotOutlined), label: 'AI Copilot', href: 'copilot.html' },
+        ];
+        const TOP_MENU = [{key:'integration',label:'数据集成'},{key:'dev',label:'数据开发'},{key:'publish',label:'发布中心'},{key:'schedule',label:'调度管理'},{key:'ops',label:'监控运维'},{key:'quality',label:'数据质量'},{key:'map',label:'数据地图'},{key:'security',label:'安全中心'},{key:'project',label:'项目管理'}];
+
+        const TableList = ({ tables, emptyText }) => (
+            tables.length === 0 ? <Empty description={emptyText} style={{padding:40}} /> :
+            <div>
+                {tables.map(item => {
+                    const s = getSource(item.serviceType);
+                    return (
+                        <div key={item.id} className="table-item" onClick={() => window.location.href = `detail.html?fqn=${encodeURIComponent(item.fqn)}`}>
+                            <div className="table-icon" style={{backgroundColor:s.bg,border:`1px solid ${s.bg}`}}><span style={{color:s.c,fontSize:s.t.length>1?14:16}}>{s.t}</span></div>
+                            <div className="table-content">
+                                <div><span className="table-name-link">{item.displayName}</span> <Tag color="blue" style={{marginLeft:8}}>{item.layer}</Tag></div>
+                                <div className="table-desc">
+                                    <span>{item.description}</span>
+                                    <span><UserOutlined style={{fontSize:11,marginRight:4}} />{item.owner}</span>
+                                    <span>{formatDate(item.updatedAt)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        );
+
+        const MyTablesPage = () => {
+            const [activeTab, setActiveTab] = useState('owned');
+            const tabItems = [
+                { key: 'owned', label: '我负责的', children: <TableList tables={MY_OWNED} emptyText="暂无负责的表" /> },
+                { key: 'favorites', label: '我收藏的', children: <TableList tables={MY_FAV} emptyText="暂无收藏的表" /> },
+                { key: 'recent', label: '最近访问', children: <TableList tables={RECENT} emptyText="暂无访问记录" /> },
+            ];
+            return (
+                <div className="app-layout">
+                    <div className="app-sider"><div className="logo-area"><div className="logo-icon-small"></div><span className="logo-title">DataPilot</span></div><div className="sider-menu">{SIDER_ITEMS.map(i=><a key={i.key} className={`sider-menu-item ${i.key==='mytables'?'active':''}`} href={i.href}>{i.icon}<span>{i.label}</span></a>)}</div></div>
+                    <div className="app-right">
+                        <header className="app-header"><div className="header-left"><div className="top-menu">{TOP_MENU.map(i=><a key={i.key} className={`top-menu-item ${i.key==='map'?'active':''}`} href="#">{i.label}</a>)}</div></div><div className="header-right"><QuestionCircleOutlined style={{fontSize:16,color:'rgba(255,255,255,0.85)'}} /><BellOutlined style={{fontSize:16,color:'rgba(255,255,255,0.85)'}} /><Avatar size={32} style={{backgroundColor:'#ffb4a2',color:'#fff'}}>王</Avatar></div></header>
+                        <div className="app-content">
+                            <div className="page-title">我的库表</div>
+                            <div className="content-card">
+                                <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<antd.ConfigProvider theme={{token:{colorPrimary:'#1677ff',borderRadius:6,fontFamily:'system-ui'}}} locale={antd.locale?.zh_CN}><MyTablesPage /></antd.ConfigProvider>);
+    </script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+# DataPilot 项目全局 AI 规则
+
+每次在回答用户关于本项目的前端开发、架构设计、新增页面或组件的问题前，请**必须**遵循以下规则：
+
+1. **阅读规范**：默认遵守 `datapilot-web/docs/specs/PROTOTYPE_GUIDE.md` 中的所有开发规范（React 18, Tailwind CSS, Ant Design 5, 组件拆分等）。
+2. **了解全局**：如果涉及到新增模块、页面或路由，请先参考 `datapilot-web/CATALOG.md` 了解项目结构，并修改 `datapilot-web/src/config/menu.jsx`。
+3. **协作指南**：遵循 `AI协作与提效指南.md` 中的 Prompt 模板和沟通原则。
+4. **主动沉淀**：在解决复杂问题后，主动询问用户是否需要将经验总结到 `AI协作与提效指南.md` 中。
+5. **语言**：始终使用中文（简体）回复。
+6. **[强制] 复杂任务规划 (Plan)**：当用户提出包含 3 个以上步骤的复杂任务，或要求开发新模块时：
+   - 必须先使用 TodoWrite 工具在 `.cursor/plans/` 目录下创建一个以任务命名的 `.plan.md` 文件。
+   - 文件需包含 YAML frontmatter（含 todos 数组）和需求分析。
+   - 在执行过程中，必须实时更新 todo 状态（pending -> in_progress -> completed）。
+   - 任务全部完成后，将该文件移动到 `.cursor/plans/archive/` 目录下归档。
+
+## 技术栈 (Constitution)
+- **框架**: Vue 3 + Vite (Composition API + SFC)
+- **UI 组件库**: Ant Design Vue 4 (`ant-design-vue`, `@ant-design/icons-vue`)
+- **CSS**: Tailwind CSS v4（原子化，严禁内联 style）
+- **路由**: Vue Router v4
+- **状态管理**: Pinia
+- **图表**: 纯 SVG + Ant Design Vue 内置组件（零额外图表依赖）
+
+## 目录结构规范 (Page-Based)
+```
+src/
+├── components/            # 全局公共组件 (AppLayout, PageHeader…)
+├── pages/                 # 页面目录
+│   ├── Home/              # 首页
+│   ├── Search/            # 资产检索
+│   └── Detail/            # 资产详情
+├── services/              # API 服务层 (对接 OpenMetadata)
+├── mock/                  # Mock 数据层
+├── router/                # 路由配置
+├── App.vue                # 根组件
+└── main.js                # 入口文件
+```
+
+## 编码规范
+- **组件拆分**：超过 200 行的页面组件必须拆分到模块的 `components/` 目录。
+- **数据分离**：所有 Mock 数据统一放在模块的 `mock/` 目录，组件通过 props 接收数据，禁止在组件内硬编码。
+- **配置驱动**：新增菜单或页面入口时，修改 `src/config/menu.jsx`，不在 UI 组件中硬编码。
+- **命名规范**：文件名 PascalCase（组件），camelCase（工具函数）；CSS 类名全部使用 Tailwind。

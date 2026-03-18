@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataPilot - 数据专题</title>
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/dayjs@1.11.10/dayjs.min.js"></script>
+    <script src="https://unpkg.com/antd@5.12.2/dist/antd.min.js"></script>
+    <script src="https://unpkg.com/antd@5.12.2/dist/locale/zh_CN.js"></script>
+    <script src="https://unpkg.com/@ant-design/icons@5.2.6/dist/index.umd.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/antd@5.12.2/dist/reset.css">
+    <style>
+        :root { --color-primary: #1677ff; --color-bg-page: #f5f7fa; --color-sidebar: #001529; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: var(--color-bg-page); color: #1f1f1f; overflow: hidden; }
+        .app-layout { display: flex; height: 100vh; overflow: hidden; }
+        .app-sider { width: 220px; min-width: 220px; background: var(--color-sidebar); display: flex; flex-direction: column; flex-shrink: 0; }
+        .logo-area { height: 64px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 0 16px; }
+        .logo-icon-small { width: 28px; height: 28px; background: radial-gradient(circle at center, #722ed1 0%, #1677ff 100%); border-radius: 6px; box-shadow: 0 2px 8px rgba(22, 119, 255, 0.4); flex-shrink: 0; }
+        .logo-title { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
+        .sider-menu { flex: 1; padding: 8px 12px; }
+        .sider-menu-item { height: 44px; display: flex; align-items: center; padding: 0 16px; gap: 12px; border-radius: 8px; color: rgba(255,255,255,0.65); margin-bottom: 4px; cursor: pointer; transition: all 0.2s; font-size: 14px; text-decoration: none; }
+        .sider-menu-item:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .sider-menu-item.active { background: var(--color-primary); color: #fff; }
+        .app-right { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .app-header { background: var(--color-sidebar); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 64px; flex-shrink: 0; }
+        .header-left { flex: 1; display: flex; align-items: center; }
+        .top-menu { display: flex; align-items: center; gap: 4px; flex: 1; }
+        .top-menu-item { color: rgba(255,255,255,0.65); font-size: 14px; padding: 0 12px; height: 64px; display: flex; align-items: center; cursor: pointer; border-bottom: 2px solid transparent; text-decoration: none; white-space: nowrap; }
+        .top-menu-item.active { color: #fff; font-weight: 500; border-bottom-color: var(--color-primary); }
+        .header-right { display: flex; align-items: center; gap: 16px; color: rgba(255,255,255,0.85); flex-shrink: 0; }
+        .app-content { flex: 1; background: var(--color-bg-page); padding: 24px; overflow-y: auto; }
+        .page-title { font-size: 20px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }
+        .topic-card { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 24px; cursor: pointer; transition: all 0.3s; border: 1px solid #f0f0f0; height: 100%; display: flex; flex-direction: column; }
+        .topic-card:hover { border-color: #1677ff; transform: translateY(-2px); box-shadow: 0 4px 16px rgba(22,119,255,0.12); }
+        .topic-card-title { font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+        .topic-card-desc { font-size: 14px; color: #64748b; line-height: 1.6; margin-bottom: 16px; flex: 1; }
+        .topic-card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #e2e8f0; padding-top: 12px; }
+        .topic-card-owner { font-size: 13px; color: #64748b; display: flex; align-items: center; gap: 6px; }
+        .topic-card-count { font-size: 13px; color: #1677ff; font-weight: 500; background: #e6f4ff; padding: 2px 8px; border-radius: 4px; }
+        .topic-card-domain { font-size: 12px; color: #8c8c8c; background: #f5f5f5; padding: 2px 8px; border-radius: 4px; margin-bottom: 12px; display: inline-block; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { Row, Col, Avatar } = antd;
+        const { HomeOutlined, DashboardOutlined, SearchOutlined, AppstoreOutlined, FolderOutlined, TableOutlined, RobotOutlined, QuestionCircleOutlined, BellOutlined, UserOutlined } = icons;
+
+        const TOPICS = [
+            { id: 1, name: '交易分析专题', description: '涵盖订单、支付、退款全链路交易数据', tableCount: 45, owner: '张三(zhangsan)', domain: '交易域' },
+            { id: 2, name: '用户画像专题', description: '用户基础属性、行为特征、标签体系', tableCount: 38, owner: '李四(lisi)', domain: '用户域' },
+            { id: 3, name: '营销效果专题', description: '活动投放、渠道转化、ROI分析', tableCount: 28, owner: '王五(wangwu)', domain: '营销域' },
+            { id: 4, name: '风控模型专题', description: '风险评分、反欺诈、信用评估', tableCount: 22, owner: '赵六(zhaoliu)', domain: '风控域' },
+            { id: 5, name: '内容推荐专题', description: '内容特征、用户偏好、推荐效果', tableCount: 31, owner: '陈七(chenqi)', domain: '内容域' },
+            { id: 6, name: '供应链专题', description: '库存、物流、供应商、采购管理', tableCount: 19, owner: '周八(zhouba)', domain: '基础域' },
+            { id: 7, name: '财务报表专题', description: '收入、成本、利润、预算执行', tableCount: 15, owner: '吴九(wujiu)', domain: '基础域' },
+            { id: 8, name: '数据质量专题', description: '数据完整性、一致性、时效性监控', tableCount: 12, owner: '郑十(zhengshi)', domain: '基础域' },
+        ];
+
+        const SIDER_ITEMS = [
+            { key: 'home', icon: React.createElement(HomeOutlined), label: '首页', href: 'index.html' },
+            { key: 'dashboard', icon: React.createElement(DashboardOutlined), label: '资产大盘', href: 'dashboard.html' },
+            { key: 'search', icon: React.createElement(SearchOutlined), label: '资产检索', href: 'search.html' },
+            { key: 'catalog', icon: React.createElement(AppstoreOutlined), label: '资产目录', href: 'catalog.html' },
+            { key: 'topics', icon: React.createElement(FolderOutlined), label: '数据专题', href: 'topics.html' },
+            { key: 'mytables', icon: React.createElement(TableOutlined), label: '我的库表', href: 'mytables.html' },
+            { key: 'copilot', icon: React.createElement(RobotOutlined), label: 'AI Copilot', href: 'copilot.html' },
+        ];
+        const TOP_MENU = [{key:'integration',label:'数据集成'},{key:'dev',label:'数据开发'},{key:'publish',label:'发布中心'},{key:'schedule',label:'调度管理'},{key:'ops',label:'监控运维'},{key:'quality',label:'数据质量'},{key:'map',label:'数据地图'},{key:'security',label:'安全中心'},{key:'project',label:'项目管理'}];
+
+        const TopicsPage = () => (
+            <div className="app-layout">
+                <div className="app-sider"><div className="logo-area"><div className="logo-icon-small"></div><span className="logo-title">DataPilot</span></div><div className="sider-menu">{SIDER_ITEMS.map(i=><a key={i.key} className={`sider-menu-item ${i.key==='topics'?'active':''}`} href={i.href}>{i.icon}<span>{i.label}</span></a>)}</div></div>
+                <div className="app-right">
+                    <header className="app-header"><div className="header-left"><div className="top-menu">{TOP_MENU.map(i=><a key={i.key} className={`top-menu-item ${i.key==='map'?'active':''}`} href="#">{i.label}</a>)}</div></div><div className="header-right"><QuestionCircleOutlined style={{fontSize:16,color:'rgba(255,255,255,0.85)'}} /><BellOutlined style={{fontSize:16,color:'rgba(255,255,255,0.85)'}} /><Avatar size={32} style={{backgroundColor:'#ffb4a2',color:'#fff'}}>王</Avatar></div></header>
+                    <div className="app-content">
+                        <div className="page-title">数据专题</div>
+                        <Row gutter={[16, 16]}>
+                            {TOPICS.map(topic => (
+                                <Col key={topic.id} xs={24} sm={12} lg={8} xl={6}>
+                                    <div className="topic-card" onClick={() => window.location.href = `search.html?topic=${encodeURIComponent(topic.name)}`}>
+                                        <span className="topic-card-domain">{topic.domain}</span>
+                                        <div className="topic-card-title">{topic.name}</div>
+                                        <div className="topic-card-desc">{topic.description}</div>
+                                        <div className="topic-card-footer">
+                                            <span className="topic-card-owner"><UserOutlined /> {topic.owner}</span>
+                                            <span className="topic-card-count">{topic.tableCount} 张表</span>
+                                        </div>
+                                    </div>
+                                </Col>
+                            ))}
+                        </Row>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<antd.ConfigProvider theme={{token:{colorPrimary:'#1677ff',borderRadius:6,fontFamily:'system-ui'}}} locale={antd.locale?.zh_CN}><TopicsPage /></antd.ConfigProvider>);
+    </script>
+</body>
+</html>

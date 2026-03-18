@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataPilot - 资产目录</title>
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/dayjs@1.11.10/dayjs.min.js"></script>
+    <script src="https://unpkg.com/antd@5.12.2/dist/antd.min.js"></script>
+    <script src="https://unpkg.com/antd@5.12.2/dist/locale/zh_CN.js"></script>
+    <script src="https://unpkg.com/@ant-design/icons@5.2.6/dist/index.umd.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/antd@5.12.2/dist/reset.css">
+    <style>
+        :root { --color-primary: #1677ff; --color-bg-page: #f5f7fa; --color-sidebar: #001529; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: var(--color-bg-page); color: #1f1f1f; overflow: hidden; }
+        .app-layout { display: flex; height: 100vh; overflow: hidden; }
+        .app-sider { width: 220px; min-width: 220px; background: var(--color-sidebar); display: flex; flex-direction: column; flex-shrink: 0; }
+        .logo-area { height: 64px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 0 16px; }
+        .logo-icon-small { width: 28px; height: 28px; background: radial-gradient(circle at center, #722ed1 0%, #1677ff 100%); border-radius: 6px; box-shadow: 0 2px 8px rgba(22, 119, 255, 0.4); flex-shrink: 0; }
+        .logo-title { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
+        .sider-menu { flex: 1; padding: 8px 12px; }
+        .sider-menu-item { height: 44px; display: flex; align-items: center; padding: 0 16px; gap: 12px; border-radius: 8px; color: rgba(255,255,255,0.65); margin-bottom: 4px; cursor: pointer; transition: all 0.2s; font-size: 14px; text-decoration: none; }
+        .sider-menu-item:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .sider-menu-item.active { background: var(--color-primary); color: #fff; }
+        .app-right { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .app-header { background: var(--color-sidebar); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 64px; flex-shrink: 0; }
+        .header-left { flex: 1; display: flex; align-items: center; }
+        .top-menu { display: flex; align-items: center; gap: 4px; flex: 1; }
+        .top-menu-item { color: rgba(255,255,255,0.65); font-size: 14px; padding: 0 12px; height: 64px; display: flex; align-items: center; cursor: pointer; border-bottom: 2px solid transparent; text-decoration: none; white-space: nowrap; }
+        .top-menu-item.active { color: #fff; font-weight: 500; border-bottom-color: var(--color-primary); }
+        .header-right { display: flex; align-items: center; gap: 16px; color: rgba(255,255,255,0.85); flex-shrink: 0; }
+        .app-content { flex: 1; background: var(--color-bg-page); padding: 24px; overflow-y: auto; }
+        .page-title { font-size: 20px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }
+        .catalog-layout { display: flex; gap: 16px; flex: 1; min-height: 500px; }
+        .tree-wrap { width: 280px; flex-shrink: 0; background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 16px; overflow-y: auto; }
+        .table-wrap { flex: 1; min-width: 0; background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 16px; }
+        .source-tag { display: inline-flex; padding: 0 6px; height: 20px; border-radius: 4px; font-size: 12px; font-weight: 600; align-items: center; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState } = React;
+        const { Tree, Table, Tag, Input, Avatar } = antd;
+        const { HomeOutlined, DashboardOutlined, SearchOutlined, AppstoreOutlined, FolderOutlined, TableOutlined, RobotOutlined, QuestionCircleOutlined, BellOutlined, DownOutlined } = icons;
+
+        const getSourceTag = (t) => { switch(t?.toUpperCase()) { case 'HIVE': return {c:'#db2777',bg:'#fce7f3',t:'Hive'}; case 'MYSQL': return {c:'#ea580c',bg:'#ffedd5',t:'MySQL'}; case 'STARROCKS': return {c:'#2563eb',bg:'#eff6ff',t:'StarRocks'}; default: return {c:'#64748b',bg:'#f1f5f9',t:t||'DB'}; } };
+
+        const TREE_DATA = [
+            { title: 'Hive', key: 'hive', children: [
+                { title: 'dm_trade', key: 'hive.dm_trade', children: [
+                    { title: 'ods', key: 'hive.dm_trade.ods', children: [{ title: 'ods_order_detail', key: 'hive.dm_trade.ods.ods_order_detail', isLeaf: true }] },
+                    { title: 'dwd', key: 'hive.dm_trade.dwd', children: [{ title: 'dwd_trade_order_detail', key: 'hive.dm_trade.dwd.dwd_trade_order_detail', isLeaf: true }] },
+                    { title: 'dws', key: 'hive.dm_trade.dws', children: [{ title: 'dws_trade_summary', key: 'hive.dm_trade.dws.dws_trade_summary', isLeaf: true }] },
+                ] },
+                { title: 'dm_user', key: 'hive.dm_user', children: [
+                    { title: 'ods', key: 'hive.dm_user.ods', children: [{ title: 'ods_user_log', key: 'hive.dm_user.ods.ods_user_log', isLeaf: true }] },
+                ] },
+            ] },
+            { title: 'StarRocks', key: 'starrocks', children: [
+                { title: 'dm_user', key: 'starrocks.dm_user', children: [{ title: 'dwd', key: 'starrocks.dm_user.dwd', children: [{ title: 'dwd_user_profile', key: 'starrocks.dm_user.dwd.dwd_user_profile', isLeaf: true }] }] },
+                { title: 'dm_report', key: 'starrocks.dm_report', children: [{ title: 'ads', key: 'starrocks.dm_report.ads', children: [{ title: 'ads_daily_report', key: 'starrocks.dm_report.ads.ads_daily_report', isLeaf: true }] }] },
+            ] },
+            { title: 'MySQL', key: 'mysql', children: [
+                { title: 'product_db', key: 'mysql.product_db', children: [{ title: 'dim', key: 'mysql.product_db.dim', children: [{ title: 'dim_product', key: 'mysql.product_db.dim.dim_product', isLeaf: true }] }] },
+            ] },
+        ];
+
+        const CATALOG_TABLES = [
+            { key: '1', name: 'ods_order_detail', displayName: '订单明细表', serviceType: 'Hive', layer: 'ODS', owner: '张三(zhangsan)', description: '全渠道订单原子粒度明细数据' },
+            { key: '2', name: 'dwd_user_profile', displayName: '用户画像宽表', serviceType: 'StarRocks', layer: 'DWD', owner: '李四(lisi)', description: '用户基础属性与行为标签宽表' },
+            { key: '3', name: 'dws_trade_summary', displayName: '交易汇总表', serviceType: 'Hive', layer: 'DWS', owner: '王五(wangwu)', description: '按日/渠道/类目维度的交易汇总指标' },
+            { key: '4', name: 'ads_daily_report', displayName: '日报表', serviceType: 'StarRocks', layer: 'ADS', owner: '赵六(zhaoliu)', description: '经营日报核心指标' },
+            { key: '5', name: 'dim_product', displayName: '商品维表', serviceType: 'MySQL', layer: 'DIM', owner: '孙七(sunqi)', description: '商品基础信息维表' },
+            { key: '6', name: 'ods_user_log', displayName: '用户日志表', serviceType: 'Hive', layer: 'ODS', owner: '周八(zhouba)', description: '用户行为埋点日志原始数据' },
+        ];
+
+        const SIDER_ITEMS = [
+            { key: 'home', icon: React.createElement(HomeOutlined), label: '首页', href: 'index.html' },
+            { key: 'dashboard', icon: React.createElement(DashboardOutlined), label: '资产大盘', href: 'dashboard.html' },
+            { key: 'search', icon: React.createElement(SearchOutlined), label: '资产检索', href: 'search.html' },
+            { key: 'catalog', icon: React.createElement(AppstoreOutlined), label: '资产目录', href: 'catalog.html' },
+            { key: 'topics', icon: React.createElement(FolderOutlined), label: '数据专题', href: 'topics.html' },
+            { key: 'mytables', icon: React.createElement(TableOutlined), label: '我的库表', href: 'mytables.html' },
+            { key: 'copilot', icon: React.createElement(RobotOutlined), label: 'AI Copilot', href: 'copilot.html' },
+        ];
+        const TOP_MENU = [{key:'integration',label:'数据集成'},{key:'dev',label:'数据开发'},{key:'publish',label:'发布中心'},{key:'schedule',label:'调度管理'},{key:'ops',label:'监控运维'},{key:'quality',label:'数据质量'},{key:'map',label:'数据地图'},{key:'security',label:'安全中心'},{key:'project',label:'项目管理'}];
+
+        const CatalogPage = () => {
+            const [selectedKey, setSelectedKey] = useState(null);
+            const cols = [
+                { title: '表名', dataIndex: 'displayName', key: 'name', render: (v, r) => <a style={{color:'#1677ff',fontWeight:500}} href={`detail.html?fqn=${r.name}`}>{v}</a> },
+                { title: '数据源', dataIndex: 'serviceType', key: 'type', width: 110, render: v => { const s=getSourceTag(v); return <span className="source-tag" style={{backgroundColor:s.bg,color:s.c}}>{s.t}</span>; } },
+                { title: '分层', dataIndex: 'layer', key: 'layer', width: 80, render: v => <Tag color="blue">{v}</Tag> },
+                { title: '负责人', dataIndex: 'owner', key: 'owner', width: 140 },
+                { title: '描述', dataIndex: 'description', key: 'desc', ellipsis: true },
+            ];
+
+            return (
+                <div className="app-layout">
+                    <div className="app-sider"><div className="logo-area"><div className="logo-icon-small"></div><span className="logo-title">DataPilot</span></div><div className="sider-menu">{SIDER_ITEMS.map(i=><a key={i.key} className={`sider-menu-item ${i.key==='catalog'?'active':''}`} href={i.href}>{i.icon}<span>{i.label}</span></a>)}</div></div>
+                    <div className="app-right">
+                        <header className="app-header"><div className="header-left"><div className="top-menu">{TOP_MENU.map(i=><a key={i.key} className={`top-menu-item ${i.key==='map'?'active':''}`} href="#">{i.label}</a>)}</div></div><div className="header-right"><QuestionCircleOutlined style={{fontSize:16,color:'rgba(255,255,255,0.85)'}} /><BellOutlined style={{fontSize:16,color:'rgba(255,255,255,0.85)'}} /><Avatar size={32} style={{backgroundColor:'#ffb4a2',color:'#fff'}}>王</Avatar></div></header>
+                        <div className="app-content">
+                            <div className="page-title">资产目录</div>
+                            <div className="catalog-layout">
+                                <div className="tree-wrap">
+                                    <Input.Search placeholder="搜索目录..." style={{marginBottom:12}} size="small" />
+                                    <Tree treeData={TREE_DATA} defaultExpandedKeys={['hive','hive.dm_trade']} onSelect={(keys) => setSelectedKey(keys[0])} showLine />
+                                </div>
+                                <div className="table-wrap">
+                                    {selectedKey && <div style={{marginBottom:12,fontSize:13,color:'#8c8c8c'}}>当前路径：{selectedKey}</div>}
+                                    <Table dataSource={CATALOG_TABLES} columns={cols} rowKey="key" size="small" pagination={{pageSize:10}} onRow={r=>({style:{cursor:'pointer'},onClick:()=>window.location.href=`detail.html?fqn=${r.name}`})} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<antd.ConfigProvider theme={{token:{colorPrimary:'#1677ff',borderRadius:6,fontFamily:'system-ui'}}} locale={antd.locale?.zh_CN}><CatalogPage /></antd.ConfigProvider>);
+    </script>
+</body>
+</html>

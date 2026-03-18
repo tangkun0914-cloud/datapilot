@@ -1,0 +1,38 @@
+---
+description: Mock 数据规范 - 创建或修改 mock 目录下文件时生效
+globs: src/mock/**/*.js
+alwaysApply: false
+---
+
+# Mock 数据规范
+
+## 用途
+Mock 数据仅在 `VITE_USE_MOCK=true` 时通过服务层动态加载，用于前端独立开发和演示。
+
+## 数据格式
+- 所有 mock 数据必须与 OpenMetadata API 响应格式保持一致
+- 使用 `export const` 或 `export function` 导出
+- 字段命名遵循后端 API：`fullyQualifiedName`、`serviceType`、`displayName`
+
+## 关键字段约定
+```js
+{
+  id: 'unique_id',                     // 唯一标识
+  name: 'table_name',                  // 表名
+  fullyQualifiedName: 'service.db.schema.table',  // 完全限定名
+  serviceType: 'mysql',                // 数据源类型：mysql | hive | starrocks | analysis | tableau
+  database: { name: 'db_name' },       // 所属库
+  owners: [{ name: '张三(zhangsan)' }],// 负责人
+  columns: [...],                      // 字段列表
+  description: '表描述',               // 中文描述
+}
+```
+
+## 数据源类型枚举
+```
+mysql | hive | starrocks | analysis | tableau
+```
+
+## 禁止事项
+- 禁止在 `pages/` 或 `components/` 中直接 import mock 文件
+- 唯一例外：纯 UI 配置常量（如 `presetQuestions` 等固定文案）

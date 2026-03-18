@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataPilot - 首页</title>
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/dayjs@1.11.10/dayjs.min.js"></script>
+    <script src="https://unpkg.com/antd@5.12.2/dist/antd.min.js"></script>
+    <script src="https://unpkg.com/antd@5.12.2/dist/locale/zh_CN.js"></script>
+    <script src="https://unpkg.com/@ant-design/icons@5.2.6/dist/index.umd.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/antd@5.12.2/dist/reset.css">
+    <style>
+        :root {
+            --color-primary: #1677ff;
+            --color-bg-page: #f5f7fa;
+            --color-bg-card: #ffffff;
+            --color-sidebar: #001529;
+            --color-text-title: #1e293b;
+            --color-text-body: #475569;
+            --color-text-muted: #94a3b8;
+            --radius-card: 12px;
+            --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04);
+            --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: var(--color-bg-page); color: #1f1f1f; overflow: hidden; }
+
+        /* AppLayout */
+        .app-layout { display: flex; height: 100vh; overflow: hidden; }
+        .app-sider { width: 220px; min-width: 220px; background: var(--color-sidebar); display: flex; flex-direction: column; flex-shrink: 0; }
+        .logo-area { height: 64px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 0 16px; }
+        .logo-icon-small { width: 28px; height: 28px; background: radial-gradient(circle at center, #722ed1 0%, #1677ff 100%); border-radius: 6px; box-shadow: 0 2px 8px rgba(22, 119, 255, 0.4); flex-shrink: 0; }
+        .logo-title { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
+        .sider-menu { flex: 1; padding: 8px 12px; }
+        .sider-menu-item { height: 44px; display: flex; align-items: center; padding: 0 16px; gap: 12px; border-radius: 8px; color: rgba(255,255,255,0.65); margin-bottom: 4px; cursor: pointer; transition: all 0.2s; font-size: 14px; text-decoration: none; }
+        .sider-menu-item:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .sider-menu-item.active { background: var(--color-primary); color: #fff; box-shadow: 0 2px 8px rgba(22, 119, 255, 0.4); }
+        .app-right { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .app-header { background: var(--color-sidebar); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 64px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); z-index: 10; flex-shrink: 0; }
+        .header-left { flex: 1; display: flex; align-items: center; overflow: hidden; min-width: 0; }
+        .top-menu { display: flex; align-items: center; gap: 4px; flex: 1; }
+        .top-menu-item { color: rgba(255,255,255,0.65); font-size: 14px; padding: 0 12px; height: 64px; display: flex; align-items: center; cursor: pointer; transition: all 0.3s; border-bottom: 2px solid transparent; text-decoration: none; white-space: nowrap; }
+        .top-menu-item:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        .top-menu-item.active { color: #fff; font-weight: 500; border-bottom-color: var(--color-primary); }
+        .header-right { display: flex; align-items: center; gap: 16px; color: rgba(255,255,255,0.85); flex-shrink: 0; }
+        .header-copilot-btn { color: #fff; background: transparent; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 0 8px; height: 28px; display: flex; align-items: center; gap: 4px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+        .header-copilot-btn:hover { background: #6b9fff; border-color: #6b9fff; }
+        .header-divider { width: 1px; height: 16px; background: rgba(255,255,255,0.2); }
+        .header-text { font-size: 13px; cursor: pointer; display: flex; align-items: center; color: rgba(255,255,255,0.85); }
+        .header-icon-btn { font-size: 16px; cursor: pointer; padding: 4px; color: rgba(255,255,255,0.85); transition: color 0.3s; }
+        .header-icon-btn:hover { color: #fff; }
+        .app-content { flex: 1; background: var(--color-bg-page); padding: 0; overflow-y: auto; }
+
+        /* Banner */
+        .banner-container { background: linear-gradient(135deg, #eef4fb 0%, #f7f9fc 100%); padding: 40px 60px; position: relative; overflow: visible; min-height: 280px; display: flex; align-items: center; justify-content: space-between; }
+        .banner-content-wrapper { display: flex; flex-direction: column; align-items: flex-start; width: 100%; z-index: 10; gap: 32px; }
+        .banner-title { font-size: 32px; font-weight: 800; color: #1f1f1f; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; letter-spacing: -0.5px; }
+        .banner-desc { font-size: 15px; color: #64748b; margin-bottom: 0; max-width: 600px; white-space: normal; line-height: 1.7; font-weight: 400; }
+        .banner-graphic-right { position: absolute; right: -40px; top: 50%; transform: translateY(-50%); width: 400px; height: 300px; z-index: 1; opacity: 0.8; pointer-events: none; background-image: radial-gradient(circle at 50% 50%, rgba(22, 119, 255, 0.1) 0%, transparent 70%); }
+
+        /* Smart Search */
+        .smart-search-wrapper { width: 100%; max-width: 720px; position: relative; }
+        .search-capsule { display: flex; align-items: center; background: #fff; border-radius: 16px; box-shadow: 0 10px 40px -10px rgba(22, 119, 255, 0.15), 0 2px 10px rgba(0,0,0,0.02); padding: 6px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid transparent; }
+        .search-capsule:hover, .search-capsule:focus-within { transform: translateY(-2px); box-shadow: 0 15px 40px -10px rgba(22, 119, 255, 0.25), 0 4px 12px rgba(0,0,0,0.05); border-color: rgba(22, 119, 255, 0.2); }
+        .smart-search-input-field .ant-select-selector { background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 16px !important; height: 52px !important; display: flex; align-items: center; }
+        .smart-search-input-field input { font-size: 16px !important; font-weight: 500; color: #1f1f1f; }
+        .smart-search-input-field .ant-select-selection-placeholder { font-size: 16px; color: #94a3b8; line-height: 52px !important; }
+        .search-capsule-btn { height: 48px; padding: 0 28px; border-radius: 12px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(22, 119, 255, 0.3); border: none; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); flex-shrink: 0; }
+        .search-capsule-btn:hover { background: linear-gradient(135deg, #4fa3f7 0%, #3b82f6 100%) !important; transform: scale(1.02); }
+        .smart-search-dropdown { padding: 8px; border-radius: 12px !important; box-shadow: 0 20px 50px -10px rgba(0,0,0,0.15) !important; border: 1px solid rgba(0,0,0,0.04); backdrop-filter: blur(10px); background: rgba(255,255,255,0.98) !important; }
+        .smart-search-dropdown .ant-select-item { padding: 10px 12px; border-radius: 10px; margin-bottom: 4px; transition: all 0.2s; }
+        .smart-search-dropdown .ant-select-item-option-active { background-color: #f1f5f9 !important; }
+        .search-option-item { display: flex; align-items: flex-start; gap: 12px; padding: 4px; }
+        .search-option-item .result-main { display: flex; flex-direction: column; gap: 4px; }
+        .search-option-item .result-title { font-size: 15px; font-weight: 600; color: #1f1f1f; }
+        .search-option-item .result-desc { font-size: 13px; color: #64748b; }
+
+        /* Section Card */
+        .section-card { background: #fff; border-radius: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); padding: 24px; }
+
+        /* Asset List Item */
+        .asset-list-item { display: flex; align-items: center; padding: 16px 8px; border-bottom: 1px solid #f1f5f9; transition: all 0.2s; cursor: pointer; }
+        .asset-list-item:hover { background-color: #f8fafc; border-radius: 8px; }
+        .asset-list-item:last-child { border-bottom: none; }
+        .item-icon-wrapper { margin-right: 16px; flex-shrink: 0; }
+        .source-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
+        .source-icon span { font-weight: 800; }
+        .item-content { flex: 1; overflow: hidden; margin-right: 24px; }
+        .item-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .item-title-link { font-size: 15px; font-weight: 600; color: #1677ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; transition: color 0.2s; }
+        .item-title-link:hover { color: #4096ff; text-decoration: underline; }
+        .item-desc { font-size: 13px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; }
+        .owner-info { margin-left: 16px; font-size: 12px; display: flex; align-items: center; gap: 4px; opacity: 0.8; }
+        .item-meta { display: flex; align-items: center; gap: 12px; flex-shrink: 0; color: #64748b; font-size: 13px; }
+        .meta-unit { display: flex; align-items: center; gap: 4px; }
+        .meta-unit.fav { min-width: 24px; justify-content: flex-end; cursor: pointer; }
+        .meta-divider { width: 1px; height: 12px; background: #e2e8f0; }
+
+        /* Rank Badge */
+        .rank-badge { width: 20px; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; margin-right: 12px; flex-shrink: 0; background: #f0f0f0; color: #8c8c8c; }
+        .rank-badge.top { background: #fff1f0; color: #ff4d4f; }
+
+        /* View More */
+        .view-more-footer { border-top: 1px solid #f0f0f0; padding: 12px 0; display: flex; justify-content: center; margin-top: 8px; flex-shrink: 0; }
+        .view-more-btn { color: #999; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; transition: color 0.2s; }
+        .view-more-btn:hover { color: #1677ff; }
+
+        /* Topic Cards */
+        .topic-item { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); padding: 24px; border-radius: 12px; border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.3s; }
+        .topic-item:hover { border-color: #3b82f6; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1); }
+        .topic-item-header { font-weight: 700; font-size: 16px; margin-bottom: 8px; color: #0f172a; }
+        .topic-item-desc { font-size: 14px; color: #64748b; line-height: 1.5; margin-bottom: 12px; height: 42px; overflow: hidden; }
+        .topic-item-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #e2e8f0; padding-top: 12px; }
+        .topic-owner { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #64748b; }
+        .topic-count { font-size: 13px; color: #1677ff; font-weight: 500; background: #e6f4ff; padding: 2px 8px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const { Layout, Menu, Input, Button, Card, Tag, Tabs, Avatar, Tooltip, Row, Col, AutoComplete, Select, message, Typography, Empty, Space } = antd;
+        const { SearchOutlined, HomeOutlined, DashboardOutlined, AppstoreOutlined, FolderOutlined, TableOutlined, RobotOutlined, UserOutlined, DownOutlined, QuestionCircleOutlined, BellOutlined, FireFilled, StarFilled, StarOutlined, RightOutlined, HistoryOutlined, SyncOutlined } = icons;
+
+        // --- Helpers ---
+        const getSourceStyle = (type) => {
+            switch(type?.toUpperCase()) {
+                case 'HIVE': return { color: '#db2777', bg: '#fce7f3', text: 'H' };
+                case 'MYSQL': return { color: '#ea580c', bg: '#ffedd5', text: 'M' };
+                case 'STARROCKS': return { color: '#2563eb', bg: '#eff6ff', text: 'SR' };
+                default: return { color: '#64748b', bg: '#f1f5f9', text: 'D' };
+            }
+        };
+
+        // --- Mock Data ---
+        const RECENT_VIEWED = [
+            { id: '1', name: 'ods_order_detail', fqn: 'hive.dm_trade.ods.ods_order_detail', displayName: '订单明细表', serviceType: 'Hive', owners: [{ name: '张三(zhangsan)' }], usage: 3420, isFavorite: false },
+            { id: '2', name: 'dwd_user_profile', fqn: 'starrocks.dm_user.dwd.dwd_user_profile', displayName: '用户画像宽表', serviceType: 'StarRocks', owners: [{ name: '李四(lisi)' }], usage: 2890, isFavorite: false },
+            { id: '3', name: 'dws_trade_summary', fqn: 'hive.dm_trade.dws.dws_trade_summary', displayName: '交易汇总表', serviceType: 'Hive', owners: [{ name: '王五(wangwu)' }], usage: 2156, isFavorite: false },
+            { id: '4', name: 'ads_daily_report', fqn: 'starrocks.dm_report.ads.ads_daily_report', displayName: '日报表', serviceType: 'StarRocks', owners: [{ name: '赵六(zhaoliu)' }], usage: 1980, isFavorite: false },
+            { id: '5', name: 'dim_product', fqn: 'mysql.product_db.dim.dim_product', displayName: '商品维表', serviceType: 'MySQL', owners: [{ name: '孙七(sunqi)' }], usage: 1650, isFavorite: false },
+            { id: '6', name: 'ods_user_log', fqn: 'hive.dm_user.ods.ods_user_log', displayName: '用户日志表', serviceType: 'Hive', owners: [{ name: '周八(zhouba)' }], usage: 1420, isFavorite: false },
+        ];
+
+        const FAVORITES = [
+            { id: '1', name: 'ods_order_detail', fqn: 'hive.dm_trade.ods.ods_order_detail', displayName: '订单明细表', serviceType: 'Hive', owners: [{ name: '张三(zhangsan)' }], usage: 3420, isFavorite: true },
+            { id: '2', name: 'dwd_user_profile', fqn: 'starrocks.dm_user.dwd.dwd_user_profile', displayName: '用户画像宽表', serviceType: 'StarRocks', owners: [{ name: '李四(lisi)' }], usage: 2890, isFavorite: true },
+            { id: '7', name: 'dwd_payment_flow', fqn: 'hive.dm_trade.dwd.dwd_payment_flow', displayName: '支付流水表', serviceType: 'Hive', owners: [{ name: '王五(wangwu)' }], usage: 1280, isFavorite: true },
+            { id: '8', name: 'ads_funnel_analysis', fqn: 'starrocks.dm_marketing.ads.ads_funnel_analysis', displayName: '漏斗分析表', serviceType: 'StarRocks', owners: [{ name: '赵六(zhaoliu)' }], usage: 980, isFavorite: true },
+        ];
+
+        const HOT_RANK = [
+            { id: '1', name: 'ods_order_detail', fqn: 'hive.dm_trade.ods.ods_order_detail', displayName: '订单明细表', serviceType: 'Hive', owners: [{ name: '张三(zhangsan)' }], usage: 3420 },
+            { id: '2', name: 'dwd_user_profile', fqn: 'starrocks.dm_user.dwd.dwd_user_profile', displayName: '用户画像宽表', serviceType: 'StarRocks', owners: [{ name: '李四(lisi)' }], usage: 2890 },
+            { id: '3', name: 'dws_trade_summary', fqn: 'hive.dm_trade.dws.dws_trade_summary', displayName: '交易汇总表', serviceType: 'Hive', owners: [{ name: '王五(wangwu)' }], usage: 2156 },
+            { id: '4', name: 'ads_daily_report', fqn: 'starrocks.dm_report.ads.ads_daily_report', displayName: '日报表', serviceType: 'StarRocks', owners: [{ name: '赵六(zhaoliu)' }], usage: 1980 },
+            { id: '5', name: 'dim_product', fqn: 'mysql.product_db.dim.dim_product', displayName: '商品维表', serviceType: 'MySQL', owners: [{ name: '孙七(sunqi)' }], usage: 1650 },
+            { id: '6', name: 'ods_user_log', fqn: 'hive.dm_user.ods.ods_user_log', displayName: '用户日志表', serviceType: 'Hive', owners: [{ name: '周八(zhouba)' }], usage: 1420 },
+            { id: '7', name: 'dwd_payment_flow', fqn: 'hive.dm_trade.dwd.dwd_payment_flow', displayName: '支付流水表', serviceType: 'Hive', owners: [{ name: '王五(wangwu)' }], usage: 1280 },
+            { id: '8', name: 'ads_funnel_analysis', fqn: 'starrocks.dm_marketing.ads.ads_funnel_analysis', displayName: '漏斗分析表', serviceType: 'StarRocks', owners: [{ name: '赵六(zhaoliu)' }], usage: 980 },
+            { id: '9', name: 'ods_inventory', fqn: 'hive.dm_product.ods.ods_inventory', displayName: '库存表', serviceType: 'Hive', owners: [{ name: '孙七(sunqi)' }], usage: 756 },
+            { id: '10', name: 'dws_marketing_effect', fqn: 'hive.dm_marketing.dws.dws_marketing_effect', displayName: '营销效果表', serviceType: 'Hive', owners: [{ name: '周八(zhouba)' }], usage: 620 },
+        ];
+
+        const MOCK_TOPICS = [
+            { id: 1, title: '营销活动', desc: '双11/618大促全链路数据', count: 128, owner: '王强(wangqiang)' },
+            { id: 2, title: '用户增长', desc: '拉新留存与生命周期分析', count: 85, owner: '李娜(lina)' },
+            { id: 3, title: '供应链', desc: '库存流转与物流履约效率', count: 210, owner: '陈晨(chenchen)' },
+            { id: 4, title: '财务经营', desc: '营收利润与成本分摊报表', count: 64, owner: '孙权(sunquan)' },
+        ];
+
+        const SUGGESTIONS = [
+            { text: 'ods_order_detail', display: '订单明细表', type: 'Hive' },
+            { text: 'dwd_user_profile', display: '用户画像宽表', type: 'StarRocks' },
+            { text: 'dws_trade_summary', display: '交易汇总表', type: 'Hive' },
+            { text: 'ads_daily_report', display: '日报表', type: 'StarRocks' },
+            { text: 'dim_product', display: '商品维表', type: 'MySQL' },
+        ];
+
+        // --- Sidebar ---
+        const SIDER_ITEMS = [
+            { key: 'home', icon: React.createElement(HomeOutlined), label: '首页', href: 'index.html' },
+            { key: 'dashboard', icon: React.createElement(DashboardOutlined), label: '资产大盘', href: 'dashboard.html' },
+            { key: 'search', icon: React.createElement(SearchOutlined), label: '资产检索', href: 'search.html' },
+            { key: 'catalog', icon: React.createElement(AppstoreOutlined), label: '资产目录', href: 'catalog.html' },
+            { key: 'topics', icon: React.createElement(FolderOutlined), label: '数据专题', href: 'topics.html' },
+            { key: 'mytables', icon: React.createElement(TableOutlined), label: '我的库表', href: 'mytables.html' },
+            { key: 'copilot', icon: React.createElement(RobotOutlined), label: 'AI Copilot', href: 'copilot.html' },
+        ];
+
+        const TOP_MENU = [
+            { key: 'integration', label: '数据集成' },
+            { key: 'dev', label: '数据开发' },
+            { key: 'publish', label: '发布中心' },
+            { key: 'schedule', label: '调度管理' },
+            { key: 'ops', label: '监控运维' },
+            { key: 'quality', label: '数据质量' },
+            { key: 'map', label: '数据地图' },
+            { key: 'security', label: '安全中心' },
+            { key: 'project', label: '项目管理' },
+        ];
+
+        // --- Components ---
+        const SourceIcon = ({ type }) => {
+            const s = getSourceStyle(type);
+            return (
+                <div className="source-icon" style={{ backgroundColor: s.bg, border: `1px solid ${s.bg}` }}>
+                    <span style={{ color: s.color, fontSize: s.text.length > 1 ? 14 : 16 }}>{s.text}</span>
+                </div>
+            );
+        };
+
+        const AssetListItem = ({ data, rank, onToggleFav }) => (
+            <div className="asset-list-item" onClick={() => window.location.href = `detail.html?fqn=${encodeURIComponent(data.fqn)}`}>
+                {rank !== undefined && <div className={`rank-badge ${rank <= 3 ? 'top' : ''}`}>{rank}</div>}
+                <div className="item-icon-wrapper"><SourceIcon type={data.serviceType} /></div>
+                <div className="item-content">
+                    <div className="item-header">
+                        <span className="item-title-link" onClick={e => { e.stopPropagation(); window.location.href = `detail.html?fqn=${encodeURIComponent(data.fqn)}`; }}>
+                            default.{data.name}
+                        </span>
+                    </div>
+                    <div className="item-desc">
+                        <span>{data.displayName}</span>
+                        <span className="owner-info">
+                            <UserOutlined style={{ fontSize: 11 }} /> {data.owners?.[0]?.name || '-'}
+                        </span>
+                    </div>
+                </div>
+                <div className="item-meta">
+                    <div className="meta-unit">
+                        <FireFilled style={{ color: '#ff7875', fontSize: 14 }} />
+                        <span>{(data.usage || 0).toLocaleString()}</span>
+                    </div>
+                    <div className="meta-divider"></div>
+                    <div className="meta-unit fav" onClick={e => { e.stopPropagation(); onToggleFav?.(data.id); }}>
+                        {data.isFavorite ? <StarFilled style={{ color: '#ffc53d', fontSize: 16 }} /> : <StarOutlined style={{ color: '#d9d9d9', fontSize: 16 }} />}
+                    </div>
+                </div>
+            </div>
+        );
+
+        const SmartSearch = () => {
+            const [options, setOptions] = useState([]);
+            const [value, setValue] = useState('');
+            const searchHistory = ['order', '营收', 'user_profile', 'dwd_fact', '埋点'];
+
+            const handleSearch = (text) => {
+                setValue(text);
+                if (!text || text.length < 2) { setOptions([]); return; }
+                const opts = SUGGESTIONS.map(s => ({
+                    value: s.text,
+                    label: (
+                        <div className="search-option-item">
+                            <div className="result-main">
+                                <span className="result-title">{s.text}</span>
+                                <span className="result-desc">{s.display}</span>
+                            </div>
+                        </div>
+                    )
+                }));
+                setOptions([{ label: React.createElement('span', { style: { fontSize: 12, color: '#94a3b8', paddingLeft: 8 } }, '最佳匹配'), options: opts }]);
+            };
+
+            const handleFocus = () => {
+                if (!value && searchHistory.length > 0) {
+                    const historyOpts = searchHistory.slice(0, 5).map(item => ({
+                        value: item,
+                        label: (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#64748b' }}>
+                                <span><HistoryOutlined style={{ marginRight: 8 }} /> {item}</span>
+                                <span style={{ fontSize: 12, color: '#cbd5e1' }}>最近搜索</span>
+                            </div>
+                        )
+                    }));
+                    setOptions([{ label: React.createElement('span', { style: { fontSize: 12, color: '#94a3b8', paddingLeft: 8 } }, '搜索历史'), options: historyOpts }]);
+                }
+            };
+
+            const doSearch = (val) => {
+                const q = (val || value || '').trim();
+                if (q) window.location.href = `search.html?q=${encodeURIComponent(q)}`;
+            };
+
+            return (
+                <div className="smart-search-wrapper">
+                    <div className="search-capsule">
+                        <AutoComplete
+                            dropdownClassName="smart-search-dropdown"
+                            dropdownMatchSelectWidth={true}
+                            style={{ flex: 1 }}
+                            options={options}
+                            onSelect={doSearch}
+                            onSearch={handleSearch}
+                            onFocus={handleFocus}
+                            value={value}
+                            onChange={setValue}
+                        >
+                            <Input
+                                className="smart-search-input-field"
+                                placeholder="请输入关键字：表名 / 中文名 / 字段 / 描述..."
+                                bordered={false}
+                                prefix={<SearchOutlined style={{ fontSize: 20, color: '#94a3b8', marginRight: 8 }} />}
+                                onPressEnter={() => doSearch(value)}
+                            />
+                        </AutoComplete>
+                        <Button type="primary" className="search-capsule-btn" onClick={() => doSearch(value)}>全域搜索</Button>
+                    </div>
+                </div>
+            );
+        };
+
+        const AppLayout = ({ activeSiderKey, children }) => (
+            <div className="app-layout">
+                <div className="app-sider">
+                    <div className="logo-area">
+                        <div className="logo-icon-small"></div>
+                        <span className="logo-title">DataPilot</span>
+                    </div>
+                    <div className="sider-menu">
+                        {SIDER_ITEMS.map(item => (
+                            <a key={item.key} className={`sider-menu-item ${item.key === activeSiderKey ? 'active' : ''}`} href={item.href}>
+                                {item.icon}
+                                <span>{item.label}</span>
+                            </a>
+                        ))}
+                    </div>
+                </div>
+                <div className="app-right">
+                    <header className="app-header">
+                        <div className="header-left">
+                            <div className="top-menu">
+                                {TOP_MENU.map(item => (
+                                    <a key={item.key} className={`top-menu-item ${item.key === 'map' ? 'active' : ''}`} href="#">{item.label}</a>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="header-right">
+                            <button className="header-copilot-btn" onClick={() => window.location.href='copilot.html'}>
+                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                                Copilot
+                            </button>
+                            <div className="header-divider"></div>
+                            <span className="header-text">Region: SG <DownOutlined style={{ fontSize: 10, marginLeft: 4 }} /></span>
+                            <span className="header-text">Space: marketing_dev <DownOutlined style={{ fontSize: 10, marginLeft: 4 }} /></span>
+                            <QuestionCircleOutlined className="header-icon-btn" />
+                            <BellOutlined className="header-icon-btn" />
+                            <Avatar size={32} style={{ backgroundColor: '#ffb4a2', color: '#fff', cursor: 'pointer' }}>王</Avatar>
+                        </div>
+                    </header>
+                    <div className="app-content">
+                        {children}
+                    </div>
+                </div>
+            </div>
+        );
+
+        // --- Page ---
+        const HomePage = () => {
+            const [activeTab, setActiveTab] = useState('recent');
+            const [recentData, setRecentData] = useState(RECENT_VIEWED.map(d => ({ ...d })));
+            const [favData, setFavData] = useState(FAVORITES.map(d => ({ ...d })));
+            const [hotData, setHotData] = useState(HOT_RANK.map(d => ({ ...d })));
+
+            const toggleFavRecent = (id) => {
+                setRecentData(prev => prev.map(d => d.id === id ? { ...d, isFavorite: !d.isFavorite } : d));
+            };
+            const toggleFavFav = (id) => {
+                setFavData(prev => prev.map(d => d.id === id ? { ...d, isFavorite: !d.isFavorite } : d));
+            };
+            const toggleFavHot = (id) => {
+                setHotData(prev => prev.map(d => d.id === id ? { ...d, isFavorite: !d.isFavorite } : d));
+            };
+
+            const currentList = activeTab === 'recent' ? recentData : favData;
+            const currentToggle = activeTab === 'recent' ? toggleFavRecent : toggleFavFav;
+
+            return (
+                <AppLayout activeSiderKey="home">
+                    {/* Banner */}
+                    <div className="banner-container">
+                        <div className="banner-content-wrapper">
+                            <div>
+                                <div className="banner-title">
+                                    智能检索，<span style={{ color: '#3b82f6' }}>洞见数据价值</span>
+                                </div>
+                                <p className="banner-desc">
+                                    面向全域的企业级智能数据地图。支持表名、字段、描述的语义检索与即时联想，让找数触手可及。
+                                </p>
+                            </div>
+                            <SmartSearch />
+                        </div>
+                        <div className="banner-graphic-right"></div>
+                    </div>
+
+                    {/* Main Content */}
+                    <div style={{ margin: '22px 32px 32px 32px' }}>
+                        <Row gutter={32} style={{ display: 'flex', alignItems: 'stretch' }}>
+                            {/* Left: Recent / Favorites */}
+                            <Col span={14} style={{ display: 'flex', flexDirection: 'column' }}>
+                                <div className="section-card" style={{ height: 580, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                                    <Tabs activeKey={activeTab} onChange={setActiveTab} items={[{ key: 'recent', label: '最近浏览' }, { key: 'favorites', label: '我的收藏' }]} style={{ marginBottom: 0 }} />
+                                    <div style={{ flex: 1, overflowY: 'auto' }}>
+                                        {currentList.length > 0 ? currentList.map(item => (
+                                            <AssetListItem key={item.id} data={item} onToggleFav={currentToggle} />
+                                        )) : (
+                                            <div style={{ padding: '60px 0' }}><Empty description="暂无数据" /></div>
+                                        )}
+                                    </div>
+                                    <div className="view-more-footer">
+                                        <a className="view-more-btn" href="search.html">查看更多 <RightOutlined style={{ fontSize: 10 }} /></a>
+                                    </div>
+                                </div>
+                            </Col>
+                            {/* Right: Hot Rank */}
+                            <Col span={10} style={{ display: 'flex', flexDirection: 'column' }}>
+                                <div className="section-card" style={{ height: 580, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20, gap: 8, flexShrink: 0 }}>
+                                        <FireFilled style={{ color: '#ff4d4f', fontSize: 20 }} />
+                                        <span style={{ fontWeight: 700, fontSize: 16, color: '#0f172a' }}>全域热度榜</span>
+                                    </div>
+                                    <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}>
+                                        {hotData.map((item, idx) => (
+                                            <AssetListItem key={item.id} data={item} rank={idx + 1} onToggleFav={toggleFavHot} />
+                                        ))}
+                                    </div>
+                                    <div className="view-more-footer">
+                                        <a className="view-more-btn" href="search.html">查看更多 <RightOutlined style={{ fontSize: 10 }} /></a>
+                                    </div>
+                                </div>
+                            </Col>
+                        </Row>
+
+                        {/* Topics */}
+                        <Row gutter={32} style={{ marginTop: 24 }}>
+                            <Col span={24}>
+                                <div className="section-card">
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                                        <span style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', margin: 0 }}>数据专题</span>
+                                        <a href="topics.html" style={{ color: '#64748b', fontSize: 14, textDecoration: 'none' }}>查看更多 <RightOutlined /></a>
+                                    </div>
+                                    <Row gutter={[20, 20]}>
+                                        {MOCK_TOPICS.map(topic => (
+                                            <Col span={6} key={topic.id}>
+                                                <div className="topic-item" onClick={() => window.location.href = `search.html?topic=${encodeURIComponent(topic.title)}`}>
+                                                    <div className="topic-item-header">{topic.title}</div>
+                                                    <div className="topic-item-desc">{topic.desc}</div>
+                                                    <div className="topic-item-footer">
+                                                        <span className="topic-owner"><UserOutlined /> {topic.owner}</span>
+                                                        <span className="topic-count">{topic.count} 张表</span>
+                                                    </div>
+                                                </div>
+                                            </Col>
+                                        ))}
+                                    </Row>
+                                </div>
+                            </Col>
+                        </Row>
+                    </div>
+                </AppLayout>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(
+            <antd.ConfigProvider theme={{ token: { colorPrimary: '#1677ff', borderRadius: 6, fontFamily: 'system-ui' } }} locale={antd.locale?.zh_CN}>
+                <HomePage />
+            </antd.ConfigProvider>
+        );
+    </script>
+</body>
+</html>

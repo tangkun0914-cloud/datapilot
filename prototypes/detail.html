@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataPilot - 数据表详情</title>
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/dayjs@1.11.10/dayjs.min.js"></script>
+    <script src="https://unpkg.com/antd@5.12.2/dist/antd.min.js"></script>
+    <script src="https://unpkg.com/antd@5.12.2/dist/locale/zh_CN.js"></script>
+    <script src="https://unpkg.com/@ant-design/icons@5.2.6/dist/index.umd.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/antd@5.12.2/dist/reset.css">
+    <style>
+        :root { --color-primary: #1677ff; --color-bg-page: #f5f7fa; --color-sidebar: #001529; --color-text-title: #1e293b; --color-text-muted: #94a3b8; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: var(--color-bg-page); color: #1f1f1f; overflow: hidden; }
+        .app-layout { display: flex; height: 100vh; overflow: hidden; }
+        .app-sider { width: 220px; min-width: 220px; background: var(--color-sidebar); display: flex; flex-direction: column; flex-shrink: 0; }
+        .logo-area { height: 64px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 0 16px; }
+        .logo-icon-small { width: 28px; height: 28px; background: radial-gradient(circle at center, #722ed1 0%, #1677ff 100%); border-radius: 6px; box-shadow: 0 2px 8px rgba(22, 119, 255, 0.4); flex-shrink: 0; }
+        .logo-title { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
+        .sider-menu { flex: 1; padding: 8px 12px; }
+        .sider-menu-item { height: 44px; display: flex; align-items: center; padding: 0 16px; gap: 12px; border-radius: 8px; color: rgba(255,255,255,0.65); margin-bottom: 4px; cursor: pointer; transition: all 0.2s; font-size: 14px; text-decoration: none; }
+        .sider-menu-item:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .sider-menu-item.active { background: var(--color-primary); color: #fff; }
+        .app-right { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .app-header { background: var(--color-sidebar); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 64px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); z-index: 10; flex-shrink: 0; }
+        .header-left { flex: 1; display: flex; align-items: center; overflow: hidden; }
+        .top-menu { display: flex; align-items: center; gap: 4px; flex: 1; }
+        .top-menu-item { color: rgba(255,255,255,0.65); font-size: 14px; padding: 0 12px; height: 64px; display: flex; align-items: center; cursor: pointer; border-bottom: 2px solid transparent; text-decoration: none; white-space: nowrap; }
+        .top-menu-item:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        .top-menu-item.active { color: #fff; font-weight: 500; border-bottom-color: var(--color-primary); }
+        .header-right { display: flex; align-items: center; gap: 16px; color: rgba(255,255,255,0.85); flex-shrink: 0; }
+        .header-copilot-btn { color: #fff; background: transparent; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 0 8px; height: 28px; display: flex; align-items: center; gap: 4px; cursor: pointer; font-size: 13px; }
+        .header-divider { width: 1px; height: 16px; background: rgba(255,255,255,0.2); }
+        .header-text { font-size: 13px; cursor: pointer; color: rgba(255,255,255,0.85); }
+        .app-content { flex: 1; background: var(--color-bg-page); overflow-y: auto; }
+
+        /* PageHeader */
+        .page-header { background: #fff; padding: 16px 32px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; }
+        .page-header .breadcrumb { font-size: 12px; color: #8c8c8c; margin-bottom: 8px; }
+        .page-header .breadcrumb a { color: #1677ff; text-decoration: none; }
+        .page-header .breadcrumb a:hover { text-decoration: underline; }
+        .page-header h2 { margin: 0; font-size: 20px; font-weight: 700; color: var(--color-text-title); }
+
+        /* Detail Body */
+        .detail-body { display: flex; gap: 0; flex: 1; padding: 24px 32px 32px; }
+
+        /* InfoSidebar */
+        .info-sidebar { width: 280px; background: #fff; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); padding: 24px 20px; margin-right: 24px; flex-shrink: 0; overflow-y: auto; max-height: calc(100vh - 180px); }
+        .section-title { font-size: 15px; font-weight: 700; color: #0f172a; margin: 0 0 16px; display: flex; align-items: center; }
+        .section-title::before { content: ''; display: inline-block; width: 4px; height: 14px; background: #1677ff; border-radius: 2px; margin-right: 8px; }
+        .info-item { display: flex; align-items: flex-start; margin-bottom: 16px; }
+        .info-item dt { flex-shrink: 0; width: 72px; font-size: 13px; color: #64748b; line-height: 24px; }
+        .info-item dd { flex: 1; font-size: 14px; color: #1f1f1f; margin: 0; line-height: 24px; }
+        .info-item-block { flex-direction: column; }
+        .info-item-block dt { width: auto; margin-bottom: 4px; }
+        .info-item-block dd { color: #475569; font-size: 13px; line-height: 1.6; }
+
+        /* Detail Main */
+        .detail-main { flex: 1; min-width: 0; background: #fff; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+        /* Source Tag */
+        .source-tag { display: inline-flex; align-items: center; padding: 0 6px; height: 20px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+
+        /* Lineage SVG */
+        .lineage-container { width: 100%; overflow-x: auto; padding: 24px 0; }
+        .lineage-node { cursor: pointer; }
+        .lineage-node rect { rx: 8; ry: 8; stroke-width: 2; transition: all 0.2s; }
+        .lineage-node:hover rect { filter: drop-shadow(0 2px 8px rgba(0,0,0,0.15)); }
+        .lineage-node text { font-size: 12px; font-family: inherit; }
+
+        /* Timeline */
+        .change-item { padding: 16px; border-left: 3px solid #e6e6e6; margin-left: 8px; margin-bottom: 0; position: relative; }
+        .change-item::before { content: ''; position: absolute; left: -7px; top: 22px; width: 10px; height: 10px; border-radius: 50%; background: #1677ff; border: 2px solid #fff; }
+        .change-item.add::before { background: #52c41a; }
+        .change-item.modify::before { background: #faad14; }
+        .change-item.drop::before { background: #ff4d4f; }
+        .change-item.alter::before { background: #1677ff; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState } = React;
+        const { Tabs, Table, Tag, Button, Space, Descriptions, Timeline, Modal, Card, Row, Col, Statistic, Badge, Progress, Avatar, Breadcrumb, Tooltip } = antd;
+        const { HomeOutlined, DashboardOutlined, SearchOutlined, AppstoreOutlined, FolderOutlined, TableOutlined, RobotOutlined, UserOutlined, DownOutlined, QuestionCircleOutlined, BellOutlined, StarOutlined, StarFilled, LockOutlined, FireFilled, CheckCircleFilled, CloseCircleFilled, CodeOutlined, FileTextOutlined, CopyOutlined, DownloadOutlined, EyeOutlined } = icons;
+
+        const getSourceTag = (t) => { switch(t?.toUpperCase()) { case 'HIVE': return {c:'#db2777',bg:'#fce7f3',t:'Hive'}; case 'MYSQL': return {c:'#ea580c',bg:'#ffedd5',t:'MySQL'}; case 'STARROCKS': return {c:'#2563eb',bg:'#eff6ff',t:'StarRocks'}; default: return {c:'#64748b',bg:'#f1f5f9',t:t||'DB'}; } };
+        const SourceTag = ({type}) => { const s=getSourceTag(type); return <span className="source-tag" style={{backgroundColor:s.bg,color:s.c}}>{s.t}</span>; };
+        const formatDate = (ts) => { if(!ts) return '-'; const d=new Date(ts); const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; };
+        const formatTime = (ts) => { if(!ts) return '-'; const d=new Date(ts); const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+        const formatSize = (bytes) => { if(!bytes) return '-'; if(bytes>=1073741824) return (bytes/1073741824).toFixed(1)+' GB'; if(bytes>=1048576) return (bytes/1048576).toFixed(1)+' MB'; return (bytes/1024).toFixed(1)+' KB'; };
+
+        const TABLE_DETAIL = {"id":"1","name":"ods_order_detail","fqn":"hive.dm_trade.ods.ods_order_detail","displayName":"订单明细表","description":"全渠道订单原子粒度明细数据，包含 App、Web、小程序等渠道的订单信息，T+1 增量同步。","serviceType":"Hive","updatedAt":1731542400000,"owners":[{"name":"张三(zhangsan)"}],"domain":{"name":"交易域"},"tags":[{"tagFQN":"业务域.交易"},{"tagFQN":"数仓分层.ODS"},{"tagFQN":"数据安全.内部"}],"usageSummary":{"dailyStats":{"count":3420}},"profile":{"rowCount":125000,"columnCount":12,"sizeInByte":536870912},"columns":[{"name":"order_id","dataType":"BIGINT","description":"订单唯一标识","constraint":"PRIMARY_KEY","ordinalPosition":1,"tags":[{"tagFQN":"PII.否"}]},{"name":"user_id","dataType":"BIGINT","description":"下单用户ID","ordinalPosition":2,"tags":[{"tagFQN":"PII.是"}]},{"name":"product_id","dataType":"BIGINT","description":"商品ID","ordinalPosition":3,"tags":[]},{"name":"order_amount","dataType":"DECIMAL(18,2)","description":"订单金额（元）","ordinalPosition":4,"tags":[]},{"name":"pay_channel","dataType":"VARCHAR(32)","description":"支付渠道：alipay/wechat/bank_card","ordinalPosition":5,"tags":[]},{"name":"order_status","dataType":"INT","description":"订单状态：0待支付 1已支付 2已取消 3已退款","ordinalPosition":6,"tags":[]},{"name":"province","dataType":"VARCHAR(64)","description":"收货省份","ordinalPosition":7,"tags":[{"tagFQN":"PII.是"}]},{"name":"city","dataType":"VARCHAR(64)","description":"收货城市","ordinalPosition":8,"tags":[{"tagFQN":"PII.是"}]},{"name":"create_time","dataType":"TIMESTAMP","description":"订单创建时间","ordinalPosition":9,"tags":[]},{"name":"update_time","dataType":"TIMESTAMP","description":"订单更新时间","ordinalPosition":10,"tags":[]},{"name":"is_deleted","dataType":"TINYINT","description":"逻辑删除标记：0正常 1已删除","ordinalPosition":11,"tags":[]},{"name":"dt","dataType":"VARCHAR(10)","description":"分区字段，格式 yyyy-MM-dd","constraint":"PARTITION","ordinalPosition":12,"tags":[]}]};
+
+        const SAMPLE_DATA = {"columns":["order_id","user_id","product_id","order_amount","pay_channel","order_status","province","city","create_time","update_time","is_deleted","dt"],"rows":[[100230001,88001,1000123,299.00,"alipay",1,"广东省","深圳市","2024-11-10 09:23:15","2024-11-10 09:25:32",0,"2024-11-10"],[100230002,88045,1000456,1580.00,"wechat",1,"北京市","朝阳区","2024-11-10 10:15:22","2024-11-10 10:18:05",0,"2024-11-10"],[100230003,92100,1000789,49.90,"alipay",0,"上海市","浦东新区","2024-11-10 11:02:48","2024-11-10 11:02:48",0,"2024-11-10"],[100230004,85632,1000234,1280.00,"bank_card",1,"浙江省","杭州市","2024-11-10 12:30:11","2024-11-10 12:32:18",0,"2024-11-10"],[100230005,92345,1000890,89.00,"wechat",2,"江苏省","南京市","2024-11-10 13:45:33","2024-11-10 14:02:10",0,"2024-11-10"]]};
+
+        const LINEAGE = {"nodes":[{"id":"ods_order_raw","name":"ods_order_raw","fqn":"mysql.trade_db.ods.ods_order_raw"},{"id":"ods_payment_raw","name":"ods_payment_raw","fqn":"mysql.pay_db.ods.ods_payment_raw"},{"id":"ods_user_raw","name":"ods_user_raw","fqn":"mysql.user_db.ods.ods_user_raw"},{"id":"current","name":"ods_order_detail","fqn":"hive.dm_trade.ods.ods_order_detail"},{"id":"dwd_trade_order_detail","name":"dwd_trade_order_detail","fqn":"hive.dm_trade.dwd.dwd_trade_order_detail"},{"id":"dws_sku_sale_daily","name":"dws_sku_sale_daily","fqn":"hive.dm_product.dws.dws_sku_sale_daily"},{"id":"ads_order_summary","name":"ads_order_summary","fqn":"starrocks.dm_report.ads.ads_order_summary"}],"upstreamEdges":[{"from":"ods_order_raw","to":"current"},{"from":"ods_payment_raw","to":"current"},{"from":"ods_user_raw","to":"current"}],"downstreamEdges":[{"from":"current","to":"dwd_trade_order_detail"},{"from":"current","to":"dws_sku_sale_daily"},{"from":"current","to":"ads_order_summary"}]};
+
+        const CHANGE_HISTORY = [{"id":"1","timestamp":1731542400000,"changeType":"ADD_COLUMN","desc":"新增 pay_channel 字段","user":"张三(zhangsan)","before":null,"after":"pay_channel VARCHAR(32)"},{"id":"2","timestamp":1731283200000,"changeType":"MODIFY_COLUMN","desc":"order_amount 精度从 (10,2) 调整为 (18,2)","user":"李四(lisi)","before":"DECIMAL(10,2)","after":"DECIMAL(18,2)"},{"id":"3","timestamp":1731024000000,"changeType":"ADD_COLUMN","desc":"新增 province、city 字段","user":"张三(zhangsan)","before":null,"after":"province VARCHAR(64), city VARCHAR(64)"},{"id":"4","timestamp":1730764800000,"changeType":"ALTER_TABLE","desc":"表注释更新","user":"王五(wangwu)","before":"订单明细表","after":"全渠道订单原子粒度明细数据，T+1 增量同步"},{"id":"5","timestamp":1730505600000,"changeType":"MODIFY_COLUMN","desc":"order_status 类型从 VARCHAR 改为 INT","user":"赵六(zhaoliu)","before":"VARCHAR(16)","after":"INT"}];
+
+        const PRODUCTION = {"pipelineName":"ods_order_detail_daily_sync","scheduleInterval":"0 2 * * *","lastRunAt":1731542400000,"slaRate":99.2,"executions":[{"id":"1","status":"SUCCESS","startTime":1731542400000,"endTime":1731546120000,"duration":3720},{"id":"2","status":"SUCCESS","startTime":1731456000000,"endTime":1731459720000,"duration":3720},{"id":"3","status":"SUCCESS","startTime":1731369600000,"endTime":1731373320000,"duration":3720},{"id":"4","status":"FAILED","startTime":1731283200000,"endTime":1731286920000,"duration":3720},{"id":"5","status":"SUCCESS","startTime":1731196800000,"endTime":1731200520000,"duration":3720}]};
+
+        const SIDER_ITEMS = [
+            { key: 'home', icon: React.createElement(HomeOutlined), label: '首页', href: 'index.html' },
+            { key: 'dashboard', icon: React.createElement(DashboardOutlined), label: '资产大盘', href: 'dashboard.html' },
+            { key: 'search', icon: React.createElement(SearchOutlined), label: '资产检索', href: 'search.html' },
+            { key: 'catalog', icon: React.createElement(AppstoreOutlined), label: '资产目录', href: 'catalog.html' },
+            { key: 'topics', icon: React.createElement(FolderOutlined), label: '数据专题', href: 'topics.html' },
+            { key: 'mytables', icon: React.createElement(TableOutlined), label: '我的库表', href: 'mytables.html' },
+            { key: 'copilot', icon: React.createElement(RobotOutlined), label: 'AI Copilot', href: 'copilot.html' },
+        ];
+        const TOP_MENU = [{key:'integration',label:'数据集成'},{key:'dev',label:'数据开发'},{key:'publish',label:'发布中心'},{key:'schedule',label:'调度管理'},{key:'ops',label:'监控运维'},{key:'quality',label:'数据质量'},{key:'map',label:'数据地图'},{key:'security',label:'安全中心'},{key:'project',label:'项目管理'}];
+        const AppLayout = ({children}) => (
+            <div className="app-layout">
+                <div className="app-sider"><div className="logo-area"><div className="logo-icon-small"></div><span className="logo-title">DataPilot</span></div><div className="sider-menu">{SIDER_ITEMS.map(i=><a key={i.key} className={`sider-menu-item ${i.key==='search'?'active':''}`} href={i.href}>{i.icon}<span>{i.label}</span></a>)}</div></div>
+                <div className="app-right">
+                    <header className="app-header"><div className="header-left"><div className="top-menu">{TOP_MENU.map(i=><a key={i.key} className={`top-menu-item ${i.key==='map'?'active':''}`} href="#">{i.label}</a>)}</div></div><div className="header-right"><button className="header-copilot-btn" onClick={()=>window.location.href='copilot.html'}><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>Copilot</button><div className="header-divider"></div><span className="header-text">Region: SG</span><QuestionCircleOutlined style={{fontSize:16,color:'rgba(255,255,255,0.85)',cursor:'pointer'}} /><BellOutlined style={{fontSize:16,color:'rgba(255,255,255,0.85)',cursor:'pointer'}} /><Avatar size={32} style={{backgroundColor:'#ffb4a2',color:'#fff'}}>王</Avatar></div></header>
+                    <div className="app-content">{children}</div>
+                </div>
+            </div>
+        );
+
+        // Tabs
+        const FieldDetailTab = () => {
+            const cols = [
+                { title: '#', dataIndex: 'ordinalPosition', key: 'pos', width: 50 },
+                { title: '字段名', dataIndex: 'name', key: 'name', render: (v, r) => <span style={{fontWeight:600}}>{v} {r.constraint === 'PRIMARY_KEY' && <Tag color="gold" style={{marginLeft:4}}>PK</Tag>}{r.constraint === 'PARTITION' && <Tag color="purple" style={{marginLeft:4}}>分区</Tag>}</span> },
+                { title: '类型', dataIndex: 'dataType', key: 'dataType', width: 140, render: v => <code style={{fontSize:12,background:'#f5f5f5',padding:'2px 6px',borderRadius:4}}>{v}</code> },
+                { title: '描述', dataIndex: 'description', key: 'description' },
+                { title: '标签', key: 'tags', width: 120, render: (_, r) => (r.tags||[]).map(t => <Tag key={t.tagFQN} style={{marginBottom:2}}>{t.tagFQN.split('.').pop()}</Tag>) },
+            ];
+            return <Table dataSource={TABLE_DETAIL.columns} columns={cols} rowKey="name" pagination={false} size="small" />;
+        };
+
+        const PreviewTab = () => {
+            const cols = SAMPLE_DATA.columns.map(c => ({ title: c, dataIndex: c, key: c, ellipsis: true, width: c === 'order_id' ? 120 : undefined }));
+            const data = SAMPLE_DATA.rows.map((row, i) => { const obj = { key: i }; SAMPLE_DATA.columns.forEach((c, j) => { obj[c] = row[j]; }); return obj; });
+            return <Table dataSource={data} columns={cols} pagination={false} size="small" scroll={{ x: 1400 }} />;
+        };
+
+        const UsageTab = () => (
+            <div style={{padding:'16px 0',lineHeight:1.8,color:'#475569',fontSize:14}}>
+                <h3 style={{color:TABLE_DETAIL?'#1e293b':''}}>使用说明</h3>
+                <p>{TABLE_DETAIL.description}</p>
+                <h4>常用查询示例</h4>
+                <pre style={{background:'#f8f9fa',padding:16,borderRadius:8,fontSize:13,overflow:'auto'}}>
+{`SELECT order_id, user_id, order_amount, pay_channel
+FROM ods_order_detail
+WHERE dt = '2024-11-10'
+  AND order_status = 1
+ORDER BY order_amount DESC
+LIMIT 100;`}
+                </pre>
+                <h4>注意事项</h4>
+                <ul>
+                    <li>数据 T+1 更新，每日凌晨 2:00 产出</li>
+                    <li>dt 为分区字段，查询时务必指定</li>
+                    <li>user_id、province、city 包含 PII 信息，需申请权限</li>
+                </ul>
+            </div>
+        );
+
+        const ProductionTab = () => {
+            const cols = [
+                { title: '状态', dataIndex: 'status', key: 'status', width: 100, render: v => v === 'SUCCESS' ? <Tag color="success">成功</Tag> : <Tag color="error">失败</Tag> },
+                { title: '开始时间', dataIndex: 'startTime', key: 'startTime', render: v => formatTime(v) },
+                { title: '结束时间', dataIndex: 'endTime', key: 'endTime', render: v => formatTime(v) },
+                { title: '耗时', dataIndex: 'duration', key: 'duration', render: v => `${Math.floor(v/60)}分${v%60}秒` },
+            ];
+            return (
+                <div>
+                    <Row gutter={16} style={{marginBottom:24}}>
+                        <Col span={6}><Card size="small"><Statistic title="任务名称" value={PRODUCTION.pipelineName} valueStyle={{fontSize:14}} /></Card></Col>
+                        <Col span={6}><Card size="small"><Statistic title="调度周期" value={PRODUCTION.scheduleInterval} valueStyle={{fontSize:14}} /></Card></Col>
+                        <Col span={6}><Card size="small"><Statistic title="最近产出" value={formatTime(PRODUCTION.lastRunAt)} valueStyle={{fontSize:14}} /></Card></Col>
+                        <Col span={6}><Card size="small"><Statistic title="SLA 达标率" value={PRODUCTION.slaRate + '%'} valueStyle={{fontSize:14,color:'#52c41a'}} /></Card></Col>
+                    </Row>
+                    <Table dataSource={PRODUCTION.executions} columns={cols} rowKey="id" pagination={false} size="small" />
+                </div>
+            );
+        };
+
+        const LineageTab = () => {
+            const upstream = LINEAGE.nodes.filter(n => LINEAGE.upstreamEdges.some(e => e.from === n.id));
+            const current = LINEAGE.nodes.find(n => n.id === 'current');
+            const downstream = LINEAGE.nodes.filter(n => LINEAGE.downstreamEdges.some(e => e.to === n.id));
+            const nodeW = 200, nodeH = 40, gapX = 120, gapY = 16;
+            const upCount = upstream.length, downCount = downstream.length;
+            const maxCount = Math.max(upCount, downCount, 1);
+            const svgH = maxCount * (nodeH + gapY) + 60;
+            const col1X = 40, col2X = col1X + nodeW + gapX, col3X = col2X + nodeW + gapX;
+            const svgW = col3X + nodeW + 40;
+            const getY = (idx, total) => (svgH - total * (nodeH + gapY) + gapY) / 2 + idx * (nodeH + gapY);
+            const curY = (svgH - nodeH) / 2;
+
+            return (
+                <div className="lineage-container">
+                    <svg width={svgW} height={svgH} style={{display:'block',margin:'0 auto'}}>
+                        <defs><marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" /></marker></defs>
+                        {upstream.map((n, i) => { const y = getY(i, upCount); return <g key={n.id}><line x1={col1X+nodeW} y1={y+nodeH/2} x2={col2X} y2={curY+nodeH/2} stroke="#94a3b8" strokeWidth="1.5" markerEnd="url(#arrow)" /><g className="lineage-node" onClick={()=>window.location.href=`detail.html?fqn=${encodeURIComponent(n.fqn)}`}><rect x={col1X} y={y} width={nodeW} height={nodeH} fill="#fff" stroke="#d9d9d9" /><text x={col1X+nodeW/2} y={y+nodeH/2+4} textAnchor="middle" fill="#1f1f1f">{n.name}</text></g></g>; })}
+                        <g className="lineage-node"><rect x={col2X} y={curY} width={nodeW} height={nodeH} fill="#e6f4ff" stroke="#1677ff" strokeWidth="2" rx="8" /><text x={col2X+nodeW/2} y={curY+nodeH/2+4} textAnchor="middle" fill="#1677ff" fontWeight="700">{current?.name}</text></g>
+                        {downstream.map((n, i) => { const y = getY(i, downCount); return <g key={n.id}><line x1={col2X+nodeW} y1={curY+nodeH/2} x2={col3X} y2={y+nodeH/2} stroke="#94a3b8" strokeWidth="1.5" markerEnd="url(#arrow)" /><g className="lineage-node" onClick={()=>window.location.href=`detail.html?fqn=${encodeURIComponent(n.fqn)}`}><rect x={col3X} y={y} width={nodeW} height={nodeH} fill="#fff" stroke="#d9d9d9" /><text x={col3X+nodeW/2} y={y+nodeH/2+4} textAnchor="middle" fill="#1f1f1f">{n.name}</text></g></g>; })}
+                    </svg>
+                </div>
+            );
+        };
+
+        const ChangeHistoryTab = () => {
+            const typeMap = { ADD_COLUMN: { label: '新增字段', color: 'success', cls: 'add' }, MODIFY_COLUMN: { label: '修改字段', color: 'warning', cls: 'modify' }, DROP_COLUMN: { label: '删除字段', color: 'error', cls: 'drop' }, ALTER_TABLE: { label: '修改表', color: 'processing', cls: 'alter' } };
+            return (
+                <div style={{padding:'8px 0'}}>
+                    {CHANGE_HISTORY.map(ch => { const t = typeMap[ch.changeType] || typeMap.ALTER_TABLE; return (
+                        <div key={ch.id} className={`change-item ${t.cls}`}>
+                            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+                                <Tag color={t.color}>{t.label}</Tag>
+                                <span style={{fontSize:12,color:'#8c8c8c'}}>{formatTime(ch.timestamp)}</span>
+                                <span style={{fontSize:12,color:'#8c8c8c',marginLeft:'auto'}}><UserOutlined style={{marginRight:4}} />{ch.user}</span>
+                            </div>
+                            <div style={{fontSize:14,color:'#1f1f1f',marginBottom:8}}>{ch.desc}</div>
+                            {(ch.before || ch.after) && (
+                                <div style={{display:'flex',gap:16,fontSize:12}}>
+                                    {ch.before && <div style={{flex:1,background:'#fff2f0',padding:8,borderRadius:4}}><span style={{color:'#ff4d4f'}}>Before: </span>{ch.before}</div>}
+                                    {ch.after && <div style={{flex:1,background:'#f6ffed',padding:8,borderRadius:4}}><span style={{color:'#52c41a'}}>After: </span>{ch.after}</div>}
+                                </div>
+                            )}
+                        </div>
+                    ); })}
+                </div>
+            );
+        };
+
+        const DetailPage = () => {
+            const [starred, setStarred] = useState(false);
+            const [activeTab, setActiveTab] = useState('fields');
+            const t = TABLE_DETAIL;
+            const warehouseLayer = (t.tags||[]).find(tg => tg.tagFQN?.startsWith('数仓分层.'))?.tagFQN?.split('.').pop() || '-';
+            const displayTags = (t.tags||[]).map(tg => tg.tagFQN.split('.').pop());
+
+            const tabItems = [
+                { key: 'fields', label: '字段详情', children: <FieldDetailTab /> },
+                { key: 'preview', label: '预览探查', children: <PreviewTab /> },
+                { key: 'usage', label: '使用说明', children: <UsageTab /> },
+                { key: 'production', label: '生产信息', children: <ProductionTab /> },
+                { key: 'lineage', label: '血缘关系', children: <LineageTab /> },
+                { key: 'history', label: '变更历史', children: <ChangeHistoryTab /> },
+            ];
+
+            return (
+                <AppLayout>
+                    <div className="page-header">
+                        <div>
+                            <div className="breadcrumb"><a href="index.html">首页</a> / <a href="search.html">资产检索</a> / {t.displayName}</div>
+                            <h2>{t.displayName}</h2>
+                        </div>
+                        <Space>
+                            <Button icon={starred ? <StarFilled style={{color:'#faad14'}} /> : <StarOutlined />} onClick={() => setStarred(!starred)}>{starred ? '已收藏' : '收藏'}</Button>
+                            <Button icon={<LockOutlined />}>申请权限</Button>
+                            <Button type="primary" icon={<RobotOutlined />} onClick={() => window.location.href='copilot.html'}>Copilot</Button>
+                        </Space>
+                    </div>
+                    <div className="detail-body">
+                        <aside className="info-sidebar">
+                            <h3 className="section-title">基础信息</h3>
+                            <dl>
+                                <div className="info-item"><dt>表名</dt><dd style={{fontWeight:500,color:'var(--color-text-title)'}}>{t.displayName}</dd></div>
+                                <div className="info-item"><dt>数据源</dt><dd><SourceTag type={t.serviceType} /></dd></div>
+                                <div className="info-item"><dt>数仓分层</dt><dd><Tag color="blue">{warehouseLayer}</Tag></dd></div>
+                                <div className="info-item"><dt>负责人</dt><dd><UserOutlined style={{fontSize:11,opacity:0.6,marginRight:4}} />{t.owners?.[0]?.name || '-'}</dd></div>
+                                <div className="info-item"><dt>创建时间</dt><dd>{formatDate(t.updatedAt)}</dd></div>
+                                <div className="info-item"><dt>浏览热度</dt><dd><FireFilled style={{color:'#ff7875',marginRight:4}} />{t.usageSummary?.dailyStats?.count?.toLocaleString()}</dd></div>
+                                <div className="info-item"><dt>数据量</dt><dd>{t.profile?.rowCount?.toLocaleString()} 行</dd></div>
+                                <div className="info-item"><dt>存储容量</dt><dd>{formatSize(t.profile?.sizeInByte)}</dd></div>
+                                <div className="info-item"><dt>权限状态</dt><dd><Tag color="success">可查询</Tag></dd></div>
+                            </dl>
+                            <div style={{borderTop:'1px solid #f0f0f0',margin:'12px 0'}}></div>
+                            <h3 className="section-title">业务信息</h3>
+                            <dl>
+                                <div className="info-item"><dt>业务域</dt><dd>{t.domain?.name}</dd></div>
+                                <div className="info-item"><dt>所属主题</dt><dd>交易分析</dd></div>
+                                <div className="info-item"><dt>类目</dt><dd style={{fontSize:12}}>数据资产 / 交易类 / 订单</dd></div>
+                                <div className="info-item"><dt>标签</dt><dd style={{display:'flex',flexWrap:'wrap',gap:4}}>{displayTags.map(tg => <Tag key={tg}>{tg}</Tag>)}</dd></div>
+                                <div className="info-item info-item-block"><dt>业务描述</dt><dd>{t.description}</dd></div>
+                            </dl>
+                        </aside>
+                        <div className="detail-main">
+                            <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} style={{padding:'0 24px'}} />
+                        </div>
+                    </div>
+                </AppLayout>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<antd.ConfigProvider theme={{token:{colorPrimary:'#1677ff',borderRadius:6,fontFamily:'system-ui'}}} locale={antd.locale?.zh_CN}><DetailPage /></antd.ConfigProvider>);
+    </script>
+</body>
+</html>

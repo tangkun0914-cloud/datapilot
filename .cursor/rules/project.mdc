@@ -1,0 +1,96 @@
+---
+description: DataPilot DataMap 项目全局规则 - 所有文件修改时自动生效（整合自 global-tech-stack.md）
+globs:
+alwaysApply: true
+---
+
+# DataPilot DataMap - 项目规则
+
+## 项目概述
+企业级智能数据地图平台，面向数据开发和数据治理场景，提供表资产检索、元数据详情、数据血缘、AI Copilot 等能力。
+
+## 技术栈
+| 层 | 选型 | 版本 | 说明 |
+|----|------|------|------|
+| 前端框架 | Vue 3 | 3.5 | Composition API + `<script setup>` |
+| UI 组件库 | Ant Design Vue | 4.x | 基础 UI 组件 |
+| 高级组件参考 | ProComponents | - | 复杂表单/表格设计思路参考，用 antdv 实现 |
+| 构建工具 | Vite | 7.x | 开发与构建 |
+| CSS 方案 | Tailwind CSS 4 + scoped style | - | Tailwind 做布局，scoped 做组件样式 |
+| 状态管理 | Pinia | 3.x | 已安装，按需使用 |
+| 路由 | Vue Router | 4.x | 页面路由 |
+| HTTP | Axios | - | 封装在 `src/services/request.js` |
+| 图可视化 | AntV G6 | 4.x | 血缘关系图 |
+| 后端 API | OpenMetadata 兼容 | - | 基础地址 `VITE_API_BASE_URL` |
+| 包管理器 | npm | - | 本项目使用 npm |
+| 语言 | JavaScript | - | 不使用 TypeScript，保持 JSDoc 习惯 |
+
+## 目录结构约定
+```
+src/
+├── components/    # 全局共享组件（PascalCase 命名）
+├── pages/         # 页面级组件（按功能域分目录，入口为 index.vue）
+├── services/      # API 服务层（每个领域一个文件）
+├── mock/          # Mock 数据（仅开发阶段，通过服务层动态加载）
+├── router/        # 路由配置
+└── assets/        # 静态资源
+```
+
+## 命名规范
+
+### 文件命名
+| 类型 | 规范 | 示例 |
+|------|------|------|
+| 组件文件 | PascalCase | `SearchBar.vue`、`LineageTab.vue` |
+| 页面入口 | index.vue | `pages/Home/index.vue` |
+| 服务文件 | camelCase | `tableService.js`、`searchService.js` |
+| Mock 文件 | camelCase | `detail.js`、`lineage.js` |
+
+### 变量命名
+| 类型 | 规范 | 示例 |
+|------|------|------|
+| 变量/函数 | camelCase | `tableData`、`handleSearch` |
+| 常量 | UPPER_SNAKE_CASE | `SOURCE_TYPE_CONFIG` |
+| 事件处理 | handle 前缀 | `handleClick`、`handleExpand` |
+| 数据获取 | get/fetch 前缀 | `getTableByFqn`、`fetchLineage` |
+| 布尔值 | is/has/can 前缀 | `isLoading`、`hasPermission` |
+
+### CSS 类命名
+- kebab-case：`.search-bar`、`.lineage-tab`
+- 层级用连字符：`.conv-item`、`.conv-item-active`、`.conv-item-title`
+
+## 核心规范
+
+### API 与 Mock 模式
+- **严禁在页面/组件中直接导入 mock 数据**
+- 所有数据获取必须通过 `src/services/` 服务层
+- 服务层使用 `import.meta.env.VITE_USE_MOCK === 'true'` 判断 mock 模式
+```js
+// 正确
+import { getTableByFqn } from '@/services/tableService.js'
+
+// 错误 — 禁止
+import { tableDetail } from '@/mock/detail.js'
+```
+
+### 响应式与路由
+- 依赖路由参数的数据必须用 `computed` + `watch` 保持响应式
+- 避免在 `onMounted` 中直接读取 `route.params`（不响应路由变化）
+```js
+// 正确
+const fqn = computed(() => route.params.fqn)
+watch(fqn, fetchData, { immediate: true })
+```
+
+### 异步操作
+- 所有数据请求必须有 loading 状态展示
+- 异步操作使用 async/await，必要时 try/catch 处理错误
+- 列表类组件必须处理空数据情况
+
+### 代码风格
+- 使用中文注释（面向中文团队）
+- import 路径使用 `@/` 别名
+- Props 使用 `defineProps` 声明类型和默认值
+- 组件超过 300 行考虑拆分
+- 优先复用已有组件和工具函数，禁止重复造轮子
+- 禁止硬编码敏感信息（API Key、密码走环境变量）

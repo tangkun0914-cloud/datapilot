@@ -1,0 +1,43 @@
+---
+description: API 服务层规范 - 创建或修改 services 目录下文件时生效
+globs: src/services/**/*.js
+alwaysApply: false
+---
+
+# API 服务层规范
+
+## 文件命名
+按业务领域命名：`tableService.js`、`searchService.js`、`lineageService.js`
+
+## 函数模板
+每个 API 函数必须遵循以下模式：
+```js
+import request from './request.js'
+
+export async function getXxxByYyy(param) {
+  if (import.meta.env.VITE_USE_MOCK === 'true') {
+    const { mockData } = await import('@/mock/xxx.js')
+    return mockData
+  }
+  return request.get(`/v1/xxx/${encodeURIComponent(param)}`)
+}
+```
+
+## 关键规则
+- 所有函数必须 `export`，使用 `async/await`
+- Mock 分支使用动态 `import()` 实现按需加载，不要静态导入 mock 文件
+- API 路径格式遵循 OpenMetadata 规范：`/v1/{resource}/{identifier}`
+- URL 参数使用 `encodeURIComponent` 编码（FQN 中包含点号）
+- 请求参数通过 `params` 对象传递（GET）或直接传 body（POST/PUT）
+
+## request.js 基础配置
+- `baseURL` 读取自 `VITE_API_BASE_URL` 环境变量
+- 自动注入 `Authorization: Bearer token` 请求头
+- 响应拦截器自动提取 `response.data`
+- 统一错误处理（401 跳登录，其他 toast 提示）
+
+## 新增服务检查清单
+1. 在 `services/` 下创建新文件
+2. 在 `mock/` 下创建对应的 mock 数据文件
+3. 函数内实现 mock/real 双路径
+4. 页面组件通过 service 层获取数据，不直接引用 mock
