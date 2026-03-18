@@ -10,7 +10,7 @@ export const SOURCE_TYPE_CONFIG = {
 }
 
 export async function getLineageByFqn(fqn, depth = 3) {
-  if (import.meta.env.VITE_USE_MOCK === 'true') {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
     const { lineageData } = await import('@/mock/lineage.js')
     return lineageData
   }
@@ -20,7 +20,7 @@ export async function getLineageByFqn(fqn, depth = 3) {
 }
 
 export async function getColumnLineageNeighbors(entityId, colName, direction) {
-  if (import.meta.env.VITE_USE_MOCK === 'true') {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
     const { mockFetchColumnNeighbors } = await import('@/mock/lineage.js')
     return mockFetchColumnNeighbors(entityId, colName, direction)
   }
@@ -30,7 +30,7 @@ export async function getColumnLineageNeighbors(entityId, colName, direction) {
 }
 
 export async function getLineageNeighbors(nodeId, direction) {
-  if (import.meta.env.VITE_USE_MOCK === 'true') {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
     const { mockFetchNeighbors } = await import('@/mock/lineage.js')
     return mockFetchNeighbors(nodeId, direction)
   }

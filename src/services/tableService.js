@@ -1,7 +1,7 @@
 import request from './request.js'
 
 export async function getTables(params) {
-  if (import.meta.env.VITE_USE_MOCK === 'true') {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
     const { searchResults } = await import('@/mock/assets.js')
     return searchResults.hits.hits.map(h => h._source)
   }
@@ -9,7 +9,7 @@ export async function getTables(params) {
 }
 
 export async function getTableByFqn(fqn) {
-  if (import.meta.env.VITE_USE_MOCK === 'true') {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
     const { tableDetail } = await import('@/mock/detail.js')
     return tableDetail
   }
@@ -19,7 +19,7 @@ export async function getTableByFqn(fqn) {
 }
 
 export async function getTableSampleData(id) {
-  if (import.meta.env.VITE_USE_MOCK === 'true') {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
     const { sampleData } = await import('@/mock/detail.js')
     return sampleData
   }
@@ -27,7 +27,7 @@ export async function getTableSampleData(id) {
 }
 
 export async function getTableColumnProfile(id) {
-  if (import.meta.env.VITE_USE_MOCK === 'true') {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
     const { columnProfiles } = await import('@/mock/detail.js')
     return columnProfiles
   }
@@ -35,7 +35,7 @@ export async function getTableColumnProfile(id) {
 }
 
 export async function getTableVersions(id) {
-  if (import.meta.env.VITE_USE_MOCK === 'true') {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
     const { changeHistory } = await import('@/mock/detail.js')
     return changeHistory
   }
@@ -43,7 +43,7 @@ export async function getTableVersions(id) {
 }
 
 export async function getTableVersion(id, version) {
-  if (import.meta.env.VITE_USE_MOCK === 'true') {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
     const { changeHistory } = await import('@/mock/detail.js')
     return changeHistory.find(c => c.id === version) || changeHistory[0]
   }
@@ -51,14 +51,14 @@ export async function getTableVersion(id, version) {
 }
 
 export async function toggleFollow(id) {
-  if (import.meta.env.VITE_USE_MOCK === 'true') {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
     return { message: 'followers updated' }
   }
   return request.put(`/v1/tables/${id}/followers`)
 }
 
 export async function getProductionInfo(id) {
-  if (import.meta.env.VITE_USE_MOCK === 'true') {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
     const { productionInfo } = await import('@/mock/detail.js')
     return productionInfo
   }
@@ -66,7 +66,7 @@ export async function getProductionInfo(id) {
 }
 
 export async function getRecentViewed() {
-  if (import.meta.env.VITE_USE_MOCK === 'true') {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
     const { recentViewed } = await import('@/mock/assets.js')
     return recentViewed
   }
@@ -74,7 +74,7 @@ export async function getRecentViewed() {
 }
 
 export async function getFavorites() {
-  if (import.meta.env.VITE_USE_MOCK === 'true') {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
     const { favorites } = await import('@/mock/assets.js')
     return favorites
   }
@@ -82,7 +82,7 @@ export async function getFavorites() {
 }
 
 export async function transferTables(tableIds, targetOwnerId, reason) {
-  if (import.meta.env.VITE_USE_MOCK === 'true') {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
     await new Promise(r => setTimeout(r, 800))
     return { success: true, message: `已成功转交 ${tableIds.length} 张表` }
   }

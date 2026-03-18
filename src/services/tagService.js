@@ -4,7 +4,7 @@
 import request from './request.js'
 
 export async function getTags(classification) {
-  if (import.meta.env.VITE_USE_MOCK === 'true') {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
     const { tags } = await import('@/mock/tags.js')
     return tags
   }
@@ -14,7 +14,7 @@ export async function getTags(classification) {
 }
 
 export async function getClassifications() {
-  if (import.meta.env.VITE_USE_MOCK === 'true') {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
     const { classifications } = await import('@/mock/tags.js')
     return classifications
   }

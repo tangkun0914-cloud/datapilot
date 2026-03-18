@@ -4,7 +4,7 @@
 import request from './request.js'
 
 export async function getDomains() {
-  if (import.meta.env.VITE_USE_MOCK === 'true') {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
     const { domains } = await import('@/mock/domains.js')
     return domains
   }

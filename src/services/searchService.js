@@ -1,7 +1,7 @@
 import request from './request.js'
 
 export async function searchAssets(params) {
-  if (import.meta.env.VITE_USE_MOCK === 'true') {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
     const { searchResults } = await import('@/mock/assets.js')
     return searchResults
   }
@@ -11,7 +11,7 @@ export async function searchAssets(params) {
 }
 
 export async function getSuggestions(keyword) {
-  if (import.meta.env.VITE_USE_MOCK === 'true') {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
     const { searchSuggestions } = await import('@/mock/assets.js')
     return searchSuggestions
   }
@@ -19,7 +19,7 @@ export async function getSuggestions(keyword) {
 }
 
 export async function getHotRank() {
-  if (import.meta.env.VITE_USE_MOCK === 'true') {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
     const { hotRank } = await import('@/mock/assets.js')
     return hotRank
   }
@@ -27,7 +27,7 @@ export async function getHotRank() {
 }
 
 export async function getFilterOptions() {
-  if (import.meta.env.VITE_USE_MOCK === 'true') {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
     const { filterOptions } = await import('@/mock/filters.js')
     return filterOptions
   }
