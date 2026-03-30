@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>资产检索（列表页）产品需求文档 v1.0</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: #fff; color: #1f2329; line-height: 1.8; padding: 48px 64px; max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  h2 { font-size: 20px; font-weight: 700; margin: 40px 0 16px; padding-bottom: 8px; border-bottom: 1px solid #e5e6eb; }
+  h3 { font-size: 16px; font-weight: 600; margin: 24px 0 12px; }
+  h4 { font-size: 14px; font-weight: 600; margin: 16px 0 8px; }
+  p { font-size: 14px; margin-bottom: 12px; }
+  ul, ol { font-size: 14px; padding-left: 24px; margin-bottom: 12px; }
+  li { margin-bottom: 6px; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+  th, td { border: 1px solid #dee0e3; padding: 10px 12px; text-align: left; vertical-align: top; }
+  th { background: #f5f6f7; font-weight: 600; color: #1f2329; }
+  td { color: #444; }
+  .meta-table { width: auto; margin-bottom: 32px; }
+  .meta-table td { border: none; padding: 4px 24px 4px 0; color: #666; font-size: 13px; }
+  .meta-table td:first-child { color: #999; width: 80px; }
+  .callout { background: #f0f5ff; border-left: 3px solid #3370ff; border-radius: 4px; padding: 12px 16px; margin: 16px 0; font-size: 13px; color: #1f2329; }
+  .callout-warn { background: #fff7e6; border-left-color: #ff8800; }
+  .callout-green { background: #f0fff4; border-left-color: #10b981; }
+  .divider { border: none; border-top: 1px solid #e5e6eb; margin: 40px 0; }
+  .scene-card { background: #fafbfc; border: 1px solid #eee; border-radius: 8px; padding: 16px 20px; margin-bottom: 16px; }
+  .scene-card strong { color: #2563eb; }
+</style>
+</head>
+<body>
+
+<h1>资产检索（列表页）产品需求文档 v1.0</h1>
+
+<table class="meta-table">
+  <tr><td>产品名称</td><td>DataPilot 数据地图 - 资产检索</td></tr>
+  <tr><td>文档版本</td><td>v1.0</td></tr>
+  <tr><td>产品负责人</td><td>王蕊</td></tr>
+  <tr><td>目标读者</td><td>前端研发、后端研发、测试、设计</td></tr>
+  <tr><td>关联文档</td><td>《数据地图首页重构 v1.0》《Copilot 产品需求文档 v1.0》《我的库表与数据专题 PRD v1.0》</td></tr>
+  <tr><td>最后更新</td><td>2026-03-24</td></tr>
+</table>
+
+<hr class="divider">
+
+<h2>1. 背景与目标</h2>
+
+<h3>1.1 项目背景</h3>
+<p>
+  资产检索页（列表页）是数据地图中使用频率最高的页面，承担着"关键词搜索 → 筛选过滤 → 浏览比较 → 进入详情"的核心用户动线。它是首页搜索框、Copilot 推荐、数据专题等多条路径的汇聚终点——用户最终都需要在这个页面上定位到目标数据表。
+</p>
+<p>
+  本文档定义资产检索页的完整功能、交互细节和技术契约，供研发团队评审和开发。
+</p>
+
+<h3>1.2 产品目标</h3>
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th style="width:160px;">目标</th>
+    <th>说明</th>
+    <th style="width:100px;">衡量指标</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>高效定位目标表</td>
+    <td>支持多关键词搜索 + 多维度筛选 + 两种视图模式，缩短用户找表路径</td>
+    <td>搜索到详情转化率 > 40%</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>丰富的信息密度</td>
+    <td>搜索结果展示表名、数据源、分层、负责人、描述、热度、字段列表等多维信息，减少用户进入详情页的必要性</td>
+    <td>卡片信息满足率 > 70%</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>搜索体验优化</td>
+    <td>搜索建议、历史记录、URL 持久化，降低重复输入成本</td>
+    <td>搜索建议点击率 > 25%</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>收藏快捷管理</td>
+    <td>搜索结果中一键收藏/取消，支持筛选查看收藏列表</td>
+    <td>收藏功能使用率 > 30%</td>
+  </tr>
+</table>
+
+<h3>1.3 功能边界</h3>
+<div class="callout">
+  <strong>本期包含：</strong><br>
+  搜索栏（关键词搜索 + 建议 + 历史 + 收藏入口）| 筛选面板（数据类型 / 搜索范围 / 库 / 负责人）| 结果列表视图（卡片模式）| 结果表格视图（表格模式）| 排序（更新时间 / 热度）| 分页 | 收藏 | 导出（CSV/Excel）| 列配置
+</div>
+<div class="callout callout-warn">
+  <strong>本期不包含：</strong><br>
+  高级搜索（布尔表达式）| 搜索结果高亮关键词 | 筛选保存为视图 | 跨资产类型搜索（本期仅表）| 真实 ES 后端对接（本期 Mock）
+</div>
+
+<hr class="divider">
+
+<h2>2. 用户场景</h2>
+
+<div class="scene-card">
+  <h4>场景一：从首页搜索跳转</h4>
+  <p><strong>角色：</strong>数据开发工程师</p>
+  <p><strong>行为：</strong>在首页搜索框输入"order_detail"回车 → 自动跳转到检索页（URL: /search?q=order_detail）→ 浏览结果列表 → 点击目标表进入详情</p>
+  <p><strong>价值：</strong>搜索关键词通过 URL 持久化，刷新页面不丢失</p>
+</div>
+
+<div class="scene-card">
+  <h4>场景二：多维度筛选定位</h4>
+  <p><strong>角色：</strong>数据分析师</p>
+  <p><strong>行为：</strong>搜索"用户画像" → 在左侧筛选面板选择数据源"Hive" + 库"dm_user" + 负责人"张三" → 结果从 50 条缩小到 5 条</p>
+  <p><strong>价值：</strong>多维交叉筛选快速缩小范围</p>
+</div>
+
+<div class="scene-card">
+  <h4>场景三：切换视图模式对比</h4>
+  <p><strong>角色：</strong>数据开发工程师</p>
+  <p><strong>行为：</strong>搜索后默认列表视图查看详细信息 → 切换到表格视图批量对比多张表的负责人、更新时间、热度</p>
+  <p><strong>价值：</strong>列表视图适合深度浏览，表格视图适合快速比较</p>
+</div>
+
+<div class="scene-card">
+  <h4>场景四：收藏管理</h4>
+  <p><strong>角色：</strong>任意用户</p>
+  <p><strong>行为：</strong>搜索结果中点击星标收藏常用表 → 点击顶部"我的收藏"按钮 → 筛选展示所有已收藏的表</p>
+  <p><strong>价值：</strong>高频表一键收藏，跨会话持久保存</p>
+</div>
+
+<div class="scene-card">
+  <h4>场景五：从 Copilot 推荐跳转</h4>
+  <p><strong>角色：</strong>业务人员</p>
+  <p><strong>行为：</strong>在 Copilot Greeting 消息中点击"查看更多推荐表" → 跳转到检索页（URL: /search?q=推荐关键词&source=copilot_recommend）</p>
+  <p><strong>价值：</strong>Copilot 与检索页无缝衔接</p>
+</div>
+
+<hr class="divider">
+
+<h2>3. 页面整体结构</h2>
+
+<table>
+  <tr>
+    <th style="width:160px;">区域</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>页面背景</td>
+    <td>#f5f7fa 浅灰色</td>
+  </tr>
+  <tr>
+    <td>搜索栏区</td>
+    <td>页面顶部白色容器，包含 SearchBar 组件（搜索输入 + 建议下拉 + 收藏按钮）</td>
+  </tr>
+  <tr>
+    <td>主体区（Grid 布局）</td>
+    <td>
+      左侧：FilterPanel 筛选面板（固定 240px 宽）<br>
+      右侧：结果区（flex 自适应）
+    </td>
+  </tr>
+  <tr>
+    <td>结果区 - 工具栏</td>
+    <td>
+      左侧：排序下拉（更新时间 / 热度）+ 视图切换（列表 / 表格）<br>
+      右侧：结果计数文案（"为您找到 N 个搜索结果"）
+    </td>
+  </tr>
+  <tr>
+    <td>结果区 - 内容</td>
+    <td>根据视图模式渲染 ResultList（卡片）或 ResultTable（表格）</td>
+  </tr>
+  <tr>
+    <td>结果区 - 分页</td>
+    <td>底部右对齐分页器（10 / 20 / 50 条/页）</td>
+  </tr>
+</table>
+
+<hr class="divider">
+
+<h2>4. 搜索栏（SearchBar）</h2>
+
+<h3>4.1 搜索输入</h3>
+
+<table>
+  <tr>
+    <th style="width:140px;">属性</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>Placeholder</td>
+    <td>"输入关键词进行查询，支持空格分割符检索多个关键词"</td>
+  </tr>
+  <tr>
+    <td>多关键词支持</td>
+    <td>以空格分隔多个关键词，后端按 AND 逻辑匹配</td>
+  </tr>
+  <tr>
+    <td>触发搜索</td>
+    <td>按 Enter 或点击搜索按钮</td>
+  </tr>
+  <tr>
+    <td>URL 同步</td>
+    <td>搜索触发后更新 URL query：/search?q={keyword}，支持浏览器前进/后退和刷新恢复</td>
+  </tr>
+  <tr>
+    <td>去重保护</td>
+    <td>连续搜索相同关键词时不重复请求（lastSearchKey 跟踪）</td>
+  </tr>
+</table>
+
+<h3>4.2 搜索建议下拉</h3>
+
+<p>输入框聚焦后，根据输入状态展示不同内容：</p>
+
+<table>
+  <tr>
+    <th style="width:160px;">输入状态</th>
+    <th>下拉内容</th>
+    <th>数据来源</th>
+  </tr>
+  <tr>
+    <td>输入框为空</td>
+    <td>
+      <strong>"历史搜索"</strong> 区域：<br>
+      - 以 Tag 列表形式展示最近搜索词（最多 10 条）<br>
+      - 右侧"清空"按钮可一键清除所有历史<br>
+      - 点击某条历史词直接触发搜索
+    </td>
+    <td>localStorage（key: datamap_search_history）</td>
+  </tr>
+  <tr>
+    <td>输入框有内容</td>
+    <td>
+      <strong>"搜索建议"</strong> 区域：<br>
+      - 实时匹配的表名建议列表<br>
+      - 每条显示表名 + 数据源 Tag<br>
+      - 点击某条建议直接触发搜索
+    </td>
+    <td>getSuggestions(keyword) 接口</td>
+  </tr>
+</table>
+
+<h4>搜索历史管理规则</h4>
+<ul>
+  <li>最多保存 10 条，超出时移除最早的记录</li>
+  <li>相同关键词不重复记录（去重后置顶）</li>
+  <li>存储 key：<code>datamap_search_history</code>，格式为字符串数组</li>
+  <li>清空操作同时清除 localStorage 和 UI</li>
+</ul>
+
+<h3>4.3 收藏入口按钮</h3>
+
+<table>
+  <tr>
+    <th style="width:140px;">属性</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>位置</td>
+    <td>搜索按钮右侧，星形图标按钮</td>
+  </tr>
+  <tr>
+    <td>默认态</td>
+    <td>空心星标，灰色</td>
+  </tr>
+  <tr>
+    <td>激活态</td>
+    <td>实心星标，金色背景 + 蓝色边框（当 URL 含 sort=favorites 时）</td>
+  </tr>
+  <tr>
+    <td>点击行为</td>
+    <td>
+      首次点击：URL 追加 sort=favorites → 结果区仅展示已收藏的表<br>
+      再次点击：移除 sort=favorites → 恢复全量搜索结果
+    </td>
+  </tr>
+</table>
+
+<hr class="divider">
+
+<h2>5. 筛选面板（FilterPanel）</h2>
+
+<h3>5.1 面板布局</h3>
+<table>
+  <tr>
+    <th style="width:140px;">属性</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>位置</td>
+    <td>主体区左侧，固定宽度 240px，白色背景卡片</td>
+  </tr>
+  <tr>
+    <td>高度</td>
+    <td>与结果区等高，内容超出时内部滚动（overflow-y: auto）</td>
+  </tr>
+  <tr>
+    <td>折叠能力</td>
+    <td>每个筛选维度支持 Header 点击折叠/展开，默认全部展开</td>
+  </tr>
+  <tr>
+    <td>底部操作</td>
+    <td>「重置」按钮：一键清空所有筛选条件，恢复默认状态</td>
+  </tr>
+</table>
+
+<h3>5.2 筛选维度</h3>
+
+<h4>维度一：数据类型</h4>
+<table>
+  <tr>
+    <th style="width:140px;">属性</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>交互形式</td>
+    <td>Radio 单选列表</td>
+  </tr>
+  <tr>
+    <td>选项</td>
+    <td>
+      全部（默认选中）<br>
+      Hive 表<br>
+      ClickHouse 表<br>
+      MySQL 表<br>
+      PostgreSQL 表<br>
+      其他
+    </td>
+  </tr>
+  <tr>
+    <td>URL 参数</td>
+    <td><code>type={hive|clickhouse|mysql|postgresql|other}</code>，选"全部"时不携带</td>
+  </tr>
+  <tr>
+    <td>联动行为</td>
+    <td>切换类型后自动重置分页到第 1 页，重新请求数据</td>
+  </tr>
+</table>
+
+<h4>维度二：搜索范围</h4>
+<table>
+  <tr>
+    <th style="width:140px;">属性</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>交互形式</td>
+    <td>Checkbox 多选列表</td>
+  </tr>
+  <tr>
+    <td>选项</td>
+    <td>
+      表名（默认选中）<br>
+      表注释<br>
+      字段名<br>
+      字段注释
+    </td>
+  </tr>
+  <tr>
+    <td>URL 参数</td>
+    <td><code>scope=tableName,tableComment,columnName,columnComment</code>（逗号分隔）</td>
+  </tr>
+  <tr>
+    <td>约束</td>
+    <td>至少选中一项，若用户取消最后一项则自动恢复"表名"选中</td>
+  </tr>
+</table>
+
+<h4>维度三：所属库</h4>
+<table>
+  <tr>
+    <th style="width:140px;">属性</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>交互形式</td>
+    <td>带搜索的 Checkbox 多选列表</td>
+  </tr>
+  <tr>
+    <td>数据来源</td>
+    <td>getFilterOptions() 接口返回的 databases 列表</td>
+  </tr>
+  <tr>
+    <td>搜索框</td>
+    <td>列表顶部输入框，输入时实时过滤选项（前端本地过滤）</td>
+  </tr>
+  <tr>
+    <td>默认展示</td>
+    <td>最多展示 8 项，超出部分折叠，点击"展开更多"显示全部</td>
+  </tr>
+  <tr>
+    <td>URL 参数</td>
+    <td><code>db=db1,db2,db3</code>（逗号分隔）</td>
+  </tr>
+  <tr>
+    <td>联动行为</td>
+    <td>受「数据类型」筛选影响——切换数据类型后，库列表刷新为对应类型下的库</td>
+  </tr>
+</table>
+
+<h4>维度四：负责人</h4>
+<table>
+  <tr>
+    <th style="width:140px;">属性</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>交互形式</td>
+    <td>带搜索的 Checkbox 多选列表</td>
+  </tr>
+  <tr>
+    <td>数据来源</td>
+    <td>getFilterOptions() 接口返回的 owners 列表</td>
+  </tr>
+  <tr>
+    <td>搜索框</td>
+    <td>支持按姓名/工号模糊匹配</td>
+  </tr>
+  <tr>
+    <td>默认展示</td>
+    <td>最多展示 8 项，超出折叠</td>
+  </tr>
+  <tr>
+    <td>URL 参数</td>
+    <td><code>owner=user1,user2</code>（逗号分隔）</td>
+  </tr>
+</table>
+
+<h3>5.3 筛选交互规则</h3>
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th style="width:200px;">规则</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>URL 双向同步</td>
+    <td>所有筛选条件实时同步到 URL query，页面刷新或分享链接可完整恢复筛选状态</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>筛选即触发</td>
+    <td>每次筛选项变更立即触发搜索请求（无需手动点击"搜索"按钮），同时重置分页到第 1 页</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>已选标签回显</td>
+    <td>结果区工具栏上方展示当前生效的筛选条件 Tag，每个 Tag 带×号可单独移除</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>空结果处理</td>
+    <td>当筛选后结果为空，展示空状态插画 + 文案"未找到匹配的表，请调整筛选条件"+ 「重置筛选」按钮</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>计数显示</td>
+    <td>每个筛选选项右侧显示匹配数量（如 Hive 表 (128)），数量为 0 的选项置灰但不隐藏</td>
+  </tr>
+</table>
+
+<hr class="divider">
+
+<h2>6. 结果列表视图（ResultList — 卡片模式）</h2>
+
+<h3>6.1 视图概述</h3>
+<p>卡片模式为默认视图，每条搜索结果以独立卡片形式展示，信息密度高，适合深度浏览。</p>
+
+<h3>6.2 卡片结构</h3>
+
+<h4>卡片 Header</h4>
+<table>
+  <tr>
+    <th style="width:140px;">元素</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>数据源图标</td>
+    <td>左侧 24×24 图标，根据数据源类型展示对应 Logo（Hive/ClickHouse/MySQL/PostgreSQL），使用本地 SVG</td>
+  </tr>
+  <tr>
+    <td>表名</td>
+    <td>
+      主标题，蓝色可点击链接（#1677ff），点击跳转详情页 /detail/{tableId}<br>
+      超过 60 字符截断 + tooltip 全显
+    </td>
+  </tr>
+  <tr>
+    <td>数据源 Tag</td>
+    <td>表名右侧，小号标签（如 "Hive"、"ClickHouse"），背景色与数据源配色一致</td>
+  </tr>
+  <tr>
+    <td>热度指标</td>
+    <td>卡片右侧，🔥 + 数字（如 🔥 998），tooltip 显示"近 7 天查询次数"</td>
+  </tr>
+  <tr>
+    <td>收藏按钮</td>
+    <td>
+      卡片右上角星标图标<br>
+      未收藏：空心灰色 → hover 变金色<br>
+      已收藏：实心金色<br>
+      点击切换状态，调用 toggleFavorite(tableId) 接口
+    </td>
+  </tr>
+</table>
+
+<h4>卡片 Body — 元数据区</h4>
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th style="width:120px;">字段</th>
+    <th style="width:120px;">布局</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>所属库</td>
+    <td>第一行左</td>
+    <td>格式：数据源.库名（如 hive.dm_user）</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>数据分层</td>
+    <td>第一行中</td>
+    <td>ODS / DWD / DWS / ADS / DIM，使用对应颜色 Tag</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>负责人</td>
+    <td>第一行右</td>
+    <td>头像（24px 圆形）+ 姓名</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>表描述</td>
+    <td>第二行（通栏）</td>
+    <td>灰色文字，最多 2 行，超出省略 + tooltip</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>更新时间</td>
+    <td>第三行左</td>
+    <td>格式：YYYY-MM-DD HH:mm，tooltip 显示完整时间戳</td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>记录数</td>
+    <td>第三行右</td>
+    <td>格式化显示（如 1.2M 行），tooltip 显示精确数字</td>
+  </tr>
+</table>
+
+<h4>卡片 Footer — 字段预览</h4>
+<table>
+  <tr>
+    <th style="width:140px;">属性</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>展示内容</td>
+    <td>该表的核心字段列表，以水平排列的 Tag 形式展示</td>
+  </tr>
+  <tr>
+    <td>默认显示</td>
+    <td>最多 8 个字段 Tag，超出部分显示 "+N" 收起标签</td>
+  </tr>
+  <tr>
+    <td>Tag 内容</td>
+    <td>字段名（如 user_id, order_date），hover 显示字段类型和注释</td>
+  </tr>
+  <tr>
+    <td>展开行为</td>
+    <td>点击 "+N" 标签展开显示全部字段，再次点击收起</td>
+  </tr>
+</table>
+
+<h3>6.3 卡片样式规范</h3>
+<table>
+  <tr>
+    <th style="width:140px;">属性</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>卡片背景</td>
+    <td>白色（#ffffff），圆角 8px</td>
+  </tr>
+  <tr>
+    <td>卡片阴影</td>
+    <td>默认：0 1px 4px rgba(0,0,0,0.08)；hover：0 4px 12px rgba(0,0,0,0.12)</td>
+  </tr>
+  <tr>
+    <td>卡片间距</td>
+    <td>卡片之间上下间距 12px</td>
+  </tr>
+  <tr>
+    <td>内边距</td>
+    <td>20px 24px</td>
+  </tr>
+  <tr>
+    <td>hover 效果</td>
+    <td>整卡片阴影增强 + 左侧出现 3px 蓝色竖线（border-left: 3px solid #1677ff）</td>
+  </tr>
+</table>
+
+<hr class="divider">
+
+<h2>7. 结果表格视图（ResultTable — 表格模式）</h2>
+
+<h3>7.1 视图概述</h3>
+<p>表格模式以紧凑行列形式展示搜索结果，适合快速对比多张表的关键属性。通过工具栏视图切换按钮进入。</p>
+
+<h3>7.2 表格列定义</h3>
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th style="width:120px;">列名</th>
+    <th style="width:80px;">宽度</th>
+    <th style="width:80px;">固定</th>
+    <th style="width:80px;">默认显示</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>表名</td>
+    <td>280px</td>
+    <td>左固定</td>
+    <td>是（不可隐藏）</td>
+    <td>数据源图标 + 表名链接（点击跳转详情）+ 数据源 Tag</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>所属库</td>
+    <td>180px</td>
+    <td>否</td>
+    <td>是</td>
+    <td>数据源.库名</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>数据分层</td>
+    <td>100px</td>
+    <td>否</td>
+    <td>是</td>
+    <td>ODS / DWD / DWS / ADS / DIM Tag</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>负责人</td>
+    <td>120px</td>
+    <td>否</td>
+    <td>是</td>
+    <td>头像 + 姓名</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>表描述</td>
+    <td>auto（flex）</td>
+    <td>否</td>
+    <td>是</td>
+    <td>单行截断，hover tooltip 显示全文</td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>热度</td>
+    <td>100px</td>
+    <td>否</td>
+    <td>是</td>
+    <td>🔥 + 数字，支持排序</td>
+  </tr>
+  <tr>
+    <td>7</td>
+    <td>更新时间</td>
+    <td>160px</td>
+    <td>否</td>
+    <td>是</td>
+    <td>YYYY-MM-DD HH:mm，支持排序</td>
+  </tr>
+  <tr>
+    <td>8</td>
+    <td>记录数</td>
+    <td>120px</td>
+    <td>否</td>
+    <td>否（可通过列配置开启）</td>
+    <td>格式化数字（1.2M）</td>
+  </tr>
+  <tr>
+    <td>9</td>
+    <td>收藏</td>
+    <td>60px</td>
+    <td>右固定</td>
+    <td>是</td>
+    <td>星标图标，点击切换收藏状态</td>
+  </tr>
+</table>
+
+<h3>7.3 列配置</h3>
+<table>
+  <tr>
+    <th style="width:140px;">属性</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>入口</td>
+    <td>表格右上角齿轮图标按钮</td>
+  </tr>
+  <tr>
+    <td>交互形式</td>
+    <td>点击弹出 Popover，内含 Checkbox 列表（每列一项）</td>
+  </tr>
+  <tr>
+    <td>约束</td>
+    <td>「表名」列为必选，不可取消；「收藏」列为必选，不可取消</td>
+  </tr>
+  <tr>
+    <td>持久化</td>
+    <td>用户的列配置存入 localStorage（key: datamap_table_columns），跨会话保持</td>
+  </tr>
+</table>
+
+<h3>7.4 导出功能</h3>
+<table>
+  <tr>
+    <th style="width:140px;">属性</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>入口</td>
+    <td>表格模式工具栏右侧「导出」按钮（仅表格视图可见）</td>
+  </tr>
+  <tr>
+    <td>导出格式</td>
+    <td>下拉选择：CSV / Excel（.xlsx）</td>
+  </tr>
+  <tr>
+    <td>导出范围</td>
+    <td>导出当前筛选条件下的全部结果（非仅当前页），最大 10,000 条</td>
+  </tr>
+  <tr>
+    <td>导出列</td>
+    <td>按当前列配置导出（用户隐藏的列不导出）</td>
+  </tr>
+  <tr>
+    <td>文件名</td>
+    <td>资产检索结果_{keyword}_{yyyyMMdd}.csv / .xlsx</td>
+  </tr>
+  <tr>
+    <td>异常处理</td>
+    <td>导出超过 10,000 条时提示"结果过多，请添加筛选条件缩小范围"</td>
+  </tr>
+</table>
+
+<h3>7.5 表格交互规范</h3>
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th style="width:160px;">规则</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>行 hover 效果</td>
+    <td>行背景变为 #f5f7fa</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>列排序</td>
+    <td>「更新时间」「热度」列 header 带排序图标，点击切换 升序/降序/默认</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>斑马纹</td>
+    <td>启用奇偶行交替背景色（#fff / #fafbfc），提升可读性</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>空状态</td>
+    <td>与卡片视图共用同一空状态组件</td>
+  </tr>
+</table>
+
+<hr class="divider">
+
+<h2>8. 排序与分页</h2>
+
+<h3>8.1 排序</h3>
+<table>
+  <tr>
+    <th style="width:140px;">属性</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>入口</td>
+    <td>结果区工具栏左侧下拉选择器</td>
+  </tr>
+  <tr>
+    <td>排序选项</td>
+    <td>
+      <strong>相关度</strong>（默认，仅在有搜索关键词时出现）：按后端相关性评分降序<br>
+      <strong>更新时间</strong>：按最后更新时间降序（最新在前）<br>
+      <strong>热度</strong>：按近 7 天查询次数降序
+    </td>
+  </tr>
+  <tr>
+    <td>URL 参数</td>
+    <td><code>sort={relevance|updateTime|hotness}</code>，默认 relevance 不携带</td>
+  </tr>
+  <tr>
+    <td>联动规则</td>
+    <td>切换排序后重置分页到第 1 页；无搜索关键词时默认按更新时间排序</td>
+  </tr>
+</table>
+
+<h3>8.2 分页</h3>
+<table>
+  <tr>
+    <th style="width:140px;">属性</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>位置</td>
+    <td>结果区底部右对齐</td>
+  </tr>
+  <tr>
+    <td>组件</td>
+    <td>Ant Design Pagination 组件</td>
+  </tr>
+  <tr>
+    <td>每页条数</td>
+    <td>下拉可选 10 / 20 / 50 条/页，默认 20</td>
+  </tr>
+  <tr>
+    <td>URL 参数</td>
+    <td><code>page={number}&size={number}</code></td>
+  </tr>
+  <tr>
+    <td>信息展示</td>
+    <td>显示"共 N 条结果"+ 分页器 + 每页条数选择器</td>
+  </tr>
+  <tr>
+    <td>边界处理</td>
+    <td>
+      page 超出范围时自动跳转到最后一页<br>
+      总数 ≤ 每页条数时隐藏分页器
+    </td>
+  </tr>
+</table>
+
+<hr class="divider">
+
+<h2>9. 工具栏（Toolbar）</h2>
+<table>
+  <tr>
+    <th style="width:140px;">元素</th>
+    <th style="width:100px;">位置</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>排序下拉</td>
+    <td>左侧</td>
+    <td>见 8.1 排序</td>
+  </tr>
+  <tr>
+    <td>视图切换</td>
+    <td>左侧（排序右侧）</td>
+    <td>
+      两个图标按钮组（SegmentedControl）：<br>
+      列表图标（默认激活）→ 卡片模式<br>
+      表格图标 → 表格模式<br>
+      激活态：蓝色背景 + 白色图标；非激活态：灰色
+    </td>
+  </tr>
+  <tr>
+    <td>结果计数</td>
+    <td>右侧</td>
+    <td>文案：为您找到 <strong>{total}</strong> 个搜索结果</td>
+  </tr>
+  <tr>
+    <td>导出按钮</td>
+    <td>右侧（仅表格模式）</td>
+    <td>见 7.4 导出功能</td>
+  </tr>
+  <tr>
+    <td>列配置</td>
+    <td>右侧（仅表格模式）</td>
+    <td>见 7.3 列配置</td>
+  </tr>
+</table>
+
+<hr class="divider">
+
+<h2>10. 数据结构</h2>
+
+<h3>10.1 搜索请求参数（SearchRequest）</h3>
+<table>
+  <tr>
+    <th style="width:160px;">字段</th>
+    <th style="width:100px;">类型</th>
+    <th style="width:60px;">必填</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>keyword</td>
+    <td>string</td>
+    <td>否</td>
+    <td>搜索关键词，多关键词以空格分隔</td>
+  </tr>
+  <tr>
+    <td>type</td>
+    <td>string</td>
+    <td>否</td>
+    <td>数据类型筛选：hive / clickhouse / mysql / postgresql / other</td>
+  </tr>
+  <tr>
+    <td>scope</td>
+    <td>string[]</td>
+    <td>否</td>
+    <td>搜索范围：tableName / tableComment / columnName / columnComment</td>
+  </tr>
+  <tr>
+    <td>databases</td>
+    <td>string[]</td>
+    <td>否</td>
+    <td>所属库筛选列表</td>
+  </tr>
+  <tr>
+    <td>owners</td>
+    <td>string[]</td>
+    <td>否</td>
+    <td>负责人筛选列表（用户 ID）</td>
+  </tr>
+  <tr>
+    <td>sort</td>
+    <td>string</td>
+    <td>否</td>
+    <td>排序方式：relevance / updateTime / hotness / favorites</td>
+  </tr>
+  <tr>
+    <td>page</td>
+    <td>number</td>
+    <td>否</td>
+    <td>当前页码，默认 1</td>
+  </tr>
+  <tr>
+    <td>size</td>
+    <td>number</td>
+    <td>否</td>
+    <td>每页条数，默认 20</td>
+  </tr>
+</table>
+
+<h3>10.2 搜索响应结构（SearchResponse）</h3>
+<table>
+  <tr>
+    <th style="width:160px;">字段</th>
+    <th style="width:140px;">类型</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>total</td>
+    <td>number</td>
+    <td>命中结果总数</td>
+  </tr>
+  <tr>
+    <td>page</td>
+    <td>number</td>
+    <td>当前页码</td>
+  </tr>
+  <tr>
+    <td>size</td>
+    <td>number</td>
+    <td>每页条数</td>
+  </tr>
+  <tr>
+    <td>list</td>
+    <td>TableAsset[]</td>
+    <td>表资产列表，结构见 10.3</td>
+  </tr>
+</table>
+
+<h3>10.3 表资产实体（TableAsset）</h3>
+<table>
+  <tr>
+    <th style="width:160px;">字段</th>
+    <th style="width:100px;">类型</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>tableId</td>
+    <td>string</td>
+    <td>表唯一标识</td>
+  </tr>
+  <tr>
+    <td>tableName</td>
+    <td>string</td>
+    <td>表名（如 dim_user_profile）</td>
+  </tr>
+  <tr>
+    <td>tableComment</td>
+    <td>string</td>
+    <td>表注释/描述</td>
+  </tr>
+  <tr>
+    <td>dataSourceType</td>
+    <td>string</td>
+    <td>数据源类型：hive / clickhouse / mysql / postgresql</td>
+  </tr>
+  <tr>
+    <td>database</td>
+    <td>string</td>
+    <td>所属库名</td>
+  </tr>
+  <tr>
+    <td>layer</td>
+    <td>string</td>
+    <td>数据分层：ODS / DWD / DWS / ADS / DIM</td>
+  </tr>
+  <tr>
+    <td>owner</td>
+    <td>object</td>
+    <td>{ id: string, name: string, avatar: string }</td>
+  </tr>
+  <tr>
+    <td>hotness</td>
+    <td>number</td>
+    <td>近 7 天查询次数</td>
+  </tr>
+  <tr>
+    <td>rowCount</td>
+    <td>number</td>
+    <td>表记录数</td>
+  </tr>
+  <tr>
+    <td>updateTime</td>
+    <td>string</td>
+    <td>最后更新时间 ISO 格式</td>
+  </tr>
+  <tr>
+    <td>isFavorite</td>
+    <td>boolean</td>
+    <td>当前用户是否已收藏</td>
+  </tr>
+  <tr>
+    <td>columns</td>
+    <td>Column[]</td>
+    <td>字段列表 [{ name, type, comment }]</td>
+  </tr>
+</table>
+
+<h3>10.4 搜索建议实体（Suggestion）</h3>
+<table>
+  <tr>
+    <th style="width:160px;">字段</th>
+    <th style="width:100px;">类型</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>tableName</td>
+    <td>string</td>
+    <td>匹配的表名</td>
+  </tr>
+  <tr>
+    <td>tableId</td>
+    <td>string</td>
+    <td>表唯一标识（点击后带入搜索或直接跳转）</td>
+  </tr>
+  <tr>
+    <td>dataSourceType</td>
+    <td>string</td>
+    <td>数据源类型，用于展示 Tag</td>
+  </tr>
+  <tr>
+    <td>database</td>
+    <td>string</td>
+    <td>所属库名</td>
+  </tr>
+</table>
+
+<h3>10.5 筛选选项实体（FilterOptions）</h3>
+<table>
+  <tr>
+    <th style="width:160px;">字段</th>
+    <th style="width:140px;">类型</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>databases</td>
+    <td>{ label, value, count }[]</td>
+    <td>可选库列表及各库匹配数量</td>
+  </tr>
+  <tr>
+    <td>owners</td>
+    <td>{ id, name, avatar, count }[]</td>
+    <td>可选负责人列表及各人匹配数量</td>
+  </tr>
+  <tr>
+    <td>dataTypes</td>
+    <td>{ label, value, count }[]</td>
+    <td>数据类型及各类型匹配数量</td>
+  </tr>
+</table>
+
+<hr class="divider">
+
+<h2>11. 接口契约</h2>
+
+<div class="callout">
+  <strong>说明：</strong>本期前端使用 Mock 数据（VITE_USE_MOCK=true），接口定义用于前后端对齐契约，后续直接对接。
+</div>
+
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th style="width:180px;">接口名称</th>
+    <th style="width:80px;">方法</th>
+    <th style="width:200px;">路径</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>搜索资产列表</td>
+    <td>POST</td>
+    <td>/api/v1/assets/search</td>
+    <td>请求体：SearchRequest → 响应体：SearchResponse</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>获取搜索建议</td>
+    <td>GET</td>
+    <td>/api/v1/assets/suggestions?keyword={keyword}</td>
+    <td>响应体：Suggestion[]，最多返回 10 条</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>获取筛选选项</td>
+    <td>GET</td>
+    <td>/api/v1/assets/filter-options?type={type}</td>
+    <td>响应体：FilterOptions，受数据类型参数影响</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>切换收藏状态</td>
+    <td>POST</td>
+    <td>/api/v1/favorites/toggle</td>
+    <td>请求体：{ tableId: string } → 响应体：{ isFavorite: boolean }</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>导出搜索结果</td>
+    <td>POST</td>
+    <td>/api/v1/assets/export</td>
+    <td>请求体：SearchRequest + { format: 'csv' | 'xlsx', columns: string[] } → 响应：文件流</td>
+  </tr>
+</table>
+
+<hr class="divider">
+
+<h2>12. 验收标准</h2>
+
+<h3>12.1 搜索栏</h3>
+<table>
+  <tr>
+    <th style="width:40px;">编号</th>
+    <th>验收项</th>
+    <th style="width:80px;">优先级</th>
+  </tr>
+  <tr><td>S-01</td><td>输入关键词按 Enter 触发搜索，URL 同步更新为 /search?q={keyword}</td><td>P0</td></tr>
+  <tr><td>S-02</td><td>空格分隔多关键词，后端按 AND 逻辑匹配</td><td>P0</td></tr>
+  <tr><td>S-03</td><td>页面刷新后从 URL 恢复搜索关键词并自动搜索</td><td>P0</td></tr>
+  <tr><td>S-04</td><td>连续搜索相同关键词不触发重复请求</td><td>P1</td></tr>
+  <tr><td>S-05</td><td>输入框为空时聚焦展示历史搜索（最多 10 条 Tag）</td><td>P1</td></tr>
+  <tr><td>S-06</td><td>点击历史词直接触发搜索</td><td>P1</td></tr>
+  <tr><td>S-07</td><td>点击"清空"删除所有搜索历史（localStorage + UI）</td><td>P1</td></tr>
+  <tr><td>S-08</td><td>输入内容时展示搜索建议（表名 + 数据源 Tag）</td><td>P1</td></tr>
+  <tr><td>S-09</td><td>点击搜索建议项触发搜索</td><td>P1</td></tr>
+  <tr><td>S-10</td><td>收藏按钮点击切换 sort=favorites，结果区展示已收藏列表</td><td>P0</td></tr>
+</table>
+
+<h3>12.2 筛选面板</h3>
+<table>
+  <tr>
+    <th style="width:40px;">编号</th>
+    <th>验收项</th>
+    <th style="width:80px;">优先级</th>
+  </tr>
+  <tr><td>F-01</td><td>数据类型 Radio 切换后立即触发搜索，分页重置为第 1 页</td><td>P0</td></tr>
+  <tr><td>F-02</td><td>搜索范围至少保留一项选中</td><td>P0</td></tr>
+  <tr><td>F-03</td><td>所属库列表支持搜索过滤，最多展示 8 项 + "展开更多"</td><td>P1</td></tr>
+  <tr><td>F-04</td><td>负责人列表支持姓名/工号模糊搜索</td><td>P1</td></tr>
+  <tr><td>F-05</td><td>所有筛选条件实时同步 URL，刷新可恢复</td><td>P0</td></tr>
+  <tr><td>F-06</td><td>已选筛选条件在工具栏上方以 Tag 回显，可单独删除</td><td>P1</td></tr>
+  <tr><td>F-07</td><td>"重置"按钮清空所有筛选条件</td><td>P0</td></tr>
+  <tr><td>F-08</td><td>筛选选项右侧显示匹配计数</td><td>P2</td></tr>
+  <tr><td>F-09</td><td>空结果展示空状态插画 + "重置筛选"按钮</td><td>P1</td></tr>
+</table>
+
+<h3>12.3 结果列表视图（卡片模式）</h3>
+<table>
+  <tr>
+    <th style="width:40px;">编号</th>
+    <th>验收项</th>
+    <th style="width:80px;">优先级</th>
+  </tr>
+  <tr><td>L-01</td><td>卡片正确展示：数据源图标 + 表名链接 + 数据源 Tag + 热度 + 收藏按钮</td><td>P0</td></tr>
+  <tr><td>L-02</td><td>点击表名跳转到详情页 /detail/{tableId}</td><td>P0</td></tr>
+  <tr><td>L-03</td><td>元数据区展示所属库、数据分层、负责人、描述、更新时间、记录数</td><td>P0</td></tr>
+  <tr><td>L-04</td><td>字段预览默认展示 8 个 Tag，超出显示 "+N" 可展开</td><td>P1</td></tr>
+  <tr><td>L-05</td><td>卡片 hover 阴影增强 + 左侧蓝色竖线</td><td>P2</td></tr>
+  <tr><td>L-06</td><td>收藏按钮点击切换状态并调用 toggleFavorite 接口</td><td>P0</td></tr>
+</table>
+
+<h3>12.4 结果表格视图（表格模式）</h3>
+<table>
+  <tr>
+    <th style="width:40px;">编号</th>
+    <th>验收项</th>
+    <th style="width:80px;">优先级</th>
+  </tr>
+  <tr><td>T-01</td><td>表格正确展示 9 列数据（含左固定表名 + 右固定收藏）</td><td>P0</td></tr>
+  <tr><td>T-02</td><td>列配置 Popover 可显隐列（表名和收藏不可隐藏）</td><td>P1</td></tr>
+  <tr><td>T-03</td><td>列配置持久化到 localStorage</td><td>P2</td></tr>
+  <tr><td>T-04</td><td>导出 CSV/Excel，文件名含关键词和日期</td><td>P1</td></tr>
+  <tr><td>T-05</td><td>导出超过 10,000 条给出提示</td><td>P1</td></tr>
+  <tr><td>T-06</td><td>更新时间和热度列支持排序</td><td>P0</td></tr>
+  <tr><td>T-07</td><td>斑马纹 + 行 hover 效果</td><td>P2</td></tr>
+</table>
+
+<h3>12.5 排序与分页</h3>
+<table>
+  <tr>
+    <th style="width:40px;">编号</th>
+    <th>验收项</th>
+    <th style="width:80px;">优先级</th>
+  </tr>
+  <tr><td>P-01</td><td>排序下拉切换后触发搜索，分页重置</td><td>P0</td></tr>
+  <tr><td>P-02</td><td>有关键词时默认相关度排序，无关键词时默认更新时间排序</td><td>P0</td></tr>
+  <tr><td>P-03</td><td>分页器正确展示，支持切换每页 10/20/50 条</td><td>P0</td></tr>
+  <tr><td>P-04</td><td>分页和排序参数同步 URL</td><td>P0</td></tr>
+  <tr><td>P-05</td><td>结果数 ≤ 每页条数时隐藏分页器</td><td>P2</td></tr>
+</table>
+
+<h3>12.6 视图切换与通用</h3>
+<table>
+  <tr>
+    <th style="width:40px;">编号</th>
+    <th>验收项</th>
+    <th style="width:80px;">优先级</th>
+  </tr>
+  <tr><td>V-01</td><td>工具栏视图切换按钮可在卡片/表格模式间切换，保持搜索结果和筛选状态</td><td>P0</td></tr>
+  <tr><td>V-02</td><td>切换视图时分页状态保持不变</td><td>P1</td></tr>
+  <tr><td>V-03</td><td>结果计数文案正确显示当前命中总数</td><td>P0</td></tr>
+  <tr><td>V-04</td><td>搜索/筛选过程中展示 Loading 状态（Skeleton 占位）</td><td>P1</td></tr>
+  <tr><td>V-05</td><td>所有页面状态通过 URL query 持久化，支持浏览器前进/后退/刷新恢复</td><td>P0</td></tr>
+</table>
+
+<div class="callout callout-green" style="margin-top:32px;">
+  <strong>文档完成：</strong>资产检索（列表页）产品需求文档 v1.0 全部章节已输出，共 12 章，覆盖背景目标、用户场景、页面结构、搜索栏、筛选面板、卡片视图、表格视图、排序分页、工具栏、数据结构、接口契约、验收标准。
+</div>
+
+</body>
+</html>

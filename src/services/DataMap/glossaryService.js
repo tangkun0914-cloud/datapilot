@@ -1,0 +1,14 @@
+/**
+ * 术语表服务 - 对接 OpenMetadata GlossaryTerms API
+ */
+import request from '@/services/request.js'
+
+export async function getGlossaryTerms(glossary) {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
+    const { glossaryTerms } = await import('@/mock/DataMap/glossary.js')
+    return glossaryTerms
+  }
+  return request.get('/v1/glossaryTerms', {
+    params: { glossary },
+  })
+}

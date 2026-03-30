@@ -1,0 +1,243 @@
+import React, { useState } from 'react';
+import { 
+  MessageSquare, Database, Plus, Search, 
+  ChevronDown, Clock, Star, Send, Paperclip, 
+  Bot, User, Sparkles, LayoutDashboard, Settings,
+  X
+} from 'lucide-react';
+
+const App = () => {
+  const [activeTab, setActiveTab] = useState('chats'); // 'chats' or 'assets'
+  const [inputText, setInputText] = useState('');
+
+  return (
+    <div className="flex h-screen w-full bg-slate-50 text-slate-800 font-sans">
+      
+      {/* 侧边栏 */}
+      <div className="w-64 bg-white border-r border-slate-200 flex flex-col shadow-sm z-10">
+        {/* Logo 区域 */}
+        <div className="h-14 flex items-center px-4 border-b border-slate-100">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3 shadow-inner">
+            <LayoutDashboard className="text-white w-5 h-5" />
+          </div>
+          <span className="font-bold text-lg tracking-tight text-slate-800">DataPilot</span>
+          <span className="ml-2 text-xs font-medium px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full">Pro</span>
+        </div>
+
+        {/* 新建对话按钮 */}
+        <div className="p-4">
+          <button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2.5 px-4 flex items-center justify-center gap-2 font-medium transition-colors shadow-sm">
+            <Plus className="w-4 h-4" />
+            新建分析对话
+          </button>
+        </div>
+
+        {/* 标签页切换 (会话 vs 资产工作台) */}
+        <div className="px-4 mb-2 flex space-x-1">
+          <button 
+            onClick={() => setActiveTab('chats')}
+            className={`flex-1 flex items-center justify-center gap-2 py-1.5 text-sm font-medium rounded-md transition-colors ${activeTab === 'chats' ? 'bg-slate-100 text-slate-800' : 'text-slate-500 hover:bg-slate-50'}`}
+          >
+            <MessageSquare className="w-4 h-4" />
+            历史
+          </button>
+          <button 
+            onClick={() => setActiveTab('assets')}
+            className={`flex-1 flex items-center justify-center gap-2 py-1.5 text-sm font-medium rounded-md transition-colors ${activeTab === 'assets' ? 'bg-slate-100 text-slate-800' : 'text-slate-500 hover:bg-slate-50'}`}
+          >
+            <Database className="w-4 h-4" />
+            工作台
+          </button>
+        </div>
+
+        {/* 列表区域 (可滚动) */}
+        <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-200">
+          
+          {activeTab === 'chats' ? (
+            <>
+              {/* 会话分组 */}
+              <div>
+                <div className="px-2 py-1.5 text-xs font-semibold text-slate-400 flex items-center gap-1 mt-2">
+                  <Clock className="w-3 h-3" /> 最近 7 天
+                </div>
+                <div className="space-y-0.5">
+                  <SidebarItem icon={<MessageSquare className="w-4 h-4" />} title="Q3 营收预测与归因分析" active />
+                  <SidebarItem icon={<MessageSquare className="w-4 h-4" />} title="大促期间用户转化漏斗" />
+                  <SidebarItem icon={<MessageSquare className="w-4 h-4" />} title="华东区各门店库存周转" />
+                </div>
+              </div>
+              <div>
+                <div className="px-2 py-1.5 text-xs font-semibold text-slate-400 flex items-center gap-1">
+                  历史对话
+                </div>
+                <div className="space-y-0.5">
+                  <SidebarItem icon={<MessageSquare className="w-4 h-4" />} title="异常订单明细排查" />
+                  <SidebarItem icon={<MessageSquare className="w-4 h-4" />} title="2023年度财务报表生成" />
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* 资产工作台 */}
+              <div className="px-2 mt-2">
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-2 text-slate-400" />
+                  <input type="text" placeholder="搜索表名、字段..." className="w-full bg-slate-100 border-none rounded-md py-1.5 pl-8 pr-3 text-xs focus:ring-1 focus:ring-blue-500 outline-none" />
+                </div>
+              </div>
+              <div>
+                <div className="px-2 py-1.5 text-xs font-semibold text-slate-400 flex items-center gap-1">
+                  <Star className="w-3 h-3" /> 常用表 / 收藏
+                </div>
+                <div className="space-y-0.5">
+                  <SidebarItem icon={<Database className="w-4 h-4 text-emerald-500" />} title="dwd_user_behavior_log" />
+                  <SidebarItem icon={<Database className="w-4 h-4 text-blue-500" />} title="dim_product_info" />
+                  <SidebarItem icon={<Database className="w-4 h-4 text-purple-500" />} title="ads_sales_daily_summary" />
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* 底部用户信息 */}
+        <div className="p-3 border-t border-slate-100 flex items-center justify-between hover:bg-slate-50 cursor-pointer transition-colors">
+          <div className="flex items-center gap-2 overflow-hidden">
+            <div className="w-8 h-8 bg-gradient-to-tr from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white shadow-sm shrink-0">
+              <User className="w-4 h-4" />
+            </div>
+            <div className="truncate">
+              <div className="text-sm font-medium text-slate-700 truncate">数据分析师 Li</div>
+              <div className="text-xs text-slate-400 truncate">li.data@company.com</div>
+            </div>
+          </div>
+          <Settings className="w-4 h-4 text-slate-400 shrink-0" />
+        </div>
+      </div>
+
+      {/* 右侧主工作区 */}
+      <div className="flex-1 flex flex-col relative bg-white">
+        
+        {/* 顶部状态栏 (可选) */}
+        <div className="h-14 flex items-center justify-end px-6 border-b border-transparent">
+           {/* 这里可以放一些全局通知、分享按钮等，当前留空保持简洁 */}
+        </div>
+
+        {/* 聊天记录展示区 / 欢迎页 */}
+        <div className="flex-1 overflow-y-auto px-4 md:px-12 lg:px-24 pb-32 pt-8">
+          
+          {/* 空状态欢迎页 (Empty State) */}
+          <div className="max-w-3xl mx-auto mt-10">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center shadow-sm border border-blue-200">
+                <Bot className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-semibold text-slate-800">你好，我是 DataPilot</h1>
+                <p className="text-slate-500 mt-1">我可以帮你查询数据、生成报表、分析异常。今天想探索什么？</p>
+              </div>
+            </div>
+
+            {/* 快捷指令推荐 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-8">
+              <PromptCard 
+                icon={<Sparkles className="w-4 h-4 text-amber-500" />}
+                title="分析近期转化率"
+                desc="查询本月各渠道的获客成本与转化漏斗数据。"
+              />
+              <PromptCard 
+                icon={<Search className="w-4 h-4 text-blue-500" />}
+                title="查找表信息"
+                desc="我想找包含「用户设备号」和「最后登录时间」的数据表。"
+              />
+              <PromptCard 
+                icon={<Database className="w-4 h-4 text-emerald-500" />}
+                title="生成 SQL 查询"
+                desc="帮我写一段 SQL：按省份统计昨日活跃用户数，按降序排列。"
+              />
+              <PromptCard 
+                icon={<LayoutDashboard className="w-4 h-4 text-purple-500" />}
+                title="排查异常波动"
+                desc="昨日订单量相比前日下降了15%，帮我分析可能的原因。"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 底部输入框区域 */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent pt-6 pb-6 px-4 md:px-12 lg:px-24">
+          <div className="max-w-3xl mx-auto">
+            
+            {/* 上下文提示 (Data Context) */}
+            <div className="mb-2 flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-xs font-medium text-slate-600 shadow-sm">
+                <Database className="w-3 h-3 text-blue-500" />
+                已关联上下文: dwd_user_behavior_log
+                <button className="hover:bg-slate-200 rounded-full p-0.5 ml-1 transition-colors">
+                  <X className="w-3 h-3 text-slate-400" />
+                </button>
+              </span>
+            </div>
+
+            {/* 输入框本体 */}
+            <div className="relative bg-white border border-slate-300 rounded-xl shadow-[0_4px_20px_-8px_rgba(0,0,0,0.08)] focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
+              <textarea 
+                className="w-full max-h-48 min-h-[56px] bg-transparent border-none resize-none px-4 py-4 pr-24 text-sm text-slate-800 focus:outline-none scrollbar-thin scrollbar-thumb-slate-200"
+                placeholder="输入你想查询的数据问题，或输入 '/' 唤出快捷指令... (Shift + Enter 换行)"
+                rows={1}
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+              />
+              
+              <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1.5">
+                <button 
+                  title="附加数据表或文件"
+                  className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  <Paperclip className="w-4 h-4" />
+                </button>
+                <button 
+                  className={`p-2 rounded-lg flex items-center justify-center transition-all ${
+                    inputText.trim() 
+                      ? 'bg-blue-600 text-white shadow-md hover:bg-blue-700' 
+                      : 'bg-slate-100 text-slate-400'
+                  }`}
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="text-center mt-3">
+              <span className="text-[11px] text-slate-400">DataPilot 可能会输出不准确的信息，请核实关键数据。</span>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+// 侧边栏列表项组件
+const SidebarItem = ({ icon, title, active }) => (
+  <button className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-left transition-colors truncate ${
+    active ? 'bg-blue-50 text-blue-700 font-medium' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+  }`}>
+    {icon}
+    <span className="truncate">{title}</span>
+  </button>
+);
+
+// 快捷指令卡片组件
+const PromptCard = ({ icon, title, desc }) => (
+  <button className="text-left p-4 rounded-xl border border-slate-200 bg-white hover:border-blue-300 hover:shadow-sm transition-all group">
+    <div className="flex items-center gap-2 mb-2">
+      {icon}
+      <span className="font-medium text-slate-700 group-hover:text-blue-600 transition-colors">{title}</span>
+    </div>
+    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{desc}</p>
+  </button>
+);
+
+export default App

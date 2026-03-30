@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>告警事件详情 - DataPilot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* 终端代码样式 */
+        .terminal-font { font-family: 'Menlo', 'Monaco', 'Courier New', monospace; }
+        
+        /* AI 区域渐变边框效果 */
+        .ai-card {
+            background: linear-gradient(white, white) padding-box,
+                        linear-gradient(135deg, #a855f7, #3b82f6) border-box;
+            border: 2px solid transparent;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 h-screen w-full overflow-hidden flex justify-center items-center relative">
+
+    <!-- 模拟背景内容 (模糊处理) -->
+    <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1614064641938-3e8485eb5615?q=80&w=2574&auto=format&fit=crop')] bg-cover filter blur-sm opacity-20 z-0"></div>
+    
+    <!-- 遮罩层 (Overlay) -->
+    <div class="absolute inset-0 bg-slate-900/60 z-10"></div>
+
+    <!-- 抽屉容器 (Drawer) -->
+    <div class="absolute right-0 top-0 bottom-0 w-[900px] bg-white shadow-2xl z-20 flex flex-col transform transition-transform duration-300 ease-in-out">
+        
+        <!-- 1. 抽屉头部 -->
+        <header class="px-6 py-4 border-b border-slate-200 flex justify-between items-start bg-white shrink-0">
+            <div>
+                <div class="flex items-center space-x-3 mb-1">
+                    <span class="bg-red-50 text-red-600 border border-red-200 text-xs font-bold px-2 py-0.5 rounded">Error</span>
+                    <h2 class="text-lg font-bold text-slate-800">hive2oss_dim_nn_enum_date_info</h2>
+                    <span class="bg-blue-50 text-blue-600 border border-blue-100 text-xs px-2 py-0.5 rounded-full flex items-center">
+                        <i data-lucide="loader-2" class="w-3 h-3 mr-1 animate-spin"></i> 处理中
+                    </span>
+
+                     <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">
+                                   责任人：王蕊(ruiwang1)
+                                </span>
+                            </td>
+
+
+                </div>
+                <div class="text-xs text-slate-500">
+                    事件ID: <span class="font-mono text-slate-700">E-100293</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button class="p-2 hover:bg-slate-100 rounded text-slate-500" title="全屏"><i data-lucide="maximize-2" class="w-4 h-4"></i></button>
+                <button class="p-2 hover:bg-slate-100 rounded text-slate-500" title="关闭"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+        </header>
+
+        <!-- 2. 抽屉内容滚动区 -->
+        <main class="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/50">
+
+            <!-- SECTION: 基础属性 & 生命周期 -->
+            <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-5">
+                <!-- 基础信息 Grid -->
+                <div class="grid grid-cols-4 gap-6 mb-6 text-sm">
+                    <div>
+                        <div class="text-slate-400 text-xs mb-1">监控事件</div>
+                        <div class="font-medium text-slate-800">离线任务失败</div>
+                    </div>
+                    <div>
+                        <div class="text-slate-400 text-xs mb-1">调度批次</div>
+                        <div class="font-medium text-slate-800">2025-12-17</div>
+                    </div>
+                    
+                    <div>
+                        <div class="text-slate-400 text-xs mb-1">任务实例</div>
+                        <div class="font-medium text-blue-600  cursor-pointer">dim_nn_enum_date_info</div>
+                    </div>
+                    <div>
+                        <div class="text-slate-400 text-xs mb-1">触发时间</div>
+                        <div class="font-medium text-slate-800">2025-12-16 14:00:05</div>
+                    </div>
+                    <div>
+                        <div class="text-slate-400 text-xs mb-1">持续时间</div>
+                        <div class="font-medium text-orange-600">3小时 15分</div>
+                    </div>
+          
+                </div>
+
+                <!-- 进度条 (Lifecycle Timeline) -->
+                <div class="border-t border-slate-100 pt-5">
+                    <div class="text-xs font-bold text-slate-500 mb-4">当前进度</div>
+                    <div class="relative flex items-center justify-between px-4">
+                        <!-- Connecting Line -->
+                        <div class="absolute left-4 right-4 top-1/2 h-0.5 bg-slate-200 -z-10"></div>
+                        <div class="absolute left-4 right-[25%] top-1/2 h-0.5 bg-blue-500 -z-10"></div> <!-- Active Line -->
+
+                        <!-- Step 1: Triggered -->
+                        <div class="flex flex-col items-center bg-white px-2 z-10">
+                            <div class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-sm">
+                                <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i>
+                            </div>
+                            <span class="text-xs font-medium mt-2 text-slate-800">触发告警</span>
+                            <span class="text-[10px] text-slate-400">14:00:05</span>
+                        </div>
+
+                        <!-- Step 2: Notified -->
+                        <div class="flex flex-col items-center bg-white px-2 z-10">
+                            <div class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-sm">
+                                <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                            </div>
+                            <span class="text-xs font-medium mt-2 text-slate-800">通知发送</span>
+                            <span class="text-[10px] text-slate-400">14:00:10</span>
+                        </div>
+
+                        <!-- Step 3: Acknowledged (Current) -->
+                        <div class="flex flex-col items-center bg-white px-2 z-10">
+                            <div class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-sm ring-4 ring-blue-100">
+                                <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
+                            </div>
+                            <span class="text-xs font-bold mt-2 text-blue-600">已受理 (王蕊ruiwang1)</span>
+                            <span class="text-[10px] text-slate-400">14:15:00</span>
+                        </div>
+
+                        <!-- Step 4: Recovered (Future) -->
+                        <div class="flex flex-col items-center bg-white px-2 z-10 opacity-50">
+                            <div class="w-6 h-6 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center">
+                                <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                            </div>
+                            <span class="text-xs font-medium mt-2 text-slate-500">已解决</span>
+                            <span class="text-[10px] text-slate-300">--:--:--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: AI 智能分析 (高亮展示) -->
+            <div class="ai-card bg-white rounded-lg p-5 relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-2 opacity-10">
+                    <i data-lucide="sparkles" class="w-24 h-24 text-purple-600"></i>
+                </div>
+                
+                <h3 class="flex items-center text-sm font-bold text-slate-800 mb-4">
+                    <i data-lucide="bot" class="w-4 h-4 mr-2 text-purple-600"></i>
+                    AI 智能分析
+                    <span class="ml-2 bg-purple-100 text-purple-700 text-[10px] px-2 py-0.5 rounded-full">Beta</span>
+                </h3>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- 根因分析 -->
+                    <div class="bg-purple-50/50 rounded border border-purple-100 p-3">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-slate-700">根因推荐</span>
+                            <span class="text-[10px] bg-green-100 text-green-700 px-1.5 rounded">置信度 92%</span>
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed mb-2">
+                            上游任务 <a href="#" class="text-blue-600 underline">dwd_order_sync</a> 在 13:58 发生 schema 变更，导致字段 mapping 错位 。
+                        </p>
+                        <div class="flex items-center space-x-2">
+                            <button class="text-[10px] bg-white border border-slate-200 px-2 py-1 rounded text-slate-600 hover:text-blue-600 flex items-center">
+                                <i data-lucide="search" class="w-3 h-3 mr-1"></i> 查看上游变更日志
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- SOP 推荐 -->
+                    <div class="bg-blue-50/50 rounded border border-blue-100 p-3">
+                        <div class="text-xs font-bold text-slate-700 mb-2">SOP 修复建议</div>
+                        <ol class="list-decimal list-inside text-xs text-slate-600 space-y-1">
+                            <li>确认上游 dwd 表数据字段是否正确。</li>
+                            <li>检查 ETL 脚本中的字段映射逻辑。</li>
+                            <li><span class="font-medium text-slate-800">建议操作：</span> 重跑上游任务并重新运行当前实例。</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <!-- 历史相似 -->
+                <div class="mt-3 pt-3 border-t border-slate-100 flex items-center text-xs text-slate-500">
+                    <i data-lucide="history" class="w-3 h-3 mr-1.5"></i>
+                    <span>历史相似报警：</span>
+                    <a href="#" class="ml-1 text-blue-600 hover:underline">2025-11-05 (相似度 85%)</a>
+                    <span class="mx-1">,</span>
+                    <a href="#" class="ml-1 text-blue-600 hover:underline">2025-10-12 (相似度 78%)</a>
+                </div>
+            </div>
+
+            <!-- SECTION: 告警日志切片 -->
+            <div class="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+                <div class="px-5 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                    <h3 class="text-sm font-bold text-slate-800">告警日志切片</h3>
+                    <button class="text-xs text-blue-600 hover:underline">查看完整日志</button>
+                </div>
+                <div class="p-0 bg-[#1e293b]">
+                    <div class="terminal-font text-xs text-slate-300 p-4 leading-relaxed overflow-x-auto">
+                        <div class="flex"><span class="text-slate-500 w-8 select-none">102</span><span>[INFO] Start Data Quality Check for table: dwd_trade_order_di</span></div>
+                        <div class="flex"><span class="text-slate-500 w-8 select-none">103</span><span>[INFO] Table:  column `order_amount`</span></div>
+                        <div class="flex"><span class="text-slate-500 w-8 select-none">104</span><span>[INFO] Executing SQL: SELECT count(*) FROM ... WHERE order_amount IS NULL</span></div>
+                        <div class="flex text-red-400 bg-red-900/20"><span class="text-slate-500 w-8 select-none">105</span><span>[ERROR]  Check Failed! </span></div>
+                        <div class="flex text-red-400 bg-red-900/20"><span class="text-slate-500 w-8 select-none">106</span><span>[ERROR] Actual Value: 582, Expect Value: == 0</span></div>
+                        <div class="flex"><span class="text-slate-500 w-8 select-none">107</span><span>[INFO] Notification sent to user: ruiwang1</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: 依赖诊断 -->
+            <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-5 flex flex-col transition-all duration-300" id="dependency-section">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-sm font-bold text-slate-800">依赖诊断</h3>
+                    <div class="flex items-center space-x-1 bg-slate-50 p-1 rounded-md border border-slate-200">
+                        <button id="btn-zoom-in" class="text-slate-500 hover:text-blue-600 hover:bg-white p-1.5 rounded transition-colors shadow-sm" title="放大">
+                            <i data-lucide="zoom-in" class="w-4 h-4"></i>
+                        </button>
+                        <button id="btn-zoom-out" class="text-slate-500 hover:text-blue-600 hover:bg-white p-1.5 rounded transition-colors" title="缩小">
+                            <i data-lucide="zoom-out" class="w-4 h-4"></i>
+                        </button>
+                        <div class="w-px h-4 bg-slate-300 mx-1"></div>
+                        <button id="btn-expand" class="text-slate-500 hover:text-blue-600 hover:bg-white p-1.5 rounded transition-colors" title="全屏/扩大">
+                            <i data-lucide="maximize" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="dependency-container" class="relative flex-1 flex items-center justify-center py-8 bg-slate-50/50 rounded-lg border border-slate-100 overflow-auto bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9IiNlMmU4ZjAiLz48L3N2Zz4=')]">
+                    <!-- 依赖图容器 (固定尺寸以对齐 SVG 连线，支持缩放) -->
+                    <div id="dependency-graph" class="relative w-[576px] h-[334px] transition-transform duration-200 origin-center" style="transform: scale(1);">
+                        
+                        <!-- SVG 连线 -->
+                        <svg class="absolute inset-0 w-full h-full pointer-events-none" style="z-index: 0;">
+                            <!-- Top to Right -->
+                            <path d="M 240 45 C 288 45, 288 167, 336 167" fill="none" stroke="#cbd5e1" stroke-width="2" />
+                            <!-- Middle to Right -->
+                            <path d="M 240 167 L 336 167" fill="none" stroke="#cbd5e1" stroke-width="2" />
+                            <!-- Bottom to Right -->
+                            <path d="M 240 289 C 288 289, 288 167, 336 167" fill="none" stroke="#cbd5e1" stroke-width="2" />
+                        </svg>
+
+                        <!-- 节点容器 -->
+                        <div class="absolute inset-0 flex space-x-24 z-10">
+                            <!-- 左侧列 (3个节点) -->
+                            <div class="flex flex-col space-y-8 w-[240px]">
+                                <!-- Node 1 -->
+                                <div class="relative w-full bg-white rounded-md shadow-sm border border-slate-200 flex flex-col h-[90px]">
+                                    <div class="flex justify-between items-center px-3 py-1.5 bg-[#52c41a] text-white rounded-t-md text-xs font-medium">
+                                        <div class="flex items-center space-x-1">
+                                            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                                            <span>成功</span>
+                                        </div>
+                                        <span>SPARK_SQL</span>
+                                    </div>
+                                    <div class="p-2.5 text-xs text-slate-600 space-y-1 flex-1">
+                                        <div class="font-bold text-slate-800 truncate text-[13px]" title="dwd_order_df_order_info">dwd_order_df_order_info</div>
+                                        <div class="text-slate-500 scale-90 origin-left">开始: 2026-03-11 00:48:10</div>
+                                        <div class="text-slate-500 scale-90 origin-left">结束: 2026-03-11 00:54:43</div>
+                                    </div>
+                                    <button class="absolute -left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-500 shadow-sm hover:bg-slate-50 z-10">
+                                        <i data-lucide="plus" class="w-3 h-3"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Node 2 -->
+                                <div class="relative w-full bg-white rounded-md shadow-sm border border-slate-200 flex flex-col h-[90px]">
+                                    <div class="flex justify-between items-center px-3 py-1.5 bg-[#52c41a] text-white rounded-t-md text-xs font-medium">
+                                        <div class="flex items-center space-x-1">
+                                            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                                            <span>成功</span>
+                                        </div>
+                                        <span>SPARK_SQL</span>
+                                    </div>
+                                    <div class="p-2.5 text-xs text-slate-600 space-y-1 flex-1">
+                                        <div class="font-bold text-slate-800 truncate text-[13px]" title="dwt_df_trace_route_order_info_...">dwt_df_trace_route_order_info_...</div>
+                                        <div class="text-slate-500 scale-90 origin-left">开始: 2026-03-11 03:04:13</div>
+                                        <div class="text-slate-500 scale-90 origin-left">结束: 2026-03-11 03:15:37</div>
+                                    </div>
+                                    <button class="absolute -left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-500 shadow-sm hover:bg-slate-50 z-10">
+                                        <i data-lucide="plus" class="w-3 h-3"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Node 3 -->
+                                <div class="relative w-full bg-white rounded-md shadow-sm border border-slate-200 flex flex-col h-[90px]">
+                                    <div class="flex justify-between items-center px-3 py-1.5 bg-[#52c41a] text-white rounded-t-md text-xs font-medium">
+                                        <div class="flex items-center space-x-1">
+                                            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                                            <span>成功</span>
+                                        </div>
+                                        <span>SPARK_SQL</span>
+                                    </div>
+                                    <div class="p-2.5 text-xs text-slate-600 space-y-1 flex-1">
+                                        <div class="font-bold text-slate-800 truncate text-[13px]" title="dwd_order_df_order_overdue_info">dwd_order_df_order_overdue_info</div>
+                                        <div class="text-slate-500 scale-90 origin-left">开始: 2026-03-11 01:03:01</div>
+                                        <div class="text-slate-500 scale-90 origin-left">结束: 2026-03-11 01:20:09</div>
+                                    </div>
+                                    <button class="absolute -left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-500 shadow-sm hover:bg-slate-50 z-10">
+                                        <i data-lucide="plus" class="w-3 h-3"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 右侧列 (1个节点，垂直居中) -->
+                            <div class="flex flex-col justify-center w-[240px]">
+                                <!-- Node 4 -->
+                                <div class="relative w-full bg-white rounded-md shadow-md border-[2px] border-[#fa8c16] flex flex-col h-[90px] ring-4 ring-[#fa8c16]/10">
+                                    <div class="flex justify-between items-center px-3 py-1.5 bg-[#fa8c16] text-white rounded-t-sm text-xs font-medium">
+                                        <div class="flex items-center space-x-1">
+                                            <i data-lucide="circle" class="w-3.5 h-3.5"></i>
+                                            <span>正在运行</span>
+                                        </div>
+                                        <span>SPARK_SQL</span>
+                                    </div>
+                                    <div class="p-2.5 text-xs text-slate-600 space-y-1 flex-1">
+                                        <div class="font-bold text-slate-800 truncate text-[13px]" title="dwt_df_trace_route_order_info">dwt_df_trace_route_order_info</div>
+                                        <div class="text-slate-500 scale-90 origin-left">开始: 2026-03-11 11:53:34</div>
+                                        <div class="text-slate-500 scale-90 origin-left">结束: -</div>
+                                    </div>
+                                    <button class="absolute -left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-500 shadow-sm hover:bg-slate-50 z-10">
+                                        <i data-lucide="minus" class="w-3 h-3"></i>
+                                    </button>
+                                    <button class="absolute -right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-500 shadow-sm hover:bg-slate-50 z-10">
+                                        <i data-lucide="plus" class="w-3 h-3"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div> 
+            </div> 
+
+            <!-- SECTION: 闭环操作区 -->
+            <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-5">
+                <h3 class="text-sm font-bold text-slate-800 mb-4">操作闭环</h3>
+                <div class="flex space-x-3">
+                    <!-- 通知下游 Dropdown -->
+                    <div class="relative" id="notify-dropdown-container">
+                        <button id="btn-notify-downstream" class="flex items-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md transition-all shadow-sm shadow-indigo-200 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                            <i data-lucide="bell-ring" class="w-4 h-4 mr-2"></i>
+                            通知下游
+                            <div class="w-px h-4 bg-indigo-400/50 mx-2"></div>
+                            <i data-lucide="chevron-up" class="w-4 h-4 transition-transform duration-200" id="notify-chevron"></i>
+                        </button>
+                        
+                        <!-- Dropdown Menu (向上弹出) -->
+                        <div id="notify-menu" class="hidden absolute left-0 bottom-full mb-2 w-56 bg-white border border-slate-200 rounded-lg shadow-xl py-1 z-50 transform origin-bottom transition-all">
+                            <button class="notify-action-btn w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center transition-colors group" data-action="group">
+                                <div class="bg-indigo-100 text-indigo-600 p-1.5 rounded-md mr-3 group-hover:bg-indigo-200 transition-colors">
+                                    <i data-lucide="users" class="w-4 h-4"></i>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="font-medium">自动建群</span>
+                                    <span class="text-[10px] text-slate-400 mt-0.5">拉取所有受影响负责人</span>
+                                </div>
+                            </button>
+                            <div class="h-px bg-slate-100 mx-2"></div>
+                            <button class="notify-action-btn w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center transition-colors group" data-action="message">
+                                <div class="bg-blue-100 text-blue-600 p-1.5 rounded-md mr-3 group-hover:bg-blue-200 transition-colors">
+                                    <i data-lucide="message-circle" class="w-4 h-4"></i>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="font-medium">发送 DataKnower</span>
+                                    <span class="text-[10px] text-slate-400 mt-0.5">群发单聊消息周知</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toast 提示组件 -->
+            <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // 依赖图缩放与全屏逻辑
+        const dependencySection = document.getElementById('dependency-section');
+        const graph = document.getElementById('dependency-graph');
+        const btnZoomIn = document.getElementById('btn-zoom-in');
+        const btnZoomOut = document.getElementById('btn-zoom-out');
+        const btnExpand = document.getElementById('btn-expand');
+        
+        let currentScale = 1;
+
+        btnZoomIn.addEventListener('click', () => {
+            currentScale = Math.min(currentScale + 0.2, 2.5);
+            graph.style.transform = `scale(${currentScale})`;
+        });
+
+        btnZoomOut.addEventListener('click', () => {
+            currentScale = Math.max(currentScale - 0.2, 0.4);
+            graph.style.transform = `scale(${currentScale})`;
+        });
+
+        btnExpand.addEventListener('click', function() {
+            if (!dependencySection.classList.contains('fixed')) {
+                // 进入全屏/扩大模式
+                dependencySection.classList.remove('rounded-lg', 'border', 'shadow-sm', 'p-5');
+                dependencySection.classList.add('fixed', 'inset-4', 'z-50', 'bg-white', 'shadow-2xl', 'rounded-xl', 'p-6', 'border-slate-300');
+                this.innerHTML = '<i data-lucide="minimize" class="w-4 h-4"></i>';
+                this.setAttribute('title', '还原');
+            } else {
+                // 退出全屏/扩大模式
+                dependencySection.classList.add('rounded-lg', 'border', 'shadow-sm', 'p-5');
+                dependencySection.classList.remove('fixed', 'inset-4', 'z-50', 'bg-white', 'shadow-2xl', 'rounded-xl', 'p-6', 'border-slate-300');
+                this.innerHTML = '<i data-lucide="maximize" class="w-4 h-4"></i>';
+                this.setAttribute('title', '全屏/扩大');
+            }
+            lucide.createIcons();
+        });
+
+        // 通知下游下拉菜单逻辑
+        const btnNotify = document.getElementById('btn-notify-downstream');
+        const notifyMenu = document.getElementById('notify-menu');
+        const notifyChevron = document.getElementById('notify-chevron');
+        const toastContainer = document.getElementById('toast-container');
+
+        // 显示 Toast 提示
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `flex items-center px-4 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-y-10 opacity-0 bg-white border-l-4 ${type === 'success' ? 'border-green-500' : 'border-blue-500'}`;
+            
+            const icon = type === 'success' 
+                ? '<i data-lucide="check-circle" class="w-5 h-5 text-green-500 mr-3"></i>'
+                : '<i data-lucide="info" class="w-5 h-5 text-blue-500 mr-3"></i>';
+
+            toast.innerHTML = `
+                ${icon}
+                <span class="text-sm font-medium text-slate-700">${message}</span>
+            `;
+            
+            toastContainer.appendChild(toast);
+            lucide.createIcons({ root: toast });
+
+            // 动画进入
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-10', 'opacity-0');
+            });
+
+            // 3秒后移除
+            setTimeout(() => {
+                toast.classList.add('translate-y-10', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        if (btnNotify && notifyMenu) {
+            btnNotify.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isHidden = notifyMenu.classList.contains('hidden');
+                
+                if (isHidden) {
+                    notifyMenu.classList.remove('hidden');
+                    notifyChevron.classList.add('rotate-180');
+                } else {
+                    notifyMenu.classList.add('hidden');
+                    notifyChevron.classList.remove('rotate-180');
+                }
+            });
+
+            // 点击外部关闭下拉菜单
+            document.addEventListener('click', (e) => {
+                if (!notifyMenu.contains(e.target) && !btnNotify.contains(e.target)) {
+                    notifyMenu.classList.add('hidden');
+                    notifyChevron.classList.remove('rotate-180');
+                }
+            });
+
+            // 处理菜单点击事件
+            const actionBtns = document.querySelectorAll('.notify-action-btn');
+            actionBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const action = btn.getAttribute('data-action');
+                    
+                    // 关闭菜单
+                    notifyMenu.classList.add('hidden');
+                    notifyChevron.classList.remove('rotate-180');
+
+                    // 模拟加载状态和反馈
+                    const originalHtml = btnNotify.innerHTML;
+                    btnNotify.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i> 处理中...';
+                    btnNotify.disabled = true;
+                    lucide.createIcons({ root: btnNotify });
+
+                    setTimeout(() => {
+                        btnNotify.innerHTML = originalHtml;
+                        btnNotify.disabled = false;
+                        lucide.createIcons({ root: btnNotify });
+                        
+                        if (action === 'group') {
+                            showToast('已成功拉起下游负责人讨论群', 'success');
+                        } else if (action === 'message') {
+                            showToast('已向 12 位下游负责人发送 DataKnower 通知', 'success');
+                        }
+                    }, 800); // 模拟 800ms 的网络请求
+                });
+            });
+        }
+    </script>
+</body>
+</html>

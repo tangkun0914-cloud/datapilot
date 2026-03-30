@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DataPilot 数据地图 Agent</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#1677ff',
+            primaryHover: '#4096ff',
+            primaryBg: '#e6f4ff',
+            bgLight: '#f8fafc', // 更柔和的背景色
+            cardBg: '#ffffff',
+          },
+          boxShadow: {
+            'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+            'floating': '0 8px 30px rgba(0, 0, 0, 0.08)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* 隐藏滚动条但保持可滚动 */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    
+    /* 细滚动条 */
+    .thin-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .thin-scrollbar::-webkit-scrollbar-thumb {
+      background-color: #cbd5e1;
+      border-radius: 2px;
+    }
+    .thin-scrollbar::-webkit-scrollbar-track {
+      background-color: transparent;
+    }
+
+    /* 气泡小尾巴 */
+    .bubble-user {
+      border-top-right-radius: 2px;
+    }
+    .bubble-ai {
+      border-top-left-radius: 2px;
+    }
+
+    /* 平滑展开动画 */
+    .expand-transition {
+      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-in-out;
+      overflow: hidden;
+    }
+    .expand-hidden {
+      max-height: 0;
+      opacity: 0;
+    }
+    .expand-visible {
+      max-height: 1000px; /* 足够大的高度以容纳内容 */
+      opacity: 1;
+    }
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden text-slate-800 font-sans bg-bgLight">
+
+  <!-- 顶导 (Portal 级入口) -->
+  <header class="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-20 shadow-sm">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md">
+        <i class="fa-solid fa-compass text-sm"></i>
+      </div>
+      <span class="font-bold text-lg tracking-tight text-slate-800">DataPilot <span class="text-slate-400 font-medium text-sm ml-1.5 border-l border-slate-300 pl-2">数据地图 Agent</span></span>
+    </div>
+    <div class="flex items-center gap-5 text-slate-500 text-sm font-medium">
+      <div class="flex items-center gap-1.5 cursor-pointer hover:text-primary transition-colors"><i class="fa-solid fa-globe"></i> 国内</div>
+      <div class="cursor-pointer hover:text-primary transition-colors"><i class="fa-regular fa-circle-question text-lg"></i></div>
+      <div class="w-8 h-8 rounded-full bg-blue-50 text-primary flex items-center justify-center font-bold ring-1 ring-blue-200 cursor-pointer hover:bg-blue-100 transition-colors">
+        主
+      </div>
+    </div>
+  </header>
+
+  <!-- 主容器 -->
+  <div class="flex-1 flex overflow-hidden relative">
+    
+    <!-- 左侧边栏 -->
+    <aside class="w-[280px] bg-white border-r border-slate-200 flex flex-col shrink-0 z-10">
+      <!-- 新建对话 -->
+      <div class="p-4">
+        <button onclick="resetChat()" class="w-full py-2.5 bg-primary hover:bg-primaryHover text-white rounded-xl text-sm font-medium transition-all shadow-md shadow-blue-500/20 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-plus text-xs"></i> 新建分析对话
+        </button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="flex px-4 mb-2">
+        <div class="flex-1 text-center py-2 text-sm font-medium text-primary border-b-2 border-primary cursor-pointer transition-colors" id="tab-history" onclick="switchTab('history')">
+          历史对话
+        </div>
+        <div class="flex-1 text-center py-2 text-sm font-medium text-slate-400 hover:text-slate-700 border-b-2 border-transparent cursor-pointer transition-colors" id="tab-workspace" onclick="switchTab('workspace')">
+          工作台
+        </div>
+      </div>
+
+      <!-- 侧边栏内容区 -->
+      <div class="flex-1 overflow-y-auto thin-scrollbar px-3 pb-4">
+        <!-- 历史记录面板 -->
+        <div id="panel-history" class="block mt-2">
+          <div class="mb-5">
+            <div class="text-xs text-slate-400 font-semibold px-2 mb-2 tracking-wider">最近 7 天</div>
+            <div class="px-3 py-2.5 rounded-lg bg-blue-50 text-primary text-sm mb-1 cursor-pointer truncate font-medium ring-1 ring-blue-100">
+              <i class="fa-regular fa-message mr-2 opacity-70"></i>查找用户活跃数据
+            </div>
+            <div class="px-3 py-2.5 rounded-lg hover:bg-slate-50 text-slate-600 text-sm mb-1 cursor-pointer truncate transition-colors">
+              <i class="fa-regular fa-message mr-2 opacity-40"></i>销售归因分析表调研
+            </div>
+            <div class="px-3 py-2.5 rounded-lg hover:bg-slate-50 text-slate-600 text-sm mb-1 cursor-pointer truncate transition-colors">
+              <i class="fa-regular fa-message mr-2 opacity-40"></i>用户留存异动排查
+            </div>
+          </div>
+          
+          <div>
+            <div class="text-xs text-slate-400 font-semibold px-2 mb-2 tracking-wider">更早</div>
+            <div class="px-3 py-2.5 rounded-lg hover:bg-slate-50 text-slate-600 text-sm mb-1 cursor-pointer truncate transition-colors">
+              <i class="fa-regular fa-message mr-2 opacity-40"></i>华东区客单价分析
+            </div>
+            <div class="px-3 py-2.5 rounded-lg hover:bg-slate-50 text-slate-600 text-sm mb-1 cursor-pointer truncate transition-colors">
+              <i class="fa-regular fa-message mr-2 opacity-40"></i>渠道转化率漏斗
+            </div>
+          </div>
+        </div>
+
+        <!-- 工作台面板 -->
+        <div id="panel-workspace" class="hidden mt-2">
+          <div class="mb-5">
+            <div class="text-xs text-slate-400 font-semibold px-2 mb-3 tracking-wider flex items-center gap-1.5">
+              <i class="fa-solid fa-thumbtack text-yellow-500"></i> 推荐数据表
+            </div>
+            <div class="bg-white ring-1 ring-slate-200 rounded-xl p-3.5 mb-3 hover:ring-primary hover:shadow-md transition-all cursor-pointer group" onclick="fillInput('查看 default.dwd_user_log 详情')">
+              <div class="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                <div class="w-6 h-6 rounded bg-blue-50 text-blue-600 flex items-center justify-center text-xs group-hover:bg-blue-600 group-hover:text-white transition-colors shrink-0">
+                  <i class="fa-solid fa-table"></i>
+                </div>
+                <span class="text-sm font-semibold text-slate-800 group-hover:text-primary transition-colors font-mono">default.dwd_user_log</span>
+                <i class="fa-regular fa-copy cursor-pointer text-slate-400 hover:text-primary transition-colors" title="复制" onclick="copyText('default.dwd_user_log', this); event.stopPropagation();"></i>
+                <span class="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[11px] rounded font-medium">用户行为日志表</span>
+              </div>
+              <div class="text-xs text-slate-500 pl-8">最近 7 天高频访问</div>
+            </div>
+            <div class="bg-white ring-1 ring-slate-200 rounded-xl p-3.5 mb-3 hover:ring-primary hover:shadow-md transition-all cursor-pointer group" onclick="fillInput('查看 prod_db.dim_product 详情')">
+              <div class="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                <div class="w-6 h-6 rounded bg-purple-50 text-purple-600 flex items-center justify-center text-xs group-hover:bg-purple-600 group-hover:text-white transition-colors shrink-0">
+                  <i class="fa-solid fa-table"></i>
+                </div>
+                <span class="text-sm font-semibold text-slate-800 group-hover:text-primary transition-colors font-mono">prod_db.dim_product</span>
+                <i class="fa-regular fa-copy cursor-pointer text-slate-400 hover:text-primary transition-colors" title="复制" onclick="copyText('prod_db.dim_product', this); event.stopPropagation();"></i>
+                <span class="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[11px] rounded font-medium">商品维度表</span>
+              </div>
+              <div class="text-xs text-slate-500 pl-8">同组同事都在看</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 主对话区 -->
+    <main class="flex-1 flex flex-col relative bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMCwwLDAsMC4wMykiLz48L3N2Zz4=')]">
+      
+      <!-- 欢迎态 (初始可见) -->
+      <div id="welcome-view" class="flex-1 flex flex-col items-center justify-center p-8 w-full max-w-3xl mx-auto transition-opacity duration-300">
+        
+        <div class="text-center mb-10">
+          <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-slate-200/50 ring-4 ring-white">
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-10 h-10">
+              <defs>
+                <linearGradient id="pilot-grad-lg" x1="0" y1="100" x2="100" y2="0">
+                  <stop stop-color="rgba(108, 76, 155)" />
+                  <stop offset="1" stop-color="rgba(142, 110, 185)" />
+                </linearGradient>
+              </defs>
+              <path d="M50 5 L63 37 L95 50 L63 63 L50 95 L37 63 L5 50 L37 37 Z" fill="url(#pilot-grad-lg)" />
+              <circle cx="50" cy="50" r="4" fill="#fff" />
+            </svg>
+          </div>
+          <h1 class="text-2xl font-bold text-slate-800 mb-3 tracking-tight">你好，我是数据地图 Agent</h1>
+          <p class="text-slate-500 font-medium">我能帮你找表、查血缘、写 SQL，今天想探索什么？</p>
+        </div>
+
+        <!-- 大输入框 -->
+        <div class="w-full bg-white rounded-2xl shadow-floating ring-1 ring-slate-200 p-1.5 relative transition-all focus-within:ring-2 focus-within:ring-primary focus-within:shadow-[0_8px_30px_rgba(22,119,255,0.15)]">
+          <textarea id="welcome-input" rows="3" class="w-full bg-transparent border-none outline-none resize-none p-4 text-slate-700 text-base placeholder-slate-400" placeholder="请输入你想要查询的数据内容，支持 @ 提及表名..."></textarea>
+          
+          <div class="flex justify-between items-center px-2 pb-2 pt-1">
+            <div class="flex gap-1">
+              <button class="w-9 h-9 rounded-xl hover:bg-slate-100 text-slate-400 flex items-center justify-center transition-colors" title="添加附件/图片">
+                <i class="fa-solid fa-paperclip"></i>
+              </button>
+              <button class="w-9 h-9 rounded-xl hover:bg-slate-100 text-slate-400 flex items-center justify-center transition-colors" title="提及数据表">
+                <i class="fa-solid fa-at"></i>
+              </button>
+            </div>
+            <button id="welcome-send-btn" onclick="sendMessage('welcome')" class="px-5 py-2.5 bg-primary text-white rounded-xl font-medium hover:bg-primaryHover transition-all shadow-md shadow-blue-500/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none">
+              发送 <i class="fa-solid fa-arrow-up text-sm"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 推荐问题 -->
+        <div class="w-full mt-12">
+          <div class="text-sm font-semibold text-slate-500 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-wand-magic-sparkles text-yellow-500"></i> 试试这样问
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div onclick="fillInput('查找用户活跃数据')" class="bg-white ring-1 ring-slate-200 rounded-xl p-4 cursor-pointer hover:ring-primary hover:shadow-md transition-all group">
+              <div class="text-sm text-slate-800 font-semibold mb-1.5 group-hover:text-primary transition-colors">查找用户活跃数据</div>
+              <div class="text-xs text-slate-500 leading-relaxed">帮我找一下记录用户日活、月活相关的表</div>
+            </div>
+            <div onclick="fillInput('查看 default.user_behavior 表的字段详情')" class="bg-white ring-1 ring-slate-200 rounded-xl p-4 cursor-pointer hover:ring-primary hover:shadow-md transition-all group">
+              <div class="text-sm text-slate-800 font-semibold mb-1.5 group-hover:text-primary transition-colors">查看字段详情</div>
+              <div class="text-xs text-slate-500 leading-relaxed">查看 default.user_behavior 表的字段和空值率</div>
+            </div>
+            <div onclick="fillInput('default.user_behavior 表的血缘关系')" class="bg-white ring-1 ring-slate-200 rounded-xl p-4 cursor-pointer hover:ring-primary hover:shadow-md transition-all group">
+              <div class="text-sm text-slate-800 font-semibold mb-1.5 group-hover:text-primary transition-colors">分析血缘关系</div>
+              <div class="text-xs text-slate-500 leading-relaxed">default.user_behavior 表的上游来源是哪里？</div>
+            </div>
+            <div onclick="fillInput('查看本周GMV数据')" class="bg-white ring-1 ring-slate-200 rounded-xl p-4 cursor-pointer hover:ring-primary hover:shadow-md transition-all group">
+              <div class="text-sm text-slate-800 font-semibold mb-1.5 group-hover:text-primary transition-colors">业务指标查询</div>
+              <div class="text-xs text-slate-500 leading-relaxed">查看本周GMV数据相关的汇总表</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 对话流态 (初始隐藏) -->
+      <div id="chat-view" class="hidden flex-1 flex-col h-full relative">
+        
+        <!-- 顶部上下文提示 -->
+        <div class="absolute top-0 left-0 right-0 h-12 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center px-6 z-10 shadow-sm">
+          <div class="flex items-center gap-1.5 text-xs font-medium text-slate-600 bg-slate-100 px-3 py-1.5 rounded-full ring-1 ring-slate-200">
+            <i class="fa-solid fa-link text-blue-500 mr-0.5"></i> 当前关联上下文: 
+            <span class="text-slate-800 font-mono">default.user_behavior_log</span>
+            <i class="fa-regular fa-copy cursor-pointer text-slate-400 hover:text-primary transition-colors" title="复制" onclick="copyText('default.user_behavior_log', this)"></i>
+            <span class="px-1.5 py-0.5 bg-slate-200/70 text-slate-600 text-[10px] rounded font-medium ml-0.5">用户行为日志表</span>
+            <button class="ml-2 text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+
+        <!-- 消息流容器 -->
+        <div id="message-list" class="flex-1 overflow-y-auto thin-scrollbar px-6 pt-16 pb-36 flex flex-col gap-8 scroll-smooth">
+          <!-- 动态插入消息 -->
+        </div>
+
+        <!-- 底部输入区 -->
+        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-bgLight via-bgLight to-transparent pt-12 pb-6 px-6">
+          <div class="max-w-4xl mx-auto">
+            
+            <!-- 意图选择器 -->
+            <div class="flex gap-2 mb-3">
+              <button onclick="fillInput('🔎 帮我找表：')" class="px-3.5 py-1.5 bg-white ring-1 ring-slate-200 rounded-full text-xs font-semibold text-slate-600 hover:text-primary hover:ring-primary hover:bg-blue-50 transition-all shadow-sm flex items-center gap-1.5">
+                <i class="fa-solid fa-magnifying-glass"></i> 搜索表
+              </button>
+              <button onclick="fillInput('📊 查看详情：')" class="px-3.5 py-1.5 bg-white ring-1 ring-slate-200 rounded-full text-xs font-semibold text-slate-600 hover:text-primary hover:ring-primary hover:bg-blue-50 transition-all shadow-sm flex items-center gap-1.5">
+                <i class="fa-solid fa-table-list"></i> 查看详情
+              </button>
+              <button onclick="fillInput('🔗 查看血缘：')" class="px-3.5 py-1.5 bg-white ring-1 ring-slate-200 rounded-full text-xs font-semibold text-slate-600 hover:text-primary hover:ring-primary hover:bg-blue-50 transition-all shadow-sm flex items-center gap-1.5">
+                <i class="fa-solid fa-diagram-project"></i> 查看血缘
+              </button>
+            </div>
+
+            <!-- 输入框 -->
+            <div class="w-full bg-white rounded-2xl shadow-floating ring-1 ring-slate-200 p-1 relative focus-within:ring-2 focus-within:ring-primary transition-all">
+              <textarea id="chat-input" rows="1" class="w-full bg-transparent border-none outline-none resize-none px-4 py-3.5 text-slate-700 text-sm max-h-32 thin-scrollbar placeholder-slate-400" placeholder="继续追问，或输入 @ 提及表名..."></textarea>
+              
+              <div class="flex justify-between items-center px-2 pb-2">
+                <div class="flex gap-1">
+                  <button class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-400 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-paperclip"></i>
+                  </button>
+                </div>
+                <button id="chat-send-btn" onclick="sendMessage('chat')" class="w-9 h-9 bg-primary text-white rounded-xl flex items-center justify-center hover:bg-primaryHover transition-colors shadow-md shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none">
+                  <i class="fa-solid fa-arrow-up"></i>
+                </button>
+              </div>
+            </div>
+            <div class="text-center mt-3 text-xs text-slate-400 font-medium">
+              DataPilot 生成内容仅供参考，请以实际数据为准
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <script>
+    // --- UI 状态切换 ---
+    function switchTab(tab) {
+      document.getElementById('tab-history').classList.remove('text-primary', 'border-primary');
+      document.getElementById('tab-workspace').classList.remove('text-primary', 'border-primary');
+      document.getElementById('tab-history').classList.add('text-slate-400', 'border-transparent');
+      document.getElementById('tab-workspace').classList.add('text-slate-400', 'border-transparent');
+
+      document.getElementById('panel-history').classList.add('hidden');
+      document.getElementById('panel-workspace').classList.add('hidden');
+
+      document.getElementById(`tab-${tab}`).classList.remove('text-slate-400', 'border-transparent');
+      document.getElementById(`tab-${tab}`).classList.add('text-primary', 'border-primary');
+      document.getElementById(`panel-${tab}`).classList.remove('hidden');
+    }
+
+    function resetChat() {
+      document.getElementById('welcome-view').classList.remove('hidden');
+      document.getElementById('chat-view').classList.add('hidden');
+      document.getElementById('message-list').innerHTML = '';
+      document.getElementById('welcome-input').value = '';
+      updateBtnState('welcome');
+    }
+
+    function fillInput(text) {
+      const isWelcome = !document.getElementById('welcome-view').classList.contains('hidden');
+      const inputId = isWelcome ? 'welcome-input' : 'chat-input';
+      const input = document.getElementById(inputId);
+      input.value = text;
+      input.focus();
+      updateBtnState(isWelcome ? 'welcome' : 'chat');
+    }
+
+    // --- 输入框与发送逻辑 ---
+    const welcomeInput = document.getElementById('welcome-input');
+    const chatInput = document.getElementById('chat-input');
+
+    welcomeInput.addEventListener('input', () => updateBtnState('welcome'));
+    chatInput.addEventListener('input', () => {
+      updateBtnState('chat');
+      chatInput.style.height = 'auto';
+      chatInput.style.height = Math.min(chatInput.scrollHeight, 128) + 'px';
+    });
+
+    welcomeInput.addEventListener('keydown', (e) => handleEnter(e, 'welcome'));
+    chatInput.addEventListener('keydown', (e) => handleEnter(e, 'chat'));
+
+    function handleEnter(e, type) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage(type);
+      }
+    }
+
+    function updateBtnState(type) {
+      const input = document.getElementById(type + '-input');
+      const btn = document.getElementById(type + '-send-btn');
+      btn.disabled = input.value.trim().length === 0;
+    }
+
+    function sendMessage(type) {
+      const input = document.getElementById(type + '-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      if (type === 'welcome') {
+        document.getElementById('welcome-view').classList.add('hidden');
+        document.getElementById('chat-view').classList.remove('hidden');
+        document.getElementById('chat-view').classList.add('flex');
+      }
+
+      const list = document.getElementById('message-list');
+
+      // 1. 渲染用户消息
+      list.innerHTML += `
+        <div class="message user flex gap-3 flex-row-reverse w-full">
+          <div class="msg-bubble bubble-user bg-primary text-white px-5 py-3 text-[15px] shadow-md max-w-[80%] leading-relaxed">
+            ${text}
+          </div>
+        </div>
+      `;
+
+      input.value = '';
+      if (type === 'chat') input.style.height = 'auto';
+      updateBtnState(type);
+      scrollToBottom();
+
+      // 2. 模拟 AI 思考态
+      const aiMsgId = 'ai-msg-' + Date.now();
+      list.innerHTML += `
+        <div id="${aiMsgId}" class="message ai flex gap-3 w-full">
+          <div class="w-9 h-9 rounded-xl bg-white flex items-center justify-center shrink-0 shadow-sm ring-1 ring-slate-200">
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6">
+              <defs>
+                <linearGradient id="pilot-grad-sm" x1="0" y1="100" x2="100" y2="0">
+                  <stop stop-color="rgba(108, 76, 155)" />
+                  <stop offset="1" stop-color="rgba(142, 110, 185)" />
+                </linearGradient>
+              </defs>
+              <path d="M50 5 L63 37 L95 50 L63 63 L50 95 L37 63 L5 50 L37 37 Z" fill="url(#pilot-grad-sm)" />
+              <circle cx="50" cy="50" r="4" fill="#fff" />
+            </svg>
+          </div>
+          <div class="flex flex-col gap-2 max-w-[85%] w-full">
+            <div class="msg-bubble bubble-ai bg-white ring-1 ring-slate-200 text-slate-700 px-5 py-3 text-[15px] shadow-sm self-start flex items-center gap-2 font-medium">
+              <i class="fa-solid fa-circle-notch fa-spin text-primary"></i> 正在检索数据资产...
+            </div>
+          </div>
+        </div>
+      `;
+      scrollToBottom();
+
+      // 3. 模拟流式返回结果
+      setTimeout(() => {
+        const aiContainer = document.getElementById(aiMsgId).querySelector('.flex-col');
+        
+        aiContainer.innerHTML = `
+          <div class="msg-bubble bubble-ai bg-white ring-1 ring-slate-200 text-slate-800 px-5 py-3 text-[15px] shadow-sm self-start leading-relaxed">
+            我为您找到了最匹配的表：
+          </div>
+          
+          <!-- 全新设计的表详情卡片 -->
+          <div class="bg-white ring-1 ring-slate-200 rounded-2xl p-5 shadow-soft w-full max-w-3xl group">
+            <!-- 卡片头部 -->
+            <div class="flex justify-between items-start mb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-lg ring-1 ring-blue-100 shrink-0">
+                  <i class="fa-solid fa-table"></i>
+                </div>
+                <div>
+                  <div class="font-bold text-lg text-slate-800 flex items-center flex-wrap gap-2">
+                    <span class="font-mono">default.user_behavior_log</span>
+                    <i class="fa-regular fa-copy cursor-pointer text-slate-400 hover:text-primary transition-colors text-base" title="复制表名" onclick="copyText('default.user_behavior_log', this)"></i>
+                    <span class="px-2.5 py-0.5 bg-slate-100 text-slate-600 text-sm rounded-md font-medium">用户行为日志表</span>
+                    <span class="px-2 py-0.5 bg-green-50 text-green-600 text-xs rounded-md ring-1 ring-green-200 font-medium">核心资产</span>
+                  </div>
+                  <div class="flex gap-2 mt-1.5">
+                    <span class="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs rounded font-medium">ODS</span>
+                    <span class="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs rounded font-medium">Hive</span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex gap-1 shrink-0 ml-4">
+                <button class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors flex items-center justify-center" title="分享">
+                  <i class="fa-solid fa-share-nodes"></i>
+                </button>
+                <button class="w-8 h-8 rounded-lg text-slate-400 hover:text-yellow-500 hover:bg-yellow-50 transition-colors flex items-center justify-center" title="收藏">
+                  <i class="fa-regular fa-star"></i>
+                </button>
+              </div>
+            </div>
+            
+            <!-- 描述 -->
+            <p class="text-sm text-slate-600 mb-4 leading-relaxed">记录用户在 App 和 Web 端的所有核心行为事件，包含浏览、点击、加购、收藏等，T+1 更新。</p>
+            
+            <!-- 元数据小卡片 -->
+            <div class="grid grid-cols-3 gap-3 mb-5">
+              <div class="bg-slate-50 rounded-lg p-2.5 ring-1 ring-slate-100">
+                <div class="text-xs text-slate-400 mb-1">负责人</div>
+                <div class="text-sm font-semibold text-slate-700 truncate">张三(zhangsan)</div>
+              </div>
+              <div class="bg-slate-50 rounded-lg p-2.5 ring-1 ring-slate-100">
+                <div class="text-xs text-slate-400 mb-1">更新频率</div>
+                <div class="text-sm font-semibold text-slate-700">每天 02:00</div>
+              </div>
+              <div class="bg-slate-50 rounded-lg p-2.5 ring-1 ring-slate-100">
+                <div class="text-xs text-slate-400 mb-1">近期热度</div>
+                <div class="text-sm font-semibold text-slate-700 flex items-center gap-1"><i class="fa-solid fa-fire text-red-500"></i> 1.2w</div>
+              </div>
+            </div>
+
+            <!-- 操作按钮区 (美化后的 Action Chips) -->
+            <div class="flex flex-wrap gap-2.5 pt-4 border-t border-slate-100">
+              <button onclick="toggleInlineDetail(this)" class="px-4 py-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 text-sm font-semibold transition-colors flex items-center shadow-sm">
+                <i class="fa-solid fa-expand mr-2"></i> 展开全部详情
+              </button>
+              <button onclick="toggleCardSql(this, 'ddl')" class="px-4 py-2 rounded-lg bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900 text-sm font-semibold transition-colors flex items-center ring-1 ring-slate-200 shadow-sm">
+                <i class="fa-solid fa-code mr-2"></i> 生成 DDL
+              </button>
+              <button onclick="toggleCardSql(this, 'select')" class="px-4 py-2 rounded-lg bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900 text-sm font-semibold transition-colors flex items-center ring-1 ring-slate-200 shadow-sm">
+                <i class="fa-solid fa-terminal mr-2"></i> 生成 SELECT
+              </button>
+            </div>
+            
+            <!-- 隐藏的代码面板 -->
+            <div class="card-sql-panel hidden mt-4 bg-slate-900 rounded-xl p-4 relative shadow-inner">
+               <button onclick="copyCardSql(this)" class="absolute top-3 right-3 text-slate-300 hover:text-white text-xs font-medium bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5">
+                 <i class="fa-regular fa-copy"></i> 复制
+               </button>
+               <pre class="text-emerald-400 font-mono text-sm overflow-x-auto thin-scrollbar m-0 pt-1 pb-2"><code class="sql-content"></code></pre>
+            </div>
+
+            <!-- 内联展开的详情面板 (彻底替换原来的抽屉) -->
+            <div class="inline-detail-panel expand-hidden mt-4 pt-4 border-t border-slate-100">
+              <!-- Tabs -->
+              <div class="flex border-b border-slate-200 mb-4">
+                <div class="py-2 px-4 text-sm font-semibold text-primary border-b-2 border-primary cursor-pointer">字段详情</div>
+                <div class="py-2 px-4 text-sm font-medium text-slate-500 hover:text-slate-800 cursor-pointer transition-colors">数据预览</div>
+                <div class="py-2 px-4 text-sm font-medium text-slate-500 hover:text-slate-800 cursor-pointer transition-colors">生产信息</div>
+                <div class="py-2 px-4 text-sm font-medium text-slate-500 hover:text-slate-800 cursor-pointer transition-colors">血缘关系</div>
+              </div>
+              
+              <!-- 表格内容 -->
+              <div class="ring-1 ring-slate-200 rounded-lg overflow-hidden">
+                <table class="w-full text-left text-sm">
+                  <thead class="bg-slate-50 border-b border-slate-200 text-slate-600">
+                    <tr>
+                      <th class="py-3 px-4 font-semibold">字段名</th>
+                      <th class="py-3 px-4 font-semibold">类型</th>
+                      <th class="py-3 px-4 font-semibold">描述</th>
+                      <th class="py-3 px-4 font-semibold">空值率</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 bg-white">
+                    <tr class="hover:bg-slate-50 transition-colors">
+                      <td class="py-3 px-4 font-medium text-slate-800">
+                        user_id <i class="fa-solid fa-key text-yellow-500 text-xs ml-1" title="主键"></i>
+                      </td>
+                      <td class="py-3 px-4 text-blue-600 font-mono text-xs bg-blue-50/50">string</td>
+                      <td class="py-3 px-4 text-slate-600">全局唯一用户标识</td>
+                      <td class="py-3 px-4 text-slate-600">0%</td>
+                    </tr>
+                    <tr class="hover:bg-slate-50 transition-colors">
+                      <td class="py-3 px-4 font-medium text-slate-800">event_type</td>
+                      <td class="py-3 px-4 text-blue-600 font-mono text-xs bg-blue-50/50">string</td>
+                      <td class="py-3 px-4 text-slate-600">事件类型 (click, view, add_cart)</td>
+                      <td class="py-3 px-4 text-slate-600">0.5%</td>
+                    </tr>
+                    <tr class="hover:bg-slate-50 transition-colors">
+                      <td class="py-3 px-4 font-medium text-slate-800">page_id</td>
+                      <td class="py-3 px-4 text-blue-600 font-mono text-xs bg-blue-50/50">string</td>
+                      <td class="py-3 px-4 text-slate-600">发生事件的页面ID</td>
+                      <td class="py-3 px-4 text-slate-600">2.1%</td>
+                    </tr>
+                    <tr class="hover:bg-slate-50 transition-colors">
+                      <td class="py-3 px-4 font-medium text-slate-800">
+                        dt <span class="px-1.5 py-0.5 bg-slate-100 text-slate-500 text-[10px] rounded ml-1 font-medium">分区</span>
+                      </td>
+                      <td class="py-3 px-4 text-blue-600 font-mono text-xs bg-blue-50/50">string</td>
+                      <td class="py-3 px-4 text-slate-600">日期分区 (yyyyMMdd)</td>
+                      <td class="py-3 px-4 text-slate-600">0%</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 追问建议 -->
+          <div class="flex gap-2.5 mt-2">
+            <button onclick="fillInput('default.user_behavior_log 的上游是什么？')" class="px-4 py-2 bg-white ring-1 ring-slate-200 rounded-full text-sm font-medium text-primary hover:bg-blue-50 hover:ring-primary transition-all shadow-sm flex items-center gap-1.5">
+              <i class="fa-solid fa-diagram-project text-xs"></i> 查看血缘关系
+            </button>
+            <button onclick="fillInput('查询近7天产出量')" class="px-4 py-2 bg-white ring-1 ring-slate-200 rounded-full text-sm font-medium text-primary hover:bg-blue-50 hover:ring-primary transition-all shadow-sm flex items-center gap-1.5">
+              <i class="fa-solid fa-chart-line text-xs"></i> 查询近7天产出量
+            </button>
+          </div>
+        `;
+        scrollToBottom();
+      }, 800);
+    }
+
+    function scrollToBottom() {
+      const list = document.getElementById('message-list');
+      list.scrollTop = list.scrollHeight;
+    }
+
+    // --- 内联详情展开逻辑 ---
+    function toggleInlineDetail(btn) {
+      const card = btn.closest('.group');
+      const panel = card.querySelector('.inline-detail-panel');
+      const icon = btn.querySelector('i');
+      
+      if (panel.classList.contains('expand-hidden')) {
+        panel.classList.remove('expand-hidden');
+        panel.classList.add('expand-visible');
+        btn.innerHTML = '<i class="fa-solid fa-compress mr-2"></i> 收起详情';
+      } else {
+        panel.classList.remove('expand-visible');
+        panel.classList.add('expand-hidden');
+        btn.innerHTML = '<i class="fa-solid fa-expand mr-2"></i> 展开全部详情';
+      }
+      
+      // 保证展开时滚动到底部
+      setTimeout(scrollToBottom, 100);
+    }
+
+    // --- SQL 面板逻辑 (卡片内) ---
+    const sqlData = {
+      ddl: `CREATE TABLE default.user_behavior_log (
+  user_id STRING COMMENT '全局唯一用户标识',
+  event_type STRING COMMENT '事件类型 (click, view, add_cart)',
+  page_id STRING COMMENT '发生事件的页面ID',
+  device_os STRING COMMENT '设备操作系统 (iOS, Android)'
+)
+COMMENT '用户行为日志表'
+PARTITIONED BY (dt STRING COMMENT '日期分区 (yyyyMMdd)')
+STORED AS PARQUET;`,
+      select: `SELECT 
+  user_id,
+  event_type,
+  page_id,
+  device_os,
+  dt
+FROM default.user_behavior_log
+WHERE dt = '\${bizdate}'
+LIMIT 100;`
+    };
+
+    function toggleCardSql(btn, type) {
+      const card = btn.closest('.group');
+      const panel = card.querySelector('.card-sql-panel');
+      const content = panel.querySelector('.sql-content');
+      
+      // 重置所有 SQL 按钮状态
+      const sqlBtns = card.querySelectorAll('button[onclick^="toggleCardSql"]');
+      sqlBtns.forEach(b => {
+        b.classList.remove('bg-blue-50', 'text-blue-600', 'ring-primary');
+        b.classList.add('bg-slate-50', 'text-slate-600', 'ring-slate-200');
+      });
+
+      if (!panel.classList.contains('hidden') && panel.dataset.currentType === type) {
+        panel.classList.add('hidden');
+        panel.dataset.currentType = '';
+        return;
+      }
+
+      // 激活当前按钮
+      btn.classList.remove('bg-slate-50', 'text-slate-600', 'ring-slate-200');
+      btn.classList.add('bg-blue-50', 'text-blue-600', 'ring-primary');
+
+      content.textContent = sqlData[type];
+      panel.classList.remove('hidden');
+      panel.dataset.currentType = type;
+      
+      setTimeout(scrollToBottom, 50);
+    }
+
+    function copyCardSql(btn) {
+      const panel = btn.closest('.card-sql-panel');
+      const content = panel.querySelector('.sql-content').textContent;
+      navigator.clipboard.writeText(content).then(() => {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-check text-green-400"></i> 已复制';
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+        }, 2000);
+      });
+    }
+
+    // --- 通用复制文本 ---
+    function copyText(text, btn) {
+      navigator.clipboard.writeText(text).then(() => {
+        const originalClass = btn.className;
+        btn.className = 'fa-solid fa-check text-green-500 transition-colors';
+        if (btn.classList.contains('ml-1')) btn.classList.add('ml-1');
+        if (btn.classList.contains('text-base')) btn.classList.add('text-base');
+        setTimeout(() => {
+          btn.className = originalClass;
+        }, 2000);
+      });
+    }
+
+  </script>
+</body>
+</html>

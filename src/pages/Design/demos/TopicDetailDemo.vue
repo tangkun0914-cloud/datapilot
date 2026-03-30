@@ -46,7 +46,7 @@ import {
   TableOutlined,
   CalendarOutlined,
 } from '@ant-design/icons-vue'
-import { mockTopics } from '@/mock/topics.js'
+import { mockTopics } from '@/mock/DataMap/topics.js'
 
 const topic = mockTopics[0]
 const activeTab = ref('tables')

@@ -37,7 +37,7 @@
       </div>
       <div class="copilot-text">
         <span class="copilot-title">AI 数据助手</span>
-        <span class="copilot-desc">智能找表、血缘追溯、字段释义</span>
+        <span class="copilot-desc">智能找表（业务用途 / 关键词 / 项目范围 / 专题）</span>
       </div>
       <RightOutlined class="copilot-arrow" />
     </div>

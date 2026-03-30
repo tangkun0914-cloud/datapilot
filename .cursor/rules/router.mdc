@@ -7,15 +7,19 @@ alwaysApply: false
 # 路由规范
 
 ## 路由结构
-所有业务页面嵌套在 `AppLayout` 下：
-```
+所有业务页面嵌套在 `AppLayout` 下，并按模块划分：
+```text
 / → redirect to /home
-├── /home           → Home/index.vue
-├── /search         → Search/index.vue（支持 query 参数：q, sort, filters）
-├── /detail/:fqn    → Detail/index.vue（fqn = fullyQualifiedName，URL 编码）
-├── /topics         → Topics/index.vue
-├── /mytables       → MyTables/index.vue
-└── /copilot        → CopilotFull/index.vue
+├── 数据地图模块 (DataMap)
+│   ├── /home           → DataMap/Home/index.vue
+│   ├── /search         → DataMap/Search/index.vue（支持 query 参数：q, sort, filters）
+│   ├── /detail/:fqn    → DataMap/Detail/index.vue（fqn = fullyQualifiedName，URL 编码）
+│   ├── /topics         → DataMap/Topics/index.vue
+│   ├── /mytables       → DataMap/MyTables/index.vue
+│   └── /copilot        → DataMap/CopilotFull/index.vue
+└── 监控运维模块 (Monitoring)
+    ├── /monitoring/alerts      → Monitoring/AlertList/index.vue
+    └── /monitoring/strategies  → Monitoring/NotifyStrategy/index.vue
 ```
 
 ## 导航方式
@@ -30,4 +34,4 @@ router.push('/detail/' + encodeURIComponent(item.fullyQualifiedName))
 ## 注意事项
 - Detail 页面的 `:fqn` 参数可能包含点号（如 `hive.dwa_cn.table_name`），必须 `encodeURIComponent`
 - Search 页面通过 `watch(route.query)` 响应 URL 变化，避免重复请求需做 key 去重
-- 新增页面需同时更新 `menuItems` 导出（侧边栏菜单）
+- 新增页面需同时更新 `src/router/index.js` 中的 `xxxMenuItems` 导出（侧边栏菜单）

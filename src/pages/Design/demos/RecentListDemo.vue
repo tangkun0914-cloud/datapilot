@@ -6,7 +6,7 @@
 </template>
 
 <script setup>
-import RecentList from '@/pages/Home/RecentList.vue'
+import RecentList from '@/pages/DataMap/Home/RecentList.vue'
 </script>
 
 <style scoped>

@@ -8,7 +8,7 @@
 </template>
 
 <script setup>
-import LineageTab from '@/pages/Detail/LineageTab.vue'
+import LineageTab from '@/pages/DataMap/Detail/LineageTab.vue'
 </script>
 
 <style scoped>

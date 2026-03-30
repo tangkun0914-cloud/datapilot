@@ -1,0 +1,12 @@
+/**
+ * 业务域服务 - 对接 OpenMetadata Domains API
+ */
+import request from '@/services/request.js'
+
+export async function getDomains() {
+  if (import.meta.env.VITE_USE_MOCK !== 'false') {
+    const { domains } = await import('@/mock/DataMap/domains.js')
+    return domains
+  }
+  return request.get('/v1/domains')
+}

@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新建通知策略</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #1677ff;
+            --primary-light: #e6f4ff;
+            --text-main: #333;
+            --text-sub: #666;
+            --text-desc: #999;
+            --border-color: #e8e8e8;
+            --bg-white: #ffffff;
+            --danger-color: #ff4d4f;
+            --warning-color: #fa8c16;
+            --info-color: #1677ff;
+        }
+
+        body {
+            margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5; 
+            height: 100vh; overflow: hidden;
+        }
+
+        .drawer-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.45);
+            z-index: 1000;
+        }
+
+        .drawer-container {
+            position: fixed;
+            top: 0; right: 0; width: 800px; height: 100vh;
+            background: var(--bg-white); box-shadow: -4px 0 16px rgba(0,0,0,0.08);
+            display: flex; flex-direction: column; z-index: 1001; margin-bottom: 0; border-radius: 0;
+            animation: slideInRight 0.3s ease-out forwards;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        .drawer-header {
+            padding: 16px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: flex-start;
+        }
+        .header-content h2 { margin: 0 0 8px 0; font-size: 18px; font-weight: 600; }
+        .header-content p { margin: 0; color: var(--text-desc); font-size: 13px; }
+        .close-btn { background: none; border: none; font-size: 16px; cursor: pointer; color: #999; padding: 4px; }
+        .close-btn:hover { color: #333; }
+        
+        .drawer-body { padding: 24px; flex: 1; overflow-y: auto; }
+        .section-block { margin-bottom: 32px; }
+        .section-title { display: flex; align-items: center; margin-bottom: 16px; }
+        .step-num {
+            background: #e6f4ff; color: var(--primary-color); width: 24px; height: 24px; border-radius: 50%;
+            text-align: center; line-height: 24px; font-size: 14px; font-weight: bold; margin-right: 10px;
+        }
+        .section-title h3 { margin: 0; font-size: 15px; font-weight: 600; }
+        .section-content { margin-left: 34px; }
+        .form-item { margin-bottom: 16px; }
+        .form-item label { display: block; font-size: 13px; margin-bottom: 6px; font-weight: 500; }
+        .required { color: var(--danger-color); }
+        .input-text, .textarea {
+            width: 100%; padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 4px;
+            box-sizing: border-box; font-size: 14px; transition: all 0.2s;
+        }
+        .input-text:focus, .textarea:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 2px rgba(22,119,255,0.1); }
+        .textarea { height: 80px; resize: vertical; }
+
+        /* ======== 重构：以等级为中心的规则样式 ======== */
+        .level-rule-box {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+        .level-rule-header {
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .level-rule-header.error-header {
+            background-color: #fff1f0;
+            border-bottom-color: #ffa39e;
+        }
+        .level-rule-header.warn-header {
+            background-color: #fffbe6;
+            border-bottom-color: #ffe58f;
+        }
+        .level-tag {
+            display: inline-block;
+            width: 54px;
+            text-align: center;
+            padding: 2px 0;
+            border-radius: 2px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .level-tag.error { background: #ff4d4f; color: #fff; }
+        .level-tag.warn { background: #fa8c16; color: #fff; }
+        
+        .level-rule-desc {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-left: 12px;
+        }
+        .level-rule-body {
+            padding: 16px;
+            background-color: #fff;
+        }
+        .rule-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+        .rule-row:last-child {
+            margin-bottom: 0;
+        }
+        .rule-checkbox {
+            width: 120px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            color: var(--text-main);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .rule-options {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #fafafa;
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: 1px solid transparent;
+            transition: all 0.3s;
+            min-height: 32px;
+        }
+        .rule-row:hover .rule-options:not(.disabled-options) {
+            border-color: #e6f4ff;
+            background: #f0f7ff;
+        }
+        .rule-options.disabled-options {
+            opacity: 0.4;
+            pointer-events: none;
+            background: #f5f5f5;
+        }
+        .options-label {
+            color: var(--text-sub);
+            font-weight: 500;
+        }
+        .options-separator {
+            color: #d9d9d9;
+            margin: 0 4px;
+        }
+        .rule-options label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+
+        /* 选人组件样式 */
+        .select-inline { padding: 4px 8px; border: 1px solid #d9d9d9; border-radius: 4px; font-size: 12px; }
+        .user-select-container { position: relative; }
+        .tag {
+            background: #e6f4ff; color: var(--primary-color); border: 1px solid #91caff;
+            font-size: 12px; padding: 2px 6px; border-radius: 2px; display: inline-flex; align-items: center; gap: 4px;
+        }
+        .tag i { cursor: pointer; opacity: 0.6; }
+        .tag i:hover { opacity: 1; }
+        .add-link { font-size: 12px; color: var(--primary-color); cursor: pointer; padding: 2px 6px; user-select: none; display: inline-block;}
+        .add-link:hover { background: #e6f4ff; border-radius: 2px; }
+
+        .user-dropdown {
+            position: absolute; top: 105%; left: 0; width: 220px;
+            background: #fff; border: 1px solid #e8e8e8; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 4px; z-index: 1000; display: none; padding-bottom: 4px;
+        }
+        .user-dropdown.show { display: block; }
+        .user-list { list-style: none; margin: 0; padding: 0; max-height: 200px; overflow-y: auto; }
+        .user-item {
+            padding: 8px 12px; font-size: 13px; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center;
+            color: var(--text-main); transition: background 0.2s;
+        }
+        .user-item:hover { background-color: #f5f5f5; }
+        .user-item.selected { color: var(--primary-color); background-color: #f0f7ff; font-weight: 500; }
+        .user-item .check-icon { display: none; font-size: 12px; }
+        .user-item.selected .check-icon { display: block; }
+
+        /* ======== 策略配置样式 ======== */
+        .policy-card { border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 16px; transition: all 0.3s; background: #fff;}
+        .policy-card.active-border { border-color: var(--primary-color); border: 1px solid #69b1ff; }
+        .policy-header {
+            padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
+            background: #fafafa; border-bottom: 1px solid transparent; border-radius: 4px 4px 0 0;
+        }
+        .policy-card.active-border .policy-header { background: #f0f7ff; border-bottom-color: #d6e4ff; }
+        .policy-left { display: flex; align-items: center; gap: 12px; }
+        .policy-info { display: flex; flex-direction: column; }
+        .policy-name { font-size: 14px; font-weight: 600; color: var(--text-main); }
+        .policy-desc { font-size: 12px; color: var(--text-desc); margin-top: 2px; }
+        .status-tag {
+            background: #e6f4ff; color: var(--primary-color); border: 1px solid #adc6ff;
+            font-size: 12px; padding: 1px 6px; border-radius: 2px; display: none;
+        }
+        .policy-card.active-border .status-tag { display: block; }
+        .policy-body { padding: 16px; font-size: 13px; color: var(--text-main); display: none; }
+        .policy-card.active-border .policy-body { display: block; }
+        .inline-form { display: flex; align-items: center; gap: 8px; }
+        .input-mini { width: 40px; text-align: center; padding: 4px; border: 1px solid #d9d9d9; border-radius: 4px; }
+        
+        .time-range-picker {
+            display: inline-flex; align-items: center; border: 1px solid #d9d9d9;
+            padding: 4px 8px; border-radius: 4px; background: #fff;
+        }
+        .time-input { border: none; width: 45px; text-align: center; outline: none; font-size: 13px; }
+        .time-range-picker .icon { color: #ccc; font-size: 12px; margin-right: 4px;}
+        .time-range-picker .sep { color: #ccc; margin: 0 8px; }
+        .time-range-picker .suffix { color: #999; font-size: 12px; border-left: 1px solid #e8e8e8; padding-left: 8px; margin-left: 4px;}
+        .form-row { display: flex; align-items: center; }
+
+        /* Switch 样式 */
+        .switch { position: relative; display: inline-block; width: 36px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .4s;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 16px; width: 16px;
+            left: 2px; bottom: 2px; background-color: white; transition: .4s;
+        }
+        input:checked + .slider { background-color: var(--primary-color); }
+        input:focus + .slider { box-shadow: 0 0 1px var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(16px); }
+        .slider.round { border-radius: 20px; }
+        .slider.round:before { border-radius: 50%; }
+
+        /* 接收人规则 Switch 样式 */
+        .rule-switch {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 120px;
+            font-weight: 500;
+            color: var(--text-main);
+            flex-shrink: 0;
+        }
+        .rule-switch .switch {
+            width: 32px;
+            height: 18px;
+        }
+        .rule-switch .slider:before {
+            height: 14px;
+            width: 14px;
+        }
+        .rule-switch input:checked + .slider:before {
+            transform: translateX(14px);
+        }
+
+        /* ======== 升级策略样式 ======== */
+        .escalation-row {
+            display: flex;
+            align-items: flex-start;
+            position: relative;
+            padding-bottom: 24px;
+        }
+        .escalation-row:last-child { padding-bottom: 0; }
+        .escalation-row:not(:last-child)::after {
+            content: ""; position: absolute; left: 12px; top: 24px; bottom: 0; width: 2px; background-color: #e8e8e8;
+        }
+        .row-num {
+            width: 24px; height: 24px; border-radius: 50%; background: #f0f0f0; color: #666;
+            font-size: 12px; font-weight: bold; text-align: center; line-height: 24px;
+            margin-right: 12px; flex-shrink: 0; z-index: 1; margin-top: 4px;
+        }
+        .row-content {
+            flex: 1; display: flex; flex-direction: column; gap: 8px;
+            background: #f9f9f9; padding: 12px; border-radius: 4px;
+        }
+        .escalation-condition {
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+        }
+        .escalation-channel-config {
+            display: flex; align-items: center; gap: 12px;
+            background: #fff; padding: 6px 12px; border-radius: 4px; border: 1px solid #e8e8e8;
+        }
+        .escalation-channel-config label {
+            display: flex; align-items: center; gap: 4px; cursor: pointer;
+        }
+        .btn-delete {
+            color: var(--text-desc); cursor: pointer; font-size: 14px; margin-left: 12px; margin-top: 10px; transition: color 0.2s;
+        }
+        .btn-delete:hover { color: var(--danger-color); }
+        .escalation-add-row {
+            margin-top: 16px; margin-left: 36px; color: var(--primary-color);
+            font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
+        }
+        .escalation-add-row:hover { text-decoration: underline; }
+        .escalation-user-select {
+            display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px;
+            background: #fff; border: 1px solid #d9d9d9; border-radius: 4px;
+            padding: 2px 6px; min-height: 28px; position: relative; min-width: 200px;
+        }
+        .escalation-user-select .tags-wrapper { display: flex; flex-wrap: wrap; gap: 4px; }
+        .escalation-user-select .user-dropdown { top: 100%; left: 0; margin-top: 4px; }
+
+        .drawer-footer {
+            padding: 16px 24px; border-top: 1px solid var(--border-color); background: #fff;
+            display: flex; justify-content: flex-end; gap: 12px; flex-shrink: 0;
+        }
+        .btn-cancel { padding: 8px 16px; border: 1px solid #d9d9d9; background: #fff; border-radius: 4px; cursor: pointer; color: var(--text-main); }
+        .btn-submit { padding: 8px 16px; border: none; background: var(--primary-color); border-radius: 4px; cursor: pointer; color: #fff; }
+    </style>
+</head>
+<body>
+
+    <!-- 模拟主页面内容，用于演示抽屉效果 -->
+    <div style="padding: 20px;">
+        <h1>监控运维配置</h1>
+        <button style="padding: 8px 16px; background: #1677ff; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="document.querySelector('.drawer-overlay').style.display='block'; document.querySelector('.drawer-container').style.display='flex';">
+            新建通知策略
+        </button>
+    </div>
+
+    <!-- 遮罩层 -->
+    <div class="drawer-overlay" style="display: block;"></div>
+
+    <div class="drawer-container">
+        <!-- 头部 -->
+        <div class="drawer-header">
+            <div class="header-content">
+                <h2>新建通知策略</h2>
+                <p>配置告警通知的接收对象、渠道及频次控制逻辑。</p>
+            </div>
+            <button class="close-btn" onclick="document.querySelector('.drawer-overlay').style.display='none'; document.querySelector('.drawer-container').style.display='none';"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="drawer-body">
+            
+            <!-- 步骤 1: 基础信息 -->
+            <div class="section-block">
+                <div class="section-title">
+                    <span class="step-num">1</span>
+                    <h3>基础信息</h3>
+                </div>
+                <div class="section-content">
+                    <div class="form-item">
+                        <label>策略名称 <span class="required">*</span></label>
+                        <input type="text" class="input-text" placeholder="例如：数仓核心任务策略、业务轻量级策略、静默策略">
+                    </div>
+                    <div class="form-item">
+                        <label>描述</label>
+                        <textarea class="textarea" placeholder="请输入策略描述..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 步骤 2: 告警通知规则 (重构版) -->
+            <div class="section-block">
+                <div class="section-title">
+                    <span class="step-num">2</span>
+                    <h3>告警通知规则</h3>
+                </div>
+                <div class="section-content">
+                    
+                    <!-- ERROR 级别规则 -->
+                    <div class="level-rule-box">
+                        <div class="level-rule-header error-header">
+                            <span class="level-tag error">ERROR</span>
+                            <span class="level-rule-desc">当触发 ERROR 级别告警时，发送给：</span>
+                        </div>
+                        <div class="level-rule-body">
+                            <!-- 任务负责人 -->
+                            <div class="rule-row">
+                                <div class="rule-switch">
+                                    <label class="switch">
+                                        <input type="checkbox" checked onchange="toggleRuleOptions(this)">
+                                        <span class="slider round"></span>
+                                    </label>
+                                    任务负责人
+                                </div>
+                                <div class="rule-options">
+                                    <span class="options-label">接收渠道：</span>
+                                    <label><input type="checkbox" checked> 企微</label>
+                                    <label><input type="checkbox"> 电话</label>
+                                </div>
+                            </div>
+                            <!-- 指定人员 -->
+                            <div class="rule-row">
+                                <div class="rule-switch">
+                                    <label class="switch">
+                                        <input type="checkbox" checked onchange="toggleRuleOptions(this)">
+                                        <span class="slider round"></span>
+                                    </label>
+                                    指定人员
+                                </div>
+                                <div class="rule-options">
+                                    <div class="user-select-container escalation-user-select" data-selected='["u_wangrui"]'>
+                                        <div class="tags-wrapper"></div>
+                                        <span class="add-link" onclick="openDropdown(this, event)">+ 选择人员</span>
+                                        <div class="user-dropdown" onclick="event.stopPropagation()">
+                                            <ul class="user-list"></ul>
+                                        </div>
+                                    </div>
+                                    <span class="options-separator">|</span>
+                                    <span class="options-label">接收渠道：</span>
+                                    <label><input type="checkbox" checked> 企微</label>
+                                    <label><input type="checkbox" checked> 电话</label>
+                                </div>
+                            </div>
+                            <!-- On-call -->
+                            <div class="rule-row">
+                                <div class="rule-switch">
+                                    <label class="switch">
+                                        <input type="checkbox" onchange="toggleRuleOptions(this)">
+                                        <span class="slider round"></span>
+                                    </label>
+                                    On-call值班
+                                </div>
+                                <div class="rule-options disabled-options">
+                                    <select class="select-inline"><option>大数据SRE值班组</option></select>
+                                    <span class="options-separator">|</span>
+                                    <span class="options-label">接收渠道：</span>
+                                    <label><input type="checkbox" checked disabled> 企微</label>
+                                    <label><input type="checkbox" checked disabled> 电话</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- WARN 级别规则 -->
+                    <div class="level-rule-box">
+                        <div class="level-rule-header warn-header">
+                            <span class="level-tag warn">WARN</span>
+                            <span class="level-rule-desc">当触发 WARN 级别告警时，发送给：</span>
+                        </div>
+                        <div class="level-rule-body">
+                            <!-- 任务负责人 -->
+                            <div class="rule-row">
+                                <div class="rule-switch">
+                                    <label class="switch">
+                                        <input type="checkbox" checked onchange="toggleRuleOptions(this)">
+                                        <span class="slider round"></span>
+                                    </label>
+                                    任务负责人
+                                </div>
+                                <div class="rule-options">
+                                    <span class="options-label">接收渠道：</span>
+                                    <label><input type="checkbox" checked> 企微</label>
+                                    <label><input type="checkbox"> 电话</label>
+                                </div>
+                            </div>
+                            <!-- 指定人员 -->
+                            <div class="rule-row">
+                                <div class="rule-switch">
+                                    <label class="switch">
+                                        <input type="checkbox" onchange="toggleRuleOptions(this)">
+                                        <span class="slider round"></span>
+                                    </label>
+                                    指定人员
+                                </div>
+                                <div class="rule-options disabled-options">
+                                    <div class="user-select-container escalation-user-select" data-selected='[]'>
+                                        <div class="tags-wrapper"></div>
+                                        <span class="add-link" onclick="openDropdown(this, event)">+ 选择人员</span>
+                                        <div class="user-dropdown" onclick="event.stopPropagation()">
+                                            <ul class="user-list"></ul>
+                                        </div>
+                                    </div>
+                                    <span class="options-separator">|</span>
+                                    <span class="options-label">接收渠道：</span>
+                                    <label><input type="checkbox" checked> 企微</label>
+                                    <label><input type="checkbox"> 电话</label>
+                                </div>
+                            </div>
+                            <!-- On-call -->
+                            <div class="rule-row">
+                                <div class="rule-switch">
+                                    <label class="switch">
+                                        <input type="checkbox" onchange="toggleRuleOptions(this)">
+                                        <span class="slider round"></span>
+                                    </label>
+                                    On-call值班
+                                </div>
+                                <div class="rule-options disabled-options">
+                                    <select class="select-inline"><option>大数据SRE值班组</option></select>
+                                    <span class="options-separator">|</span>
+                                    <span class="options-label">接收渠道：</span>
+                                    <label><input type="checkbox" checked disabled> 企微</label>
+                                    <label><input type="checkbox" disabled> 电话</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 步骤 3: 发送策略配置 -->
+            <div class="section-block">
+                <div class="section-title">
+                    <span class="step-num">3</span>
+                    <h3>发送策略配置</h3>
+                </div>
+                <div class="section-content">
+                    <!-- 策略 1 -->
+                    <div class="policy-card active-border">
+                        <div class="policy-header">
+                            <div class="policy-left">
+                                <label class="switch"><input type="checkbox" checked onchange="togglePolicy(this)"><span class="slider round"></span></label>
+                                <div class="policy-info"><div class="policy-name">发送频次控制</div><div class="policy-desc">避免告警风暴，限制发送频率。</div></div>
+                            </div>
+                            <div class="status-tag">已开启</div>
+                        </div>
+                        <div class="policy-body">
+                            <div class="inline-form">每 <input type="number" value="10" class="input-mini"> 分钟发送一次，最多连续发送 <input type="number" value="3" class="input-mini"> 次</div>
+                        </div>
+                    </div>
+
+                    <!-- 策略 2 -->
+                    <div class="policy-card active-border">
+                        <div class="policy-header">
+                            <div class="policy-left">
+                                <label class="switch"><input type="checkbox" checked onchange="togglePolicy(this)"><span class="slider round"></span></label>
+                                <div class="policy-info"><div class="policy-name">静默时间</div><div class="policy-desc">在指定时间段内，屏蔽特定渠道的告警通知。</div></div>
+                            </div>
+                            <div class="status-tag">已开启</div>
+                        </div>
+                        <div class="policy-body">
+                            <div class="form-row">
+                                <span class="label-inline">生效时段：</span>
+                                <div class="time-range-picker">
+                                    <span class="icon"><i class="fa-regular fa-clock"></i></span><input type="text" value="23:00" class="time-input"><span class="sep">-</span><span class="icon"><i class="fa-regular fa-sun"></i></span><input type="text" value="08:00" class="time-input"><span class="suffix">次日</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                     <!-- 策略 3: 通知升级 (多级配置) -->
+                     <div class="policy-card">
+                        <div class="policy-header">
+                            <div class="policy-left">
+                                <label class="switch">
+                                    <input type="checkbox" onchange="togglePolicy(this)">
+                                    <span class="slider round"></span>
+                                </label>
+                                <div class="policy-info">
+                                    <div class="policy-name">通知升级</div>
+                                    <div class="policy-desc">告警未及时处理时，通知更高层级的负责人。</div>
+                                </div>
+                            </div>
+                            <div class="status-tag">已开启</div>
+                        </div>
+                        <div class="policy-body">
+                            
+                            <!-- 升级规则容器 -->
+                            <div id="escalationRulesContainer">
+                                <!-- 第一级 -->
+                                <div class="escalation-row">
+                                    <span class="row-num">1</span>
+                                    <div class="row-content">
+                                        <div class="escalation-condition">
+                                            触发告警 <input type="number" value="15" class="input-mini"> 分钟后仍未处理，升级发送给：
+                                            <div class="escalation-user-select" data-selected='["u_wangbo"]'>
+                                                <div class="tags-wrapper"></div>
+                                                <span class="add-link" onclick="openDropdown(this, event)">+ 选择人员</span>
+                                                <div class="user-dropdown" onclick="event.stopPropagation()">
+                                                    <ul class="user-list"></ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="escalation-channel-config">
+                                            <span class="options-label">升级渠道：</span>
+                                            <label><input type="checkbox" checked> 企微</label>
+                                            <label><input type="checkbox" checked> 电话</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 添加按钮 -->
+                            <div class="escalation-add-row" onclick="addEscalationLevel()">
+                                <i class="fa-solid fa-plus"></i> 添加下一级升级策略
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        <!-- 底部 -->
+        <div class="drawer-footer">
+            <button class="btn-cancel" onclick="document.querySelector('.drawer-overlay').style.display='none'; document.querySelector('.drawer-container').style.display='none';">取消</button>
+            <button class="btn-submit">保存配置</button>
+        </div>
+    </div>
+
+    <script>
+        const MOCK_USERS = [
+            { id: 'u_wangrui', name: '王蕊 (ruiwang1)' },
+            { id: 'u_wangbo', name: '王博 (bowang2)' },
+            { id: 'u_lilei', name: '李雷 (lilei)' },
+            { id: 'u_hanmeimei', name: '韩梅梅 (hmm)' },
+            { id: 'u_zhangsan', name: '张三 (zhangsan)' }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // 初始化所有的选人组件
+            document.querySelectorAll('.escalation-user-select').forEach(container => {
+                renderSelectTags(container);
+                initDropdownList(container);
+            });
+
+            initSwitches();
+
+            // 点击外部关闭下拉框
+            document.addEventListener('click', (event) => {
+                document.querySelectorAll('.user-dropdown.show').forEach(dropdown => {
+                    dropdown.classList.remove('show');
+                });
+            });
+        });
+
+        // ========== 新版接收人规则交互 ==========
+        function toggleRuleOptions(checkbox) {
+            const row = checkbox.closest('.rule-row');
+            const options = row.querySelector('.rule-options');
+            if (checkbox.checked) {
+                options.classList.remove('disabled-options');
+            } else {
+                options.classList.add('disabled-options');
+            }
+        }
+
+        function togglePolicy(checkbox) {
+            const card = checkbox.closest('.policy-card');
+            if (checkbox.checked) {
+                card.classList.add('active-border');
+            } else {
+                card.classList.remove('active-border');
+            }
+        }
+
+        function initSwitches() {
+            const switches = document.querySelectorAll('.switch input[type="checkbox"]');
+            switches.forEach(sw => togglePolicy(sw));
+        }
+
+        // ========== 通用多选人员逻辑 (复用) ==========
+        function initDropdownList(container) {
+            const list = container.querySelector('.user-list');
+            list.innerHTML = '';
+            let selected = JSON.parse(container.getAttribute('data-selected') || '[]');
+            
+            MOCK_USERS.forEach(user => {
+                const isSelected = selected.includes(user.id);
+                const li = document.createElement('li');
+                li.className = `user-item ${isSelected ? 'selected' : ''}`;
+                li.onclick = () => {
+                    let currentSelected = JSON.parse(container.getAttribute('data-selected') || '[]');
+                    if (currentSelected.includes(user.id)) {
+                        currentSelected = currentSelected.filter(id => id !== user.id);
+                    } else {
+                        currentSelected.push(user.id);
+                    }
+                    container.setAttribute('data-selected', JSON.stringify(currentSelected));
+                    renderSelectTags(container);
+                    initDropdownList(container); // 重新渲染列表选中状态
+                };
+                li.innerHTML = `<span>${user.name}</span><i class="fa-solid fa-check check-icon"></i>`;
+                list.appendChild(li);
+            });
+        }
+
+        function renderSelectTags(container) {
+            const wrapper = container.querySelector('.tags-wrapper');
+            wrapper.innerHTML = '';
+            let selected = JSON.parse(container.getAttribute('data-selected') || '[]');
+            selected.forEach(userId => {
+                const user = MOCK_USERS.find(u => u.id === userId);
+                if (user) {
+                    const tag = document.createElement('div');
+                    tag.className = 'tag';
+                    tag.innerHTML = `${user.name} <i class="fa-solid fa-xmark" onclick="removeSelectedUser(this, '${user.id}', event)"></i>`;
+                    wrapper.appendChild(tag);
+                }
+            });
+        }
+
+        function removeSelectedUser(iconEl, userId, event) {
+            event.stopPropagation();
+            const container = iconEl.closest('.escalation-user-select');
+            let selected = JSON.parse(container.getAttribute('data-selected') || '[]');
+            selected = selected.filter(id => id !== userId);
+            container.setAttribute('data-selected', JSON.stringify(selected));
+            renderSelectTags(container);
+            initDropdownList(container);
+        }
+
+        function openDropdown(btn, event) {
+            event.stopPropagation();
+            // 关闭其他
+            document.querySelectorAll('.user-dropdown.show').forEach(d => d.classList.remove('show'));
+            const container = btn.closest('.escalation-user-select');
+            const dropdown = container.querySelector('.user-dropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // ========== 升级策略动态添加 ==========
+        function addEscalationLevel() {
+            const container = document.getElementById('escalationRulesContainer');
+            const currentCount = container.querySelectorAll('.escalation-row').length;
+            const nextLevel = currentCount + 1;
+
+            const newRow = document.createElement('div');
+            newRow.className = 'escalation-row';
+            newRow.innerHTML = `
+                <span class="row-num">${nextLevel}</span>
+                <div class="row-content">
+                    <div class="escalation-condition">
+                        再过 <input type="number" value="15" class="input-mini"> 分钟后仍未处理，升级发送给：
+                        <div class="escalation-user-select" data-selected="[]">
+                            <div class="tags-wrapper"></div>
+                            <span class="add-link" onclick="openDropdown(this, event)">+ 选择人员</span>
+                            <div class="user-dropdown" onclick="event.stopPropagation()">
+                                <ul class="user-list"></ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="escalation-channel-config">
+                        <span class="options-label">升级渠道：</span>
+                        <label><input type="checkbox" checked> 企微</label>
+                        <label><input type="checkbox" checked> 电话</label>
+                    </div>
+                </div>
+                <i class="fa-regular fa-trash-can btn-delete" onclick="deleteEscalationLevel(this)"></i>
+            `;
+            
+            container.appendChild(newRow);
+
+            // 初始化新组件
+            const newSelect = newRow.querySelector('.escalation-user-select');
+            renderSelectTags(newSelect);
+            initDropdownList(newSelect);
+        }
+
+        function deleteEscalationLevel(btn) {
+            const row = btn.closest('.escalation-row');
+            row.remove();
+            
+            // 重新排序
+            const container = document.getElementById('escalationRulesContainer');
+            const rows = container.querySelectorAll('.escalation-row');
+            rows.forEach((row, index) => {
+                row.querySelector('.row-num').innerText = index + 1;
+            });
+        }
+    </script>
+</body>
+</html>

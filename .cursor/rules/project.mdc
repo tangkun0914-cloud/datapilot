@@ -1,6 +1,6 @@
 ---
 description: DataPilot DataMap 项目全局规则 - 所有文件修改时自动生效（整合自 global-tech-stack.md）
-globs:
+globs: 
 alwaysApply: true
 ---
 
@@ -25,15 +25,18 @@ alwaysApply: true
 | 包管理器 | npm | - | 本项目使用 npm |
 | 语言 | JavaScript | - | 不使用 TypeScript，保持 JSDoc 习惯 |
 
-## 目录结构约定
-```
+## 目录结构约定 (Domain-Driven)
+```text
 src/
-├── components/    # 全局共享组件（PascalCase 命名）
-├── pages/         # 页面级组件（按功能域分目录，入口为 index.vue）
-├── services/      # API 服务层（每个领域一个文件）
-├── mock/          # Mock 数据（仅开发阶段，通过服务层动态加载）
-├── router/        # 路由配置
-└── assets/        # 静态资源
+├── components/       # 全局共享组件（PascalCase 命名，如 AppLayout, Copilot）
+├── pages/            # 页面级组件（按领域划分）
+│   ├── DataMap/      # 数据地图模块
+│   └── Monitoring/   # 监控运维模块
+├── services/         # API 服务层（按领域划分，如 DataMap/, Monitoring/）
+├── mock/             # Mock 数据（按领域划分）
+├── stores/           # 状态管理（按领域划分）
+├── router/           # 路由配置
+└── assets/           # 静态资源
 ```
 
 ## 命名规范
@@ -42,7 +45,7 @@ src/
 | 类型 | 规范 | 示例 |
 |------|------|------|
 | 组件文件 | PascalCase | `SearchBar.vue`、`LineageTab.vue` |
-| 页面入口 | index.vue | `pages/Home/index.vue` |
+| 页面入口 | index.vue | `pages/DataMap/Home/index.vue` |
 | 服务文件 | camelCase | `tableService.js`、`searchService.js` |
 | Mock 文件 | camelCase | `detail.js`、`lineage.js` |
 
@@ -63,14 +66,14 @@ src/
 
 ### API 与 Mock 模式
 - **严禁在页面/组件中直接导入 mock 数据**
-- 所有数据获取必须通过 `src/services/` 服务层
+- 所有数据获取必须通过 `src/services/模块名/` 服务层
 - 服务层使用 `import.meta.env.VITE_USE_MOCK === 'true'` 判断 mock 模式
 ```js
 // 正确
-import { getTableByFqn } from '@/services/tableService.js'
+import { getTableByFqn } from '@/services/DataMap/tableService.js'
 
 // 错误 — 禁止
-import { tableDetail } from '@/mock/detail.js'
+import { tableDetail } from '@/mock/DataMap/detail.js'
 ```
 
 ### 响应式与路由

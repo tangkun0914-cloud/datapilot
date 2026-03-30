@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DataPilot 数据地图 - 创新版 MVP 原型</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f5f7fa;
+      color: #1f2937;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 顶部导航栏 (继承全局蓝白风格) */
+    .top-nav {
+      height: 56px;
+      background: #001529;
+      color: white;
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      flex-shrink: 0;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      z-index: 10;
+    }
+
+    .logo {
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-right: 40px;
+    }
+
+    .nav-menu {
+      display: flex;
+      gap: 24px;
+      font-size: 14px;
+      color: rgba(255,255,255,0.65);
+    }
+
+    .nav-item.active {
+      color: white;
+      font-weight: 500;
+    }
+
+    /* 主容器 */
+    .main-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* 左侧边栏 */
+    .sidebar {
+      width: 280px;
+      background: white;
+      border-right: 1px solid #e5e7eb;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .new-chat-btn {
+      width: 100%;
+      padding: 10px;
+      background: #1677ff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+
+    .new-chat-btn:hover {
+      background: #4096ff;
+    }
+
+    .sidebar-tabs {
+      display: flex;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .sidebar-tab {
+      flex: 1;
+      text-align: center;
+      padding: 12px 0;
+      font-size: 14px;
+      color: #6b7280;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .sidebar-tab.active {
+      color: #1677ff;
+      font-weight: 500;
+    }
+
+    .sidebar-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 20%;
+      right: 20%;
+      height: 2px;
+      background: #1677ff;
+    }
+
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    /* 历史记录列表 */
+    .history-group {
+      margin-bottom: 20px;
+    }
+    .history-title {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-bottom: 8px;
+      padding-left: 8px;
+    }
+    .history-item {
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #4b5563;
+      cursor: pointer;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .history-item:hover {
+      background: #f3f4f6;
+    }
+    .history-item.active {
+      background: #e6f4ff;
+      color: #1677ff;
+    }
+
+    /* 工作台面板 */
+    .workspace-panel {
+      display: none;
+    }
+    .workspace-panel.active {
+      display: block;
+    }
+    .workspace-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .workspace-card:hover {
+      border-color: #1677ff;
+      box-shadow: 0 2px 8px rgba(22,119,255,0.1);
+    }
+    .ws-card-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: #1f2937;
+      margin-bottom: 4px;
+    }
+    .ws-card-desc {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    /* 主对话区 */
+    .chat-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      background: #f5f7fa;
+    }
+
+    .chat-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 欢迎界面 */
+    .welcome-screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      max-width: 720px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .welcome-logo {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .welcome-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 32px;
+    }
+
+    .welcome-input-wrapper {
+      width: 100%;
+      position: relative;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      border: 1px solid #e5e7eb;
+      transition: all 0.3s;
+    }
+
+    .welcome-input-wrapper:focus-within {
+      border-color: #1677ff;
+      box-shadow: 0 4px 16px rgba(22,119,255,0.15);
+    }
+
+    .welcome-input {
+      width: 100%;
+      min-height: 120px;
+      padding: 16px 60px 16px 20px;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      resize: none;
+      outline: none;
+      background: transparent;
+    }
+
+    .send-btn {
+      position: absolute;
+      right: 12px;
+      bottom: 12px;
+      width: 36px;
+      height: 36px;
+      background: #1677ff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: background 0.2s;
+    }
+
+    .send-btn:disabled {
+      background: #d1d5db;
+      cursor: not-allowed;
+    }
+
+    .send-btn:hover:not(:disabled) {
+      background: #4096ff;
+    }
+
+    .suggestion-tags {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .suggestion-tag {
+      padding: 8px 16px;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 20px;
+      font-size: 13px;
+      color: #4b5563;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .suggestion-tag:hover {
+      border-color: #1677ff;
+      color: #1677ff;
+    }
+
+    /* 消息流区域 */
+    .messages-container {
+      display: none;
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+      padding-bottom: 20px;
+    }
+
+    .message {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .message.user {
+      flex-direction: row-reverse;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #1677ff;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .message.ai .avatar {
+      background: #e6f4ff;
+      color: #1677ff;
+    }
+
+    .msg-bubble {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .message.user .msg-bubble {
+      background: #1677ff;
+      color: white;
+      border-top-right-radius: 4px;
+    }
+
+    .message.ai .msg-bubble {
+      background: white;
+      border: 1px solid #e5e7eb;
+      color: #1f2937;
+      border-top-left-radius: 4px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+
+    /* 结果卡片 */
+    .result-card {
+      margin-top: 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #fafafa;
+      padding: 16px;
+    }
+
+    .rc-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .rc-title {
+      font-weight: 600;
+      color: #1677ff;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .rc-tag {
+      font-size: 11px;
+      padding: 2px 6px;
+      background: #e5e7eb;
+      border-radius: 4px;
+      color: #4b5563;
+    }
+
+    .rc-desc {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 12px;
+    }
+
+    .rc-meta {
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+
+    /* 底部输入区 */
+    .bottom-input-area {
+      display: none;
+      padding: 16px 24px 24px;
+      background: #f5f7fa;
+    }
+
+    .bottom-input-container {
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .bottom-input-container:focus-within {
+      border-color: #1677ff;
+    }
+
+    .bottom-input {
+      width: 100%;
+      min-height: 56px;
+      max-height: 150px;
+      padding: 16px 60px 16px 20px;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      resize: none;
+      outline: none;
+    }
+
+    .intent-bar {
+      position: absolute;
+      top: -36px;
+      left: 0;
+      display: flex;
+      gap: 8px;
+    }
+
+    .intent-btn {
+      background: white;
+      border: 1px solid #e5e7eb;
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      color: #4b5563;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+    .intent-btn:hover {
+      color: #1677ff;
+      border-color: #1677ff;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- 顶部导航 -->
+  <div class="top-nav">
+    <div class="logo">🧭 DataPilot 数据地图</div>
+    <div class="nav-menu">
+      <div class="nav-item active">探索发现</div>
+      <div class="nav-item">数据专题</div>
+      <div class="nav-item">我的库表</div>
+    </div>
+  </div>
+
+  <div class="main-container">
+    <!-- 左侧边栏 -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <button class="new-chat-btn" onclick="resetChat()">➕ 新建对话</button>
+      </div>
+      
+      <div class="sidebar-tabs">
+        <div class="sidebar-tab active" onclick="switchTab('history', this)">历史对话</div>
+        <div class="sidebar-tab" onclick="switchTab('workspace', this)">工作台</div>
+      </div>
+
+      <div class="sidebar-content">
+        <!-- 历史记录 -->
+        <div id="historyPanel">
+          <div class="history-group">
+            <div class="history-title">今天</div>
+            <div class="history-item active">查找订单明细表</div>
+            <div class="history-item">分析用户画像血缘</div>
+          </div>
+          <div class="history-group">
+            <div class="history-title">昨天</div>
+            <div class="history-item">申请 dwd_user_log 权限</div>
+          </div>
+        </div>
+
+        <!-- 工作台 -->
+        <div id="workspacePanel" class="workspace-panel">
+          <div class="history-title" style="margin-bottom: 12px;">📌 推荐数据表</div>
+          
+          <div class="workspace-card" onclick="fillInput('查看 ods_order_detail 的详情')">
+            <div class="ws-card-title">ods_order_detail</div>
+            <div class="ws-card-desc">最近 7 天高频访问</div>
+          </div>
+          
+          <div class="workspace-card" onclick="fillInput('查看 dws_user_profile 的详情')">
+            <div class="ws-card-title">dws_user_profile</div>
+            <div class="ws-card-desc">同组同事都在看</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 主对话区 -->
+    <div class="chat-main">
+      <div class="chat-content" id="chatContent">
+        
+        <!-- 欢迎界面 -->
+        <div class="welcome-screen" id="welcomeScreen">
+          <div class="welcome-logo">🤖</div>
+          <div class="welcome-title">你好，我是数据地图智能助手</div>
+          
+          <div class="welcome-input-wrapper">
+            <textarea class="welcome-input" id="welcomeInput" placeholder="描述你的业务场景，或输入表名/字段名... (支持 @ 提及表名)"></textarea>
+            <button class="send-btn" id="welcomeSendBtn" onclick="sendMessage('welcome')">↑</button>
+          </div>
+
+          <div class="suggestion-tags">
+            <div class="suggestion-tag" onclick="fillInput('找一下用户订单相关的 ODS 层表')">🔍 找一下用户订单相关的 ODS 层表</div>
+            <div class="suggestion-tag" onclick="fillInput('@ods_order_detail 的直接下游有哪些？')">🔗 @ods_order_detail 的直接下游有哪些？</div>
+            <div class="suggestion-tag" onclick="fillInput('查看我负责的表')">📊 查看我负责的表</div>
+          </div>
+        </div>
+
+        <!-- 消息流容器 -->
+        <div class="messages-container" id="messagesContainer">
+          <!-- 动态插入消息 -->
+        </div>
+
+      </div>
+
+      <!-- 底部输入区 -->
+      <div class="bottom-input-area" id="bottomInputArea">
+        <div class="bottom-input-container">
+          <div class="intent-bar">
+            <button class="intent-btn" onclick="fillInput('帮我找表：')">🔎 找表</button>
+            <button class="intent-btn" onclick="fillInput('查看详情：')">📊 看详情</button>
+            <button class="intent-btn" onclick="fillInput('血缘分析：')">🔗 看血缘</button>
+          </div>
+          <textarea class="bottom-input" id="bottomInput" placeholder="继续追问... (支持 @ 提及表名)"></textarea>
+          <button class="send-btn" id="bottomSendBtn" onclick="sendMessage('bottom')">↑</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Tab 切换逻辑
+    function switchTab(tabId, element) {
+      document.querySelectorAll('.sidebar-tab').forEach(el => el.classList.remove('active'));
+      element.classList.add('active');
+      
+      if (tabId === 'history') {
+        document.getElementById('historyPanel').style.display = 'block';
+        document.getElementById('workspacePanel').classList.remove('active');
+      } else {
+        document.getElementById('historyPanel').style.display = 'none';
+        document.getElementById('workspacePanel').classList.add('active');
+      }
+    }
+
+    // 填充输入框
+    function fillInput(text) {
+      const welcome = document.getElementById('welcomeScreen');
+      if (welcome.style.display !== 'none') {
+        const input = document.getElementById('welcomeInput');
+        input.value = text;
+        input.focus();
+        updateBtnState('welcome');
+      } else {
+        const input = document.getElementById('bottomInput');
+        input.value = text;
+        input.focus();
+        updateBtnState('bottom');
+      }
+    }
+
+    // 监听输入框变化，控制按钮状态
+    document.getElementById('welcomeInput').addEventListener('input', () => updateBtnState('welcome'));
+    document.getElementById('bottomInput').addEventListener('input', () => updateBtnState('bottom'));
+
+    // 回车发送
+    document.getElementById('welcomeInput').addEventListener('keydown', (e) => handleEnter(e, 'welcome'));
+    document.getElementById('bottomInput').addEventListener('keydown', (e) => handleEnter(e, 'bottom'));
+
+    function handleEnter(e, type) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage(type);
+      }
+    }
+
+    function updateBtnState(type) {
+      const input = document.getElementById(type + 'Input');
+      const btn = document.getElementById(type + 'SendBtn');
+      btn.disabled = input.value.trim().length === 0;
+    }
+
+    // 发送消息逻辑
+    function sendMessage(type) {
+      const input = document.getElementById(type + 'Input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      // 切换视图状态
+      document.getElementById('welcomeScreen').style.display = 'none';
+      document.getElementById('messagesContainer').style.display = 'block';
+      document.getElementById('bottomInputArea').style.display = 'block';
+
+      const container = document.getElementById('messagesContainer');
+
+      // 渲染用户消息
+      container.innerHTML += `
+        <div class="message user">
+          <div class="avatar">我</div>
+          <div class="msg-bubble">${text}</div>
+        </div>
+      `;
+
+      input.value = '';
+      updateBtnState(type);
+      scrollToBottom();
+
+      // 模拟 AI 思考与回复
+      setTimeout(() => {
+        renderAIResponse(container, text);
+        scrollToBottom();
+      }, 600);
+    }
+
+    function renderAIResponse(container, userText) {
+      let responseHtml = '';
+      
+      if (userText.includes('下游') || userText.includes('血缘')) {
+        responseHtml = `
+          为您找到 <b>ods_order_detail</b> 的下游链路，共涉及 3 张核心表：
+          <div class="result-card">
+            <div class="rc-header">
+              <span class="rc-title">🔗 血缘分析图谱</span>
+            </div>
+            <div style="height: 120px; background: #f3f4f6; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #9ca3af; margin-top: 8px;">
+              [此处将渲染 G6 血缘关系图]
+            </div>
+          </div>
+        `;
+      } else {
+        responseHtml = `
+          为您找到以下相关的 ODS 层表：
+          <div class="result-card">
+            <div class="rc-header">
+              <span class="rc-title">ods_order_detail</span>
+              <span class="rc-tag">ODS</span>
+              <span class="rc-tag">Hive</span>
+            </div>
+            <div class="rc-desc">记录所有订单的明细信息，包含订单状态、支付金额等，T+1 更新。</div>
+            <div class="rc-meta">
+              <span>👤 负责人: 张三</span>
+              <span>🔥 热度: 9,231</span>
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML += `
+        <div class="message ai">
+          <div class="avatar">🤖</div>
+          <div class="msg-bubble">${responseHtml}</div>
+        </div>
+      `;
+    }
+
+    function scrollToBottom() {
+      const chatContent = document.getElementById('chatContent');
+      chatContent.scrollTop = chatContent.scrollHeight;
+    }
+
+    function resetChat() {
+      document.getElementById('welcomeScreen').style.display = 'flex';
+      document.getElementById('messagesContainer').style.display = 'none';
+      document.getElementById('bottomInputArea').style.display = 'none';
+      document.getElementById('messagesContainer').innerHTML = '';
+      document.getElementById('welcomeInput').value = '';
+      updateBtnState('welcome');
+    }
+
+    // 初始化按钮状态
+    updateBtnState('welcome');
+    updateBtnState('bottom');
+  </script>
+</body>
+</html>

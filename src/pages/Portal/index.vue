@@ -11,18 +11,18 @@
     </header>
 
     <div class="portal-body">
-      <!-- 产品交互 -->
-      <section class="portal-section">
+      <!-- 产品矩阵 -->
+      <section class="portal-section" v-for="prod in products" :key="prod.key">
         <div class="section-head">
           <h2 class="section-title">
-            <ThunderboltOutlined class="section-icon product" />
-            产品交互
+            <component :is="prod.icon" class="section-icon" :style="{ color: prod.color }" />
+            {{ prod.title }}
           </h2>
-          <p class="section-desc">数据地图各页面入口，与真实路由一致</p>
+          <p class="section-desc">{{ prod.desc }}</p>
         </div>
         <div class="card-grid">
           <a-card
-            v-for="p in productEntries"
+            v-for="p in prod.entries"
             :key="p.to"
             class="portal-card"
             :hoverable="true"
@@ -77,6 +77,12 @@ import {
   ThunderboltOutlined,
   AppstoreOutlined,
   RightOutlined,
+  DatabaseOutlined,
+  DashboardOutlined,
+  AlertOutlined,
+  FileProtectOutlined,
+  NodeIndexOutlined,
+  BellOutlined,
 } from '@ant-design/icons-vue'
 
 const router = useRouter()
@@ -85,49 +91,97 @@ function go(path) {
   router.push(path)
 }
 
-const productEntries = [
+const products = [
   {
-    title: '数据地图首页',
-    desc: '智能检索、最近访问、平台概览',
-    to: '/home',
-    icon: HomeOutlined,
+    key: 'datamap',
+    title: '数据地图 (Data Map)',
+    desc: '数据资产的发现、理解与管理',
+    icon: DatabaseOutlined,
+    color: '#0ea5e9',
+    entries: [
+      {
+        title: '数据地图首页',
+        desc: '智能检索、最近访问、平台概览',
+        to: '/home',
+        icon: HomeOutlined,
+      },
+      {
+        title: '资产检索',
+        desc: '筛选、搜索、列表/表格结果',
+        to: '/search',
+        icon: SearchOutlined,
+      },
+      {
+        title: '资产详情（示例）',
+        desc: '表详情、Tab、血缘等',
+        to: '/detail/example',
+        icon: FileSearchOutlined,
+      },
+      {
+        title: '数据专题',
+        desc: '专题列表与卡片',
+        to: '/topics',
+        icon: FolderOutlined,
+      },
+      {
+        title: '专题详情（示例）',
+        desc: '专题内表管理与说明',
+        to: '/topics/1',
+        icon: FolderOpenOutlined,
+      },
+      {
+        title: '我的库表',
+        desc: '负责表列表、转让',
+        to: '/mytables',
+        icon: TableOutlined,
+      },
+      {
+        title: 'AI Copilot',
+        desc: '全屏对话与快捷能力',
+        to: '/copilot',
+        icon: RobotOutlined,
+      },
+    ]
   },
   {
-    title: '资产检索',
-    desc: '筛选、搜索、列表/表格结果',
-    to: '/search',
-    icon: SearchOutlined,
-  },
-  {
-    title: '资产详情（示例）',
-    desc: '表详情、Tab、血缘等',
-    to: '/detail/example',
-    icon: FileSearchOutlined,
-  },
-  {
-    title: '数据专题',
-    desc: '专题列表与卡片',
-    to: '/topics',
-    icon: FolderOutlined,
-  },
-  {
-    title: '专题详情（示例）',
-    desc: '专题内表管理与说明',
-    to: '/topics/1',
-    icon: FolderOpenOutlined,
-  },
-  {
-    title: '我的库表',
-    desc: '负责表列表、转让',
-    to: '/mytables',
-    icon: TableOutlined,
-  },
-  {
-    title: 'AI Copilot',
-    desc: '全屏对话与快捷能力',
-    to: '/copilot',
-    icon: RobotOutlined,
-  },
+    key: 'dataops',
+    title: '监控运维 (DataOps)',
+    desc: '数据质量监控、告警与影响评估',
+    icon: DashboardOutlined,
+    color: '#10b981',
+    entries: [
+      {
+        title: '告警列表',
+        desc: '质量监控告警事件处理',
+        to: '/monitoring/alerts',
+        icon: AlertOutlined,
+      },
+      {
+        title: '通知策略',
+        desc: '告警路由与通知状态管理',
+        to: '/monitoring/strategies',
+        icon: BellOutlined,
+      },
+      {
+        title: '手机端落地页（示例）',
+        desc: '移动端告警详情展示',
+        to: '/monitoring/mobile/alert/1',
+        icon: FileProtectOutlined,
+      },
+      {
+        title: '监控大盘 (开发中)',
+        desc: '全链路监控视图与核心指标',
+        to: '/monitoring/dashboard',
+        icon: DashboardOutlined,
+      },
+      {
+        title: '影响评估 (开发中)',
+        desc: 'DataOps 影响评估与智能协同',
+        to: '/monitoring/impact',
+        icon: NodeIndexOutlined,
+      },
+    ]
+  }
 ]
 </script>
 
@@ -197,10 +251,6 @@ const productEntries = [
 
 .section-icon {
   font-size: 20px;
-}
-
-.section-icon.product {
-  color: #ea580c;
 }
 
 .section-icon.design {

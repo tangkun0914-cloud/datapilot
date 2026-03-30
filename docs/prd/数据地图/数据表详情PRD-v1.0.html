@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>数据表详情页产品需求文档 v1.0</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: #fff; color: #1f2329; line-height: 1.8; padding: 48px 64px; max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  h2 { font-size: 20px; font-weight: 700; margin: 40px 0 16px; padding-bottom: 8px; border-bottom: 1px solid #e5e6eb; }
+  h3 { font-size: 16px; font-weight: 600; margin: 24px 0 12px; }
+  h4 { font-size: 14px; font-weight: 600; margin: 16px 0 8px; }
+  p { font-size: 14px; margin-bottom: 12px; }
+  ul, ol { font-size: 14px; padding-left: 24px; margin-bottom: 12px; }
+  li { margin-bottom: 6px; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+  th, td { border: 1px solid #dee0e3; padding: 10px 12px; text-align: left; vertical-align: top; }
+  th { background: #f5f6f7; font-weight: 600; color: #1f2329; }
+  td { color: #444; }
+  .meta-table { width: auto; margin-bottom: 32px; }
+  .meta-table td { border: none; padding: 4px 24px 4px 0; color: #666; font-size: 13px; }
+  .meta-table td:first-child { color: #999; width: 80px; }
+  .callout { background: #f0f5ff; border-left: 3px solid #3370ff; border-radius: 4px; padding: 12px 16px; margin: 16px 0; font-size: 13px; color: #1f2329; }
+  .callout-warn { background: #fff7e6; border-left-color: #ff8800; }
+  .callout-green { background: #f0fff4; border-left-color: #10b981; }
+  .divider { border: none; border-top: 1px solid #e5e6eb; margin: 40px 0; }
+  .scene-card { background: #fafbfc; border: 1px solid #eee; border-radius: 8px; padding: 16px 20px; margin-bottom: 16px; }
+  .scene-card strong { color: #2563eb; }
+  code { background: #f4f5f5; padding: 2px 6px; border-radius: 3px; font-size: 12px; color: #d63384; }
+</style>
+</head>
+<body>
+
+<h1>数据表详情页产品需求文档 v1.0</h1>
+
+<table class="meta-table">
+  <tr><td>产品名称</td><td>DataPilot 数据地图 - 数据表详情</td></tr>
+  <tr><td>文档版本</td><td>v1.0</td></tr>
+  <tr><td>产品负责人</td><td>王蕊</td></tr>
+  <tr><td>目标读者</td><td>前端研发、后端研发、测试、设计</td></tr>
+  <tr><td>关联文档</td><td>《资产检索 PRD v1.0》《Copilot 产品需求文档 v1.0》《数据地图首页重构 v1.0》</td></tr>
+  <tr><td>最后更新</td><td>2026-03-24</td></tr>
+</table>
+
+<hr class="divider">
+
+<h2>1. 背景与目标</h2>
+
+<h3>1.1 项目背景</h3>
+<p>
+  数据表详情页是数据地图中信息密度最高的页面，承载"查看元数据 → 理解表结构 → 评估数据质量 → 确认血缘关系 → 决策是否使用"的核心用户路径。用户从搜索列表、Copilot 推荐、首页快捷入口等多条路径进入详情页后，需要在一个页面内获取关于目标表的全方位信息，从而决定是否使用该表进行开发或分析。
+</p>
+<p>
+  本文档定义数据表详情页的完整功能、交互细节和技术契约，供研发团队评审和开发。
+</p>
+
+<h3>1.2 产品目标</h3>
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th style="width:160px;">目标</th>
+    <th>说明</th>
+    <th style="width:120px;">衡量指标</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>一站式信息获取</td>
+    <td>在一个页面内提供表的基础元数据、字段详情、数据预览、脚本信息、生产信息、血缘关系 6 大维度信息，减少用户跨页面查找</td>
+    <td>页面停留时长 > 60s</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>快速理解表结构</td>
+    <td>字段详情支持搜索过滤、主键高亮、分区字段分组，并一键生成 SELECT / DDL 语句</td>
+    <td>SQL 复制使用率 > 30%</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>数据质量可感知</td>
+    <td>数据探查提供字段级别的 NULL 率、唯一值、空字符串、枚举 Top5 等统计指标，帮助用户快速判断数据质量</td>
+    <td>探查功能使用率 > 20%</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>血缘关系可视化</td>
+    <td>支持表级 + 字段级双层血缘可视化，按需逐层展开上下游，帮助用户理解数据流转链路</td>
+    <td>血缘图展开操作率 > 40%</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>生产健康可追溯</td>
+    <td>展示调度任务信息和执行记录，让用户了解数据新鲜度和产出稳定性</td>
+    <td>生产信息 Tab 访问率 > 15%</td>
+  </tr>
+</table>
+
+<h3>1.3 功能边界</h3>
+<div class="callout">
+  <strong>本期包含：</strong><br>
+  页头区（面包屑 + 表名 + 统计指标 + 收藏 + 权限申请）| 信息侧边栏（基础信息 / 业务信息 / Tableau 数据源 3 个折叠面板）| 字段详情 Tab（非分区/分区分组 + 搜索 + SELECT/DDL 生成）| 预览探查 Tab（数据预览 + 数据探查卡片/列表双视图 + 新建探查任务）| 脚本信息 Tab（DDL 展示 + 全屏 + 复制）| 生产信息 Tab（概览条 + 执行记录表）| 血缘关系 Tab（表级/字段级 G6 可视化 + 逐层展开 + 搜索过滤）
+</div>
+<div class="callout callout-warn">
+  <strong>本期不包含：</strong><br>
+  表级权限管理详情 | 数据质量规则配置 | 血缘编辑/手动标注 | 变更历史对比（Diff 视图）| 真实后端对接（本期 Mock）
+</div>
+
+<hr class="divider">
+
+<h2>2. 用户场景</h2>
+
+<div class="scene-card">
+  <h4>场景一：从搜索结果进入详情</h4>
+  <p><strong>角色：</strong>数据开发工程师</p>
+  <p><strong>行为：</strong>在搜索结果页点击表名链接 → 进入详情页（URL: /detail/{fqn}）→ 左侧侧边栏快速扫描基础信息 → 切换到"字段详情"Tab 查看表结构 → 点击"生成 SELECT"复制查询语句到 IDE</p>
+  <p><strong>价值：</strong>从搜索到获取可用 SQL 的路径最短化</p>
+</div>
+
+<div class="scene-card">
+  <h4>场景二：数据质量评估</h4>
+  <p><strong>角色：</strong>数据分析师</p>
+  <p><strong>行为：</strong>进入详情页 → 切换到"预览探查"Tab → 先在"数据预览"模式查看样本数据 → 切换到"数据探查"模式 → 查看各字段的 NULL 率、唯一值比例等指标 → 发现某字段 NULL 率过高，决定换用其他表</p>
+  <p><strong>价值：</strong>在使用数据前快速了解数据质量，避免踩坑</p>
+</div>
+
+<div class="scene-card">
+  <h4>场景三：血缘链路追溯</h4>
+  <p><strong>角色：</strong>数据开发工程师</p>
+  <p><strong>行为：</strong>进入详情页 → 切换到"血缘关系"Tab → 查看当前表的上下游依赖 → 点击上游节点左侧"+"按钮逐层展开 → 切换到"字段级血缘" → 选择关键字段查看具体字段的数据流转路径</p>
+  <p><strong>价值：</strong>快速定位数据问题的上游根源或评估变更影响范围</p>
+</div>
+
+<div class="scene-card">
+  <h4>场景四：生产健康检查</h4>
+  <p><strong>角色：</strong>数据运维</p>
+  <p><strong>行为：</strong>进入详情页 → 切换到"生产信息"Tab → 查看调度任务概览（任务名、调度周期、时区、最近产出时间）→ 查看执行记录表，发现昨天任务失败 → 进一步排查原因</p>
+  <p><strong>价值：</strong>快速了解数据产出状态，及时发现异常</p>
+</div>
+
+<div class="scene-card">
+  <h4>场景五：表信息快速复制</h4>
+  <p><strong>角色：</strong>任意用户</p>
+  <p><strong>行为：</strong>进入详情页 → 点击页头表名旁的复制图标 → 复制"db.table_name"到剪贴板 → 在 IM/文档中粘贴分享 → 或切换到"脚本信息"Tab 复制完整 DDL</p>
+  <p><strong>价值：</strong>便捷获取表标识用于沟通协作</p>
+</div>
+
+<hr class="divider">
+
+<h2>3. 页面整体结构</h2>
+
+<table>
+  <tr>
+    <th style="width:160px;">区域</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>路由</td>
+    <td><code>/detail/:fqn</code>，fqn 为表的全限定名（如 hive.dwa_cn.dwa_cn_cus_df_complain_detail）</td>
+  </tr>
+  <tr>
+    <td>页面背景</td>
+    <td>var(--color-bg-page)，浅灰色</td>
+  </tr>
+  <tr>
+    <td>页头区（PageHeader）</td>
+    <td>
+      面包屑：首页 > 资产检索 > db.table_name<br>
+      标题区：数据库名.表名 + 复制按钮 + 中文名 Tag + 热度/浏览量统计 + 收藏按钮<br>
+      右侧操作区：「申请权限」按钮
+    </td>
+  </tr>
+  <tr>
+    <td>主体区（Flex 布局）</td>
+    <td>
+      左侧：InfoSidebar 信息侧边栏（30% 宽，min 260px，max 380px）<br>
+      右侧：Tab 内容区（flex: 1 自适应）
+    </td>
+  </tr>
+  <tr>
+    <td>Tab 内容区</td>
+    <td>
+      5 个 Tab 页签：字段详情 | 预览探查 | 脚本信息 | 生产信息 | 血缘关系<br>
+      默认激活「字段详情」Tab；路由变化时重置为默认 Tab
+    </td>
+  </tr>
+</table>
+
+<div class="callout">
+  <strong>布局特性：</strong>页面整体 height: 100vh，侧边栏和 Tab 内容区各自独立滚动（overflow-y: auto），页头固定不滚动，避免双层滚动条。
+</div>
+
+<hr class="divider">
+
+<h2>4. 页头区（PageHeader）</h2>
+
+<h3>4.1 面包屑导航</h3>
+<table>
+  <tr>
+    <th style="width:140px;">属性</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>层级</td>
+    <td>首页 → 资产检索 → 当前表名（db.table_name）</td>
+  </tr>
+  <tr>
+    <td>交互</td>
+    <td>前两级可点击跳转（/home、/search），末级为当前页不可点击</td>
+  </tr>
+  <tr>
+    <td>动态文案</td>
+    <td>末级文案从接口返回的 database.name + table.name 拼接</td>
+  </tr>
+</table>
+
+<h3>4.2 标题区</h3>
+<table>
+  <tr>
+    <th style="width:140px;">元素</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>数据库名</td>
+    <td>灰色弱化显示（opacity: 0.6），等宽字体（Fira Code），后接"."分隔符</td>
+  </tr>
+  <tr>
+    <td>表名</td>
+    <td>加粗显示（font-weight: 600），等宽字体</td>
+  </tr>
+  <tr>
+    <td>复制按钮</td>
+    <td>CopyOutlined 图标，点击复制"db.table_name"到剪贴板，成功提示"表名已复制到剪贴板"</td>
+  </tr>
+  <tr>
+    <td>中文名 Tag</td>
+    <td>灰色背景标签（#f1f5f9），展示 table.displayName</td>
+  </tr>
+</table>
+
+<h3>4.3 统计指标</h3>
+<table>
+  <tr>
+    <th style="width:140px;">指标</th>
+    <th style="width:100px;">图标</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>热度（查询次数）</td>
+    <td>FireFilled（红色）</td>
+    <td>近 30 天被查询/引用的次数，tooltip 显示"最近30天被查询/引用的次数"</td>
+  </tr>
+  <tr>
+    <td>浏览量</td>
+    <td>EyeOutlined（蓝色）</td>
+    <td>近 30 天被浏览的次数，tooltip 显示"最近30天被浏览的次数"</td>
+  </tr>
+</table>
+
+<h3>4.4 收藏与操作</h3>
+<table>
+  <tr>
+    <th style="width:140px;">元素</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>收藏按钮</td>
+    <td>
+      未收藏：StarOutlined 灰色 → hover 变金色<br>
+      已收藏：StarFilled 金色（#ffc53d）<br>
+      点击切换状态，tooltip 分别为"加入收藏"/"取消收藏"
+    </td>
+  </tr>
+  <tr>
+    <td>申请权限按钮</td>
+    <td>页头右侧，LockOutlined 图标 + "申请权限"文案，灰色边框按钮，hover 变蓝色</td>
+  </tr>
+</table>
+
+<hr class="divider">
+
+<h2>5. 信息侧边栏（InfoSidebar）</h2>
+
+<h3>5.1 布局规范</h3>
+<table>
+  <tr>
+    <th style="width:140px;">属性</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>宽度</td>
+    <td>30% 自适应，min-width: 260px，max-width: 380px</td>
+  </tr>
+  <tr>
+    <td>背景</td>
+    <td>白色卡片，圆角 12px，1px 边框 + 浅阴影</td>
+  </tr>
+  <tr>
+    <td>内部滚动</td>
+    <td>overflow-y: auto，独立于右侧内容区滚动</td>
+  </tr>
+  <tr>
+    <td>折叠组件</td>
+    <td>Ant Design Collapse，每个 Panel Header 左侧有 4px 蓝色竖线装饰</td>
+  </tr>
+</table>
+
+<h3>5.2 面板一：基础信息</h3>
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th style="width:100px;">字段</th>
+    <th style="width:160px;">数据来源</th>
+    <th>展示规则</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>表名</td>
+    <td>database.name + name</td>
+    <td>等宽字体加粗 + 复制按钮 + 下方灰色展示 displayName</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>数据源</td>
+    <td>serviceType</td>
+    <td>SourceTag 图标组件（16px）+ 类型文字（Hive/ClickHouse/MySQL 等）</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>数仓分层</td>
+    <td>tags（以"数仓分层."开头的 tagFQN）</td>
+    <td>蓝色 Tag（ODS/DWD/DWS/ADS/DIM/DWA）</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>负责人</td>
+    <td>owners[0].name</td>
+    <td>UserOutlined 图标 + 姓名</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>表类型</td>
+    <td>tableType</td>
+    <td>纯文本（如"内部表"）</td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>分区类型</td>
+    <td>partitionType</td>
+    <td>纯文本（如"天级分区"）</td>
+  </tr>
+  <tr>
+    <td>7</td>
+    <td>创建时间</td>
+    <td>createdAt（时间戳）</td>
+    <td>YYYY-MM-DD 格式，等宽字体灰色</td>
+  </tr>
+  <tr>
+    <td>8</td>
+    <td>更新时间</td>
+    <td>updatedAt（时间戳）</td>
+    <td>YYYY-MM-DD 格式，等宽字体灰色</td>
+  </tr>
+  <tr>
+    <td>9</td>
+    <td>数据量</td>
+    <td>profile.rowCount</td>
+    <td>千分位格式 + "行"后缀（如 125,000 行）</td>
+  </tr>
+  <tr>
+    <td>10</td>
+    <td>存储容量</td>
+    <td>profile.sizeInByte</td>
+    <td>自动转换为 KB/MB/GB（如 512.0 MB）</td>
+  </tr>
+</table>
+
+<h3>5.3 面板二：业务信息</h3>
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th style="width:100px;">字段</th>
+    <th style="width:160px;">数据来源</th>
+    <th>展示规则</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>业务域</td>
+    <td>domain.name</td>
+    <td>纯文本（如"催收域"）</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>所属主题</td>
+    <td>后端接口返回（本期 Mock）</td>
+    <td>纯文本（如"交易分析"）</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>表描述</td>
+    <td>description</td>
+    <td>独占一行，灰色背景区块，13px 字号，自动换行</td>
+  </tr>
+</table>
+
+<h3>5.4 面板三：Tableau 数据源（正式环境）</h3>
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th style="width:120px;">字段</th>
+    <th style="width:200px;">数据来源</th>
+    <th>展示规则</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>是否推送</td>
+    <td>tableauInfo.isPushed</td>
+    <td>Badge 组件：已推送（绿色 success）/ 未推送（灰色 default）</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>数据源名称</td>
+    <td>tableauInfo.dataSourceName</td>
+    <td>等宽字体，13px</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>最近状态</td>
+    <td>tableauInfo.lastExecStatus</td>
+    <td>成功（绿色）/ 失败（红色）/ 运行中（蓝色）</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>最近开始时间</td>
+    <td>tableauInfo.lastExecStartTime</td>
+    <td>YYYY-MM-DD HH:mm:ss 格式</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>最近结束时间</td>
+    <td>tableauInfo.lastExecEndTime</td>
+    <td>YYYY-MM-DD HH:mm:ss 格式</td>
+  </tr>
+</table>
+
+<hr class="divider">
+
+<h2>6. 字段详情 Tab（FieldDetailTab）</h2>
+
+<h3>6.1 功能概述</h3>
+<p>字段详情 Tab 是默认激活的 Tab，展示当前表的完整字段结构。字段按是否为分区字段分为两组展示，支持关键词搜索和 SQL 语句一键生成。</p>
+
+<h3>6.2 工具栏</h3>
+<table>
+  <tr>
+    <th style="width:140px;">元素</th>
+    <th style="width:100px;">位置</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>字段搜索框</td>
+    <td>左侧</td>
+    <td>InputSearch 组件，宽度 220px，placeholder "搜索字段"，按字段名和描述模糊匹配，实时过滤</td>
+  </tr>
+  <tr>
+    <td>生成 SELECT</td>
+    <td>右侧</td>
+    <td>CodeOutlined 图标 + 文案，点击弹出 Modal 展示生成的 SELECT 语句</td>
+  </tr>
+  <tr>
+    <td>生成 DDL</td>
+    <td>右侧</td>
+    <td>FileTextOutlined 图标 + 文案，点击弹出 Modal 展示生成的 DDL 语句</td>
+  </tr>
+</table>
+
+<h3>6.3 字段表格</h3>
+
+<h4>分组规则</h4>
+<ul>
+  <li><strong>非分区字段</strong>：字段名不在 [dt, ds, pt, partition_date] 列表中的字段</li>
+  <li><strong>分区字段</strong>：字段名在上述列表中的字段，单独展示在下方分组</li>
+  <li>每组标题左侧有 3px 蓝色竖线装饰</li>
+  <li>若无分区字段，则不展示分区字段分组</li>
+</ul>
+
+<h4>表格列定义</h4>
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th style="width:100px;">列名</th>
+    <th style="width:80px;">宽度</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>序号</td>
+    <td>60px</td>
+    <td>ordinalPosition 字段值，居中对齐，灰色等宽字体</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>字段名</td>
+    <td>160px</td>
+    <td>
+      等宽字体 13px<br>
+      主键字段前显示 KeyOutlined 图标（金色 #f59e0b）+ 加粗文字<br>
+      主键判断：column.constraint === 'PRIMARY_KEY'
+    </td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>类型</td>
+    <td>110px</td>
+    <td>
+      展示数据类型，有长度时拼接（如 VARCHAR(64)、DECIMAL(18,2)）<br>
+      浅蓝色背景标签样式（#f1f5f9 背景 + #0ea5e9 文字），等宽字体
+    </td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>描述</td>
+    <td>auto（flex）</td>
+    <td>灰色文字 13px，超长自动省略（ellipsis）</td>
+  </tr>
+</table>
+
+<h3>6.4 SQL 生成弹窗</h3>
+
+<h4>SELECT 语句弹窗</h4>
+<table>
+  <tr>
+    <th style="width:140px;">属性</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>弹窗宽度</td>
+    <td>640px（支持全屏切换至 100%）</td>
+  </tr>
+  <tr>
+    <td>生成规则</td>
+    <td>
+      <code>SELECT</code> + 所有字段（每行一个，反引号包裹）<br>
+      <code>FROM db.table_name</code><br>
+      <code>WHERE dt = '{最新分区}'</code><br>
+      <code>LIMIT 100;</code>
+    </td>
+  </tr>
+  <tr>
+    <td>代码块样式</td>
+    <td>深色背景（#1e293b），浅色文字（#e2e8f0），等宽字体</td>
+  </tr>
+  <tr>
+    <td>操作按钮</td>
+    <td>右上角：复制按钮（CopyOutlined）+ 全屏切换按钮（FullscreenOutlined）</td>
+  </tr>
+</table>
+
+<h4>DDL 语句弹窗</h4>
+<table>
+  <tr>
+    <th style="width:140px;">属性</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>生成规则</td>
+    <td>
+      <code>CREATE TABLE db.table_name (</code><br>
+      每个字段一行：反引号字段名 + 类型(长度) + PRIMARY KEY（如有）+ COMMENT '描述'<br>
+      <code>PARTITIONED BY (dt VARCHAR(10))</code><br>
+      <code>STORED AS ORC;</code>
+    </td>
+  </tr>
+  <tr>
+    <td>其他</td>
+    <td>与 SELECT 弹窗共用同一代码块样式和操作按钮</td>
+  </tr>
+</table>
+
+<hr class="divider">
+
+<h2>7. 预览探查 Tab（PreviewTab）</h2>
+
+<h3>7.1 功能概述</h3>
+<p>预览探查 Tab 包含两个子模式：「数据预览」用于查看表的抽样数据，「数据探查」用于查看字段级数据质量统计。两者通过 SegmentedControl 切换。</p>
+
+<h3>7.2 顶部工具栏</h3>
+<table>
+  <tr>
+    <th style="width:140px;">元素</th>
+    <th style="width:100px;">位置</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>模式切换</td>
+    <td>左侧</td>
+    <td>
+      SegmentedControl（圆角 6px 灰色背景）：<br>
+      「数据预览」（默认激活）| 「数据探查」<br>
+      激活态：白色背景 + 蓝色文字 + 浅阴影
+    </td>
+  </tr>
+  <tr>
+    <td>探查生成时间</td>
+    <td>左侧（仅探查模式）</td>
+    <td>灰色文字，等宽字体，展示最近一次探查时间</td>
+  </tr>
+  <tr>
+    <td>重新抽样按钮</td>
+    <td>右侧（仅预览模式）</td>
+    <td>ReloadOutlined 图标 + "重新抽样"，点击重新请求样本数据，Loading 状态</td>
+  </tr>
+  <tr>
+    <td>新建探查任务</td>
+    <td>右侧（仅探查模式）</td>
+    <td>PlusOutlined 图标 + "新建探查任务"，点击弹出探查任务配置弹窗</td>
+  </tr>
+</table>
+
+<h3>7.3 数据预览模式</h3>
+<table>
+  <tr>
+    <th style="width:140px;">属性</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>数据来源</td>
+    <td>getTableSampleData(tableId) 接口</td>
+  </tr>
+  <tr>
+    <td>展示形式</td>
+    <td>Ant Design Table，表头为字段名，第一列为序号（从 1 开始）</td>
+  </tr>
+  <tr>
+    <td>样本行数</td>
+    <td>默认 20 行，不分页</td>
+  </tr>
+  <tr>
+    <td>滚动</td>
+    <td>横向 max-content 滚动，纵向最大 460px</td>
+  </tr>
+  <tr>
+    <td>单元格样式</td>
+    <td>等宽字体（Fira Code），13px，灰色文字，不换行</td>
+  </tr>
+</table>
+
+<h3>7.4 数据探查模式</h3>
+
+<h4>7.4.1 探查字段工具栏</h4>
+<table>
+  <tr>
+    <th style="width:140px;">元素</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>字段搜索</td>
+    <td>InputSearch，宽度 240px，按字段名模糊匹配</td>
+  </tr>
+  <tr>
+    <td>类型筛选</td>
+    <td>Select 下拉，宽度 120px，选项：全部类型 / 数值型 / 字符型 / 日期型 / 枚举型</td>
+  </tr>
+  <tr>
+    <td>字段计数</td>
+    <td>文案：共 N 个字段</td>
+  </tr>
+  <tr>
+    <td>视图切换</td>
+    <td>RadioGroup：卡片（AppstoreOutlined）| 列表（BarsOutlined），默认规则：字段 ≤ 12 时卡片，> 12 时列表</td>
+  </tr>
+</table>
+
+<h4>7.4.2 核心指标概览</h4>
+<p>三张指标卡片横向排列：</p>
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th style="width:160px;">指标</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>总行数</td>
+    <td>表的总记录数，千分位格式</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>主键去重记录数</td>
+    <td>按主键去重后的记录数</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>重复记录数</td>
+    <td>总行数 - 去重记录数</td>
+  </tr>
+</table>
+
+<h4>7.4.3 卡片视图</h4>
+<p>三列网格布局（响应式：xs=24, sm=12, lg=8），每页 9 张卡片，底部分页。</p>
+
+<table>
+  <tr>
+    <th style="width:120px;">卡片区域</th>
+    <th>内容</th>
+  </tr>
+  <tr>
+    <td>Header</td>
+    <td>
+      字段名（等宽加粗 14px）+ 类型 Tag（蓝色，如"数值型"）<br>
+      含 _id 的字段显示主键图标（金色 KeyOutlined）<br>
+      底部分隔线
+    </td>
+  </tr>
+  <tr>
+    <td>通用指标</td>
+    <td>
+      <strong>NULL 值：</strong>红色进度条 + 数量 + 百分比
+    </td>
+  </tr>
+  <tr>
+    <td>字符型扩展</td>
+    <td>空字符串：黄色进度条 + 数量 + 百分比</td>
+  </tr>
+  <tr>
+    <td>数值型扩展</td>
+    <td>
+      0 值：浅蓝色进度条 + 数量 + 百分比<br>
+      统计网格（2×2）：Max / Min / Avg / Std
+    </td>
+  </tr>
+  <tr>
+    <td>枚举型扩展</td>
+    <td>
+      空字符串 + 枚举值（蓝色进度条）<br>
+      Top 5 值列表：值名 + 数量
+    </td>
+  </tr>
+  <tr>
+    <td>日期型扩展</td>
+    <td>Max / Min 两个日期值</td>
+  </tr>
+</table>
+
+<h4>7.4.4 列表视图</h4>
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th style="width:100px;">列名</th>
+    <th style="width:80px;">宽度</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>序号</td>
+    <td>60px</td>
+    <td>左固定</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>字段名</td>
+    <td>180px</td>
+    <td>左固定，等宽加粗，主键字段显示图标</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>类型</td>
+    <td>120px</td>
+    <td>左固定，原始数据类型标签（如 VARCHAR）</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>打标类型</td>
+    <td>100px</td>
+    <td>蓝色 Tag（数值型/字符型/日期型/枚举型）</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>NULL 值</td>
+    <td>180px</td>
+    <td>数量 + 百分比 + 红色进度条</td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>空字符串</td>
+    <td>180px</td>
+    <td>仅字符/枚举型显示，其他类型显示"-"</td>
+  </tr>
+  <tr>
+    <td>7</td>
+    <td>0 值</td>
+    <td>180px</td>
+    <td>仅数值型显示，其他类型显示"-"</td>
+  </tr>
+  <tr>
+    <td>8</td>
+    <td>枚举值</td>
+    <td>180px</td>
+    <td>仅枚举型显示，其他类型显示"-"</td>
+  </tr>
+  <tr>
+    <td>9</td>
+    <td>最小值</td>
+    <td>100px</td>
+    <td>数值/日期型有效，其他显示"-"</td>
+  </tr>
+  <tr>
+    <td>10</td>
+    <td>最大值</td>
+    <td>100px</td>
+    <td>同上</td>
+  </tr>
+  <tr>
+    <td>11</td>
+    <td>平均值</td>
+    <td>100px</td>
+    <td>仅数值型有效</td>
+  </tr>
+</table>
+<p>分页：每页 20 条，支持切换 pageSize，显示"共 N 条"。</p>
+
+<h4>7.4.5 新建探查任务弹窗</h4>
+<table>
+  <tr>
+    <th style="width:140px;">属性</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>弹窗宽度</td>
+    <td>720px</td>
+  </tr>
+  <tr>
+    <td>表单字段 1</td>
+    <td>
+      <strong>探查分区日期</strong>（DatePicker）<br>
+      分区表必填，非分区表禁用<br>
+      分区表判断：字段列表中包含 dt 或 ds 字段
+    </td>
+  </tr>
+  <tr>
+    <td>表单字段 2</td>
+    <td>
+      <strong>选择探查字段</strong>（Transfer 穿梭框）<br>
+      左侧"可选字段" / 右侧"已选字段"<br>
+      默认全选，支持搜索，至少选择 1 个字段
+    </td>
+  </tr>
+  <tr>
+    <td>表单字段 3</td>
+    <td>
+      <strong>字段类型打标</strong>（仅已选字段 > 0 时展示）<br>
+      表格形式：字段名 + 类型下拉（数值型/字符型/日期型/枚举型）<br>
+      系统自动推断默认值，用户可手动修正
+    </td>
+  </tr>
+  <tr>
+    <td>操作按钮</td>
+    <td>取消 / 执行（主按钮），执行前进行表单校验</td>
+  </tr>
+</table>
+
+</body>
+</html>

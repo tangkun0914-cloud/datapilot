@@ -11,7 +11,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import ResultList from '@/pages/Search/ResultList.vue'
+import ResultList from '@/pages/DataMap/Search/ResultList.vue'
 
 const showLoading = ref(false)
 

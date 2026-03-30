@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>通知策略 - DataPilot</title>
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/dayjs@1.11.10/dayjs.min.js"></script>
+    <script src="https://unpkg.com/antd@5.12.2/dist/antd.min.js"></script>
+    <script src="https://unpkg.com/@ant-design/icons@5.2.6/dist/index.umd.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.22.20/babel.min.js"></script>
+    
+    <style>
+        body { margin: 0; background-color: #f0f2f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'; height: 100vh; overflow: hidden; }
+        #root { height: 100%; }
+        .layout-container { display: flex; flex-direction: column; height: 100%; }
+        
+        /* Top Header */
+        .top-header { height: 48px; background-color: #001529; display: flex; align-items: center; padding: 0 20px; color: white; justify-content: space-between; }
+        .header-left { display: flex; align-items: center; }
+        .logo { font-size: 16px; font-weight: bold; margin-right: 32px; display: flex; align-items: center; gap: 8px; }
+        .logo-icon { width: 24px; height: 24px; background: #1677ff; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+        .logo-icon-inner { width: 12px; height: 12px; background: white; border-radius: 50%; }
+        .nav-menu { display: flex; gap: 24px; font-size: 14px; }
+        .nav-item { cursor: pointer; opacity: 0.8; transition: opacity 0.3s; padding: 13px 0; }
+        .nav-item:hover { opacity: 1; }
+        .nav-item.active { opacity: 1; color: #1677ff; border-bottom: 2px solid #1677ff; font-weight: 500; }
+        
+        .header-right { display: flex; align-items: center; gap: 16px; font-size: 14px; }
+        .header-right-item { cursor: pointer; opacity: 0.8; display: flex; align-items: center; gap: 4px; }
+        .header-right-item:hover { opacity: 1; }
+        .avatar { width: 24px; height: 24px; border-radius: 50%; background: #1677ff; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+
+        /* Main Content Area */
+        .main-container { display: flex; flex: 1; overflow: hidden; }
+        
+        /* Left Sidebar */
+        .left-sidebar { width: 48px; background-color: #001529; display: flex; flex-direction: column; align-items: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-icon { color: rgba(255,255,255,0.65); font-size: 16px; margin-bottom: 24px; cursor: pointer; transition: color 0.3s; }
+        .sidebar-icon:hover, .sidebar-icon.active { color: white; }
+
+        /* Content Area */
+        .content-area { flex: 1; display: flex; flex-direction: column; background: #f5f7fa; overflow: hidden; position: relative; }
+        
+        /* Watermark */
+        .watermark { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 9999; opacity: 0.04; background-image: url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='50%25' y='50%25' font-size='14' fill='%23000' font-family='sans-serif' text-anchor='middle' dominant-baseline='middle' transform='rotate(-45 100 100)'%3Eruiwang1-王蕊-05354%3C/text%3E%3C/svg%3E"); }
+
+        /* Breadcrumb */
+        .breadcrumb-area { padding: 12px 24px; background: #fff; font-size: 14px; color: #666; border-bottom: 1px solid #f0f0f0; }
+        .breadcrumb-item { cursor: pointer; }
+        .breadcrumb-item:hover { color: #1677ff; }
+        .breadcrumb-separator { margin: 0 8px; color: #ccc; }
+        .breadcrumb-current { color: #333; font-weight: 500; }
+
+        /* Page Content */
+        .page-content { flex: 1; padding: 24px; overflow-y: auto; }
+        .page-header { background: #fff; padding: 24px; border-radius: 8px 8px 0 0; border-bottom: 1px dashed #f0f0f0; }
+        .filter-row { display: flex; gap: 24px; align-items: flex-end; }
+        .filter-item { display: flex; flex-direction: column; gap: 8px; }
+        .filter-label { font-size: 14px; color: #333; font-weight: 500; }
+        
+        .table-area { background: #fff; padding: 24px; border-radius: 0 0 8px 8px; }
+        .table-header { margin-bottom: 16px; font-weight: 500; color: #333; }
+        
+        .default-tag { background: #f6ffed; border: 1px solid #b7eb8f; color: #52c41a; font-size: 12px; padding: 0 6px; border-radius: 4px; margin-left: 8px; line-height: 20px; display: inline-block; }
+        
+        .action-link { color: #1677ff; cursor: pointer; margin-right: 16px; }
+        .action-link:hover { opacity: 0.8; }
+        .action-link.danger { color: #ff4d4f; }
+        .action-link:last-child { margin-right: 0; }
+
+        /* Floating Chat Button */
+        .float-btn { position: fixed; right: 32px; bottom: 32px; width: 48px; height: 48px; background: #1677ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; cursor: pointer; box-shadow: 0 4px 12px rgba(22,119,255,0.3); z-index: 100; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { Button, Input, Select, Table, ConfigProvider, Space, Switch, message, Popconfirm } = antd;
+        const { SearchOutlined, ReloadOutlined, PlusOutlined, BellOutlined, QuestionCircleOutlined, DownOutlined, MessageOutlined } = icons;
+
+        const App = () => {
+            // 独立的状态开关组件，用于处理 Popconfirm 逻辑
+            const StatusSwitch = ({ record, initialStatus }) => {
+                const [checked, setChecked] = React.useState(initialStatus);
+
+                const handleChange = (newChecked) => {
+                    if (newChecked) {
+                        // 如果是开启，直接开启，不需要确认
+                        setChecked(true);
+                        message.success('通知策略已开启');
+                    } else {
+                        // 如果是关闭，Popconfirm 会拦截，不在这里处理
+                    }
+                };
+
+                const handleConfirmClose = () => {
+                    setChecked(false);
+                    message.success('通知策略已关闭');
+                };
+
+                // 只有在当前是开启状态，且用户点击（试图关闭）时，才显示 Popconfirm
+                if (checked) {
+                    return (
+                        <Popconfirm
+                            title="关闭策略"
+                            description="关闭策略可能导致遗漏重要告警，是否确认关闭？"
+                            onConfirm={handleConfirmClose}
+                            okText="确认关闭"
+                            cancelText="取消"
+                            okButtonProps={{ danger: true }}
+                        >
+                            <Switch 
+                                checked={checked} 
+                                checkedChildren="开启" 
+                                unCheckedChildren="关闭" 
+                            />
+                        </Popconfirm>
+                    );
+                }
+
+                // 如果当前是关闭状态，点击直接开启
+                return (
+                    <Switch 
+                        checked={checked} 
+                        checkedChildren="开启" 
+                        unCheckedChildren="关闭" 
+                        onChange={handleChange}
+                    />
+                );
+            };
+
+            const columns = [
+                {
+                    title: '名称',
+                    dataIndex: 'name',
+                    key: 'name',
+                    render: (text, record) => (
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <a style={{ color: '#1677ff' }}>{text}</a>
+                            {record.isDefault && <span className="default-tag">默认</span>}
+                        </div>
+                    ),
+                },
+                {
+                    title: '描述',
+                    dataIndex: 'description',
+                    key: 'description',
+                },
+                {
+                    title: '更新时间',
+                    dataIndex: 'updateTime',
+                    key: 'updateTime',
+                },
+                {
+                    title: '创建人',
+                    dataIndex: 'creator',
+                    key: 'creator',
+                },
+                {
+                    title: '发送间隔',
+                    dataIndex: 'interval',
+                    key: 'interval',
+                },
+                {
+                    title: '最大发送',
+                    dataIndex: 'maxSend',
+                    key: 'maxSend',
+                },
+                {
+                    title: '状态',
+                    dataIndex: 'status',
+                    key: 'status',
+                    render: (status, record) => {
+                        // 提取组件为一个单独的渲染函数，以便处理内部状态
+                        return <StatusSwitch record={record} initialStatus={status} />;
+                    },
+                },
+                {
+                    title: '操作',
+                    key: 'action',
+                    render: (_, record) => (
+                        <div>
+                            <span className="action-link">编辑</span>
+                            <span className="action-link">查看</span>
+                            <span className="action-link">复制</span>
+                            <span className="action-link danger">删除</span>
+                        </div>
+                    ),
+                },
+            ];
+
+            const data = [
+                {
+                    key: '1',
+                    name: '系统内置默认通知策略',
+                    isDefault: true,
+                    description: '系统内置默认通知策略',
+                    updateTime: '2026-03-04 19:29:20',
+                    creator: '王博(bowang1)',
+                    interval: '10分钟',
+                    maxSend: '3次',
+                    status: true,
+                },
+                {
+                    key: '2',
+                    name: '核心业务告警通知策略',
+                    isDefault: false,
+                    description: '用于核心业务表及高优先级任务的告警通知',
+                    updateTime: '2026-03-11 10:15:30',
+                    creator: '王蕊(ruiwang1)',
+                    interval: '5分钟',
+                    maxSend: '5次',
+                    status: false,
+                }
+            ];
+
+            return (
+                <ConfigProvider theme={{ token: { colorPrimary: '#1677ff' } }}>
+                    <div className="layout-container">
+                        {/* Top Header */}
+                        <div className="top-header">
+                            <div className="header-left">
+                                <div className="logo">
+                                    <div className="logo-icon"><div className="logo-icon-inner"></div></div>
+                                    DataPilot 数智工坊
+                                </div>
+                                <div className="nav-menu">
+                                    <div className="nav-item">数据集成</div>
+                                    <div className="nav-item">数据开发</div>
+                                    <div className="nav-item">发布中心</div>
+                                    <div className="nav-item">数据质量</div>
+                                    <div className="nav-item">调度管理</div>
+                                    <div className="nav-item active">监控运维</div>
+                                    <div className="nav-item">安全中心</div>
+                                    <div className="nav-item">数据地图</div>
+                                    <div className="nav-item">项目管理</div>
+                                </div>
+                            </div>
+                            <div className="header-right">
+                                <div className="header-right-item">国内 <DownOutlined style={{ fontSize: 12 }} /></div>
+                                <div className="header-right-item">数据平台 <DownOutlined style={{ fontSize: 12 }} /></div>
+                                <QuestionCircleOutlined style={{ fontSize: 16, cursor: 'pointer', opacity: 0.8 }} />
+                                <div className="avatar">王</div>
+                            </div>
+                        </div>
+
+                        <div className="main-container">
+                            {/* Left Sidebar */}
+                            <div className="left-sidebar">
+                                <BellOutlined className="sidebar-icon active" />
+                            </div>
+
+                            {/* Content Area */}
+                            <div className="content-area">
+                                <div className="watermark"></div>
+                                
+                                {/* Breadcrumb */}
+                                <div className="breadcrumb-area">
+                                    <span className="breadcrumb-item">监控运维</span>
+                                    <span className="breadcrumb-separator">/</span>
+                                    <span className="breadcrumb-item">告警中心</span>
+                                    <span className="breadcrumb-separator">/</span>
+                                    <span className="breadcrumb-current">通知策略</span>
+                                </div>
+
+                                {/* Page Content */}
+                                <div className="page-content">
+                                    <div className="page-header">
+                                        <div className="filter-row">
+                                            <div className="filter-item">
+                                                <div className="filter-label">策略名称</div>
+                                                <Input placeholder="搜索策略名称" style={{ width: 240 }} />
+                                            </div>
+                                            <div className="filter-item">
+                                                <div className="filter-label">创建人</div>
+                                                <Select placeholder="请选择创建人" style={{ width: 240 }} allowClear />
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '8px', paddingBottom: '0' }}>
+                                                <Button icon={<ReloadOutlined />} />
+                                                <Button type="primary" icon={<PlusOutlined />}>新建策略</Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="table-area">
+                                        <div className="table-header">共 2 条策略</div>
+                                        <Table 
+                                            columns={columns} 
+                                            dataSource={data} 
+                                            pagination={{
+                                                total: 2,
+                                                showSizeChanger: true,
+                                                showQuickJumper: true,
+                                                showTotal: (total, range) => `${range[0]}-${range[1]}行，共 ${total} 行`,
+                                                defaultPageSize: 10,
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <div className="float-btn">
+                                    <MessageOutlined />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </ConfigProvider>
+            );
+        };
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>

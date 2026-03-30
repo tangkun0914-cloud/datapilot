@@ -1,6 +1,7 @@
 <template>
   <a-layout class="app-layout">
     <a-layout-sider
+      v-if="!isAgentPage"
       v-model:collapsed="collapsed"
       :trigger="null"
       collapsible
@@ -8,17 +9,22 @@
       :collapsedWidth="64"
       class="app-sider"
     >
-      <div class="logo-area">
+      <div class="logo-area cursor-pointer" @click="goToAgent">
         <div class="logo-icon-small"></div>
         <div class="logo-title" v-show="!collapsed">DataPilot</div>
       </div>
-      <a-menu
-        v-model:selectedKeys="selectedKeys"
-        theme="dark"
-        mode="inline"
-        :items="menuItemsWithIcons"
-        @click="handleMenuClick"
-      />
+      
+      <Transition name="menu-fade" mode="out-in">
+        <a-menu
+          :key="currentModule"
+          v-model:selectedKeys="selectedKeys"
+          theme="dark"
+          mode="inline"
+          :items="menuItemsWithIcons"
+          @click="handleMenuClick"
+        />
+      </Transition>
+
       <div class="sider-trigger" @click="collapsed = !collapsed">
         <MenuUnfoldOutlined v-if="collapsed" />
         <MenuFoldOutlined v-else />
@@ -27,8 +33,9 @@
     <a-layout>
       <a-layout-header class="app-header">
         <div class="header-left">
-          <div class="header-logo" v-if="collapsed">
+          <div class="header-logo cursor-pointer" v-if="collapsed || isAgentPage" @click="goToAgent">
             <div class="logo-icon-small"></div>
+            <div v-if="isAgentPage" class="logo-title ml-3">DataPilot</div>
           </div>
           <a-menu
             v-model:selectedKeys="topMenuKey"
@@ -36,11 +43,18 @@
             mode="horizontal"
             class="top-menu"
             :items="topMenuItems"
+            @click="handleTopMenuClick"
           />
         </div>
         <div class="header-right">
-          <button class="header-copilot-btn" @click="copilotStore.open()">
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="copilot-icon"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+          <!-- Agent 页面专属的主题切换按钮 -->
+          <a-switch v-if="isAgentPage" v-model:checked="agentStore.isDarkMode" size="small" class="mr-2">
+            <template #checkedChildren><i class="fa-solid fa-moon text-[10px]"></i></template>
+            <template #unCheckedChildren><i class="fa-solid fa-sun text-[10px] text-yellow-500"></i></template>
+          </a-switch>
+
+          <button class="header-copilot-btn" :class="{ active: copilotStore.visible }" @click="copilotStore.visible ? copilotStore.close() : copilotStore.open()">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="currentColor" stroke-linecap="round" stroke-linejoin="round" class="copilot-icon"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"></path></svg>
             Copilot
           </button>
           <div class="header-divider"></div>
@@ -52,8 +66,8 @@
           <span class="header-username">王睿(wangrui)</span>
         </div>
       </a-layout-header>
-      <div class="main-body">
-        <a-layout-content class="app-content">
+      <div class="main-body relative">
+        <a-layout-content class="app-content" :class="{ '!p-0 !overflow-hidden': isAgentPage }">
           <router-view />
         </a-layout-content>
         <transition name="copilot-slide">
@@ -75,6 +89,7 @@ import {
   FolderOutlined,
   TableOutlined,
   RobotOutlined,
+  AlertOutlined,
   UserOutlined,
   DownOutlined,
   QuestionCircleOutlined,
@@ -82,15 +97,17 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
 } from '@ant-design/icons-vue'
-import { menuItems } from '@/router/index.js'
+import { dataMapMenuItems, monitoringMenuItems } from '@/router/index.js'
 import CopilotPanel from '@/components/Copilot/CopilotPanel.vue'
-import { useCopilotStore } from '@/stores/copilot.js'
+import { useCopilotStore } from '@/stores/DataMap/copilot.js'
+import { useAgentStore } from '@/stores/DataMap/agent.js'
 
 const router = useRouter()
 const route = useRoute()
 
 const collapsed = ref(false)
 const copilotStore = useCopilotStore()
+const agentStore = useAgentStore()
 const selectedKeys = ref([route.path])
 const topMenuKey = ref(['map'])
 
@@ -113,10 +130,19 @@ const iconMap = {
   FolderOutlined,
   TableOutlined,
   RobotOutlined,
+  AlertOutlined,
+  BellOutlined,
 }
 
+const currentModule = computed(() => route.meta?.module || 'datamap')
+const isAgentPage = computed(() => route.path === '/datamap/agent')
+
+const currentMenuItems = computed(() =>
+  currentModule.value === 'monitoring' ? monitoringMenuItems : dataMapMenuItems
+)
+
 const menuItemsWithIcons = computed(() =>
-  menuItems.map((item) => ({
+  currentMenuItems.value.map((item) => ({
     key: item.key,
     label: item.label,
     icon: iconMap[item.icon] ? () => h(iconMap[item.icon]) : undefined,
@@ -125,6 +151,7 @@ const menuItemsWithIcons = computed(() =>
 
 const breadcrumbItems = computed(() => {
   const path = route.path
+  const items = currentMenuItems.value
   if (path === '/' || path === '') {
     return [{ label: '工作台', path: null }]
   }
@@ -135,7 +162,7 @@ const breadcrumbItems = computed(() => {
   return parts.map((p, i) => {
     const fullPath = '/' + parts.slice(0, i + 1).join('/')
     const isLast = i === parts.length - 1
-    const menuItem = menuItems.find((m) => m.key === fullPath)
+    const menuItem = items.find((m) => m.key === fullPath)
     const label = isLast ? (route.meta?.title || (menuItem?.label ?? p)) : (menuItem?.label ?? p)
     return { label, path: isLast ? null : fullPath }
   })
@@ -144,15 +171,36 @@ const breadcrumbItems = computed(() => {
 watch(
   () => route.path,
   (path) => {
-    const basePath = path.split('/').slice(0, 2).join('/') || '/'
-    const match = menuItems.find((m) => m.key === basePath || path.startsWith(m.key + '/'))
+    const items = currentMenuItems.value
+    const match = items.find((m) => m.key === path || path.startsWith(m.key + '/'))
     selectedKeys.value = match ? [match.key] : [path]
+
+    if (currentModule.value === 'monitoring') {
+      topMenuKey.value = ['ops']
+    } else {
+      topMenuKey.value = ['map']
+    }
   },
   { immediate: true }
 )
 
 function handleMenuClick({ key }) {
   router.push(key)
+}
+
+function goToAgent() {
+  agentStore.isDarkMode = false // 每次通过 Logo 进入时，强制重置为白色主题
+  router.push('/datamap/agent')
+}
+
+function handleTopMenuClick(info) {
+  if (info.key === 'ops') {
+    router.push('/monitoring/alerts')
+  } else if (info.key === 'map') {
+    router.push('/')
+  } else if (info.key === 'dev') {
+    router.push('/dev/alert-landing')
+  }
 }
 </script>
 
@@ -167,6 +215,11 @@ function handleMenuClick({ key }) {
   height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-sider.agent-sider {
+  background: #001529 !important; /* 强制暗色 */
 }
 
 .app-sider :deep(.ant-layout-sider-children) {
@@ -270,12 +323,12 @@ function handleMenuClick({ key }) {
 
 .top-menu :deep(.ant-menu-item-selected) {
   color: #fff !important;
-  background: transparent !important;
-  font-weight: 500;
+  background: rgba(255, 255, 255, 0.08) !important;
+  font-weight: 600;
 }
 
 .top-menu :deep(.ant-menu-item-selected::after) {
-  border-bottom-color: #1677ff !important;
+  border-bottom: 2px solid #1677ff !important;
 }
 
 .header-right {
@@ -287,25 +340,28 @@ function handleMenuClick({ key }) {
 }
 
 .header-copilot-btn {
-  color: #fff;
-  background: transparent; /* 与顶部导航背景色一致 */
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
-  padding: 0 8px; /* 减小宽度 */
-  height: 28px; /* 明确设置高度为 28px，远小于顶部导航的 64px */
   display: flex;
   align-items: center;
-  gap: 4px; /* 减小图标和文字的间距 */
-  cursor: pointer;
-  font-size: 13px;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 14px;
+  color: #fff;
+  font-size: 12px;
   font-weight: 500;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.2s;
+  height: 28px;
 }
 
 .header-copilot-btn:hover {
-  background: #6b9fff;
-  border-color: #6b9fff;
-  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.header-copilot-btn.active {
+  background: linear-gradient(90deg, #722ed1 0%, #9254de 100%);
+  border-color: transparent;
 }
 
 .copilot-icon {
@@ -374,5 +430,19 @@ function handleMenuClick({ key }) {
   width: 0 !important;
   opacity: 0;
   border-left-color: transparent;
+}
+
+/* Sidebar menu fade transition */
+.menu-fade-enter-active {
+  transition: opacity 0.25s ease;
+}
+
+.menu-fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+
+.menu-fade-enter-from,
+.menu-fade-leave-to {
+  opacity: 0;
 }
 </style>

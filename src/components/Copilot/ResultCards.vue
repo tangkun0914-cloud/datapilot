@@ -15,24 +15,46 @@
       </div>
       <p class="result-card-desc">{{ table.description }}</p>
     </div>
+    
+    <!-- 查看更多按钮 -->
+    <div v-if="showMore" class="result-card-more" @click="goSearch">
+      查看更多推荐表 <RightOutlined class="ml-1 text-[10px]" />
+    </div>
   </div>
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router'
-import SourceTag from '@/components/SourceTag.vue'
+import { RightOutlined } from '@ant-design/icons-vue'
+import SourceTag from '@/pages/DataMap/components/SourceTag.vue'
 
-defineProps({
+const props = defineProps({
   tables: {
     type: Array,
     default: () => [],
   },
+  /** 是否显示查看更多按钮 */
+  showMore: {
+    type: Boolean,
+    default: false,
+  },
+  /** 查看更多的搜索关键词或意图，用于跳转搜索页 */
+  moreKeyword: {
+    type: String,
+    default: '',
+  }
 })
 
 const router = useRouter()
 
 function goDetail(table) {
   router.push(`/detail/${encodeURIComponent(table.fullyQualifiedName)}`)
+}
+
+function goSearch() {
+  // 跳转到搜索页，带上推荐参数或关键词
+  const query = props.moreKeyword ? `?q=${encodeURIComponent(props.moreKeyword)}` : ''
+  router.push(`/search${query}`)
 }
 </script>
 
@@ -82,5 +104,25 @@ function goDetail(table) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.result-card-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--color-primary);
+  background: rgba(22, 119, 255, 0.04);
+  border: 1px dashed rgba(22, 119, 255, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.result-card-more:hover {
+  background: rgba(22, 119, 255, 0.08);
+  border-color: var(--color-primary);
 }
 </style>

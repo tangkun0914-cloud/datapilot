@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>我的库表 & 数据专题 产品需求文档 v1.0</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: #fff; color: #1f2329; line-height: 1.8; padding: 48px 64px; max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  h2 { font-size: 20px; font-weight: 700; margin: 40px 0 16px; padding-bottom: 8px; border-bottom: 1px solid #e5e6eb; }
+  h3 { font-size: 16px; font-weight: 600; margin: 24px 0 12px; }
+  h4 { font-size: 14px; font-weight: 600; margin: 16px 0 8px; }
+  p { font-size: 14px; margin-bottom: 12px; }
+  ul, ol { font-size: 14px; padding-left: 24px; margin-bottom: 12px; }
+  li { margin-bottom: 6px; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+  th, td { border: 1px solid #dee0e3; padding: 10px 12px; text-align: left; vertical-align: top; }
+  th { background: #f5f6f7; font-weight: 600; color: #1f2329; }
+  td { color: #444; }
+  .meta-table { width: auto; margin-bottom: 32px; }
+  .meta-table td { border: none; padding: 4px 24px 4px 0; color: #666; font-size: 13px; }
+  .meta-table td:first-child { color: #999; width: 80px; }
+  .callout { background: #f0f5ff; border-left: 3px solid #3370ff; border-radius: 4px; padding: 12px 16px; margin: 16px 0; font-size: 13px; color: #1f2329; }
+  .callout-warn { background: #fff7e6; border-left-color: #ff8800; }
+  .callout-green { background: #f0fff4; border-left-color: #10b981; }
+  .divider { border: none; border-top: 1px solid #e5e6eb; margin: 40px 0; }
+  .scene-card { background: #fafbfc; border: 1px solid #eee; border-radius: 8px; padding: 16px 20px; margin-bottom: 16px; }
+  .scene-card strong { color: #2563eb; }
+  .tag { display: inline-block; background: #eff6ff; color: #2563eb; font-size: 12px; padding: 2px 8px; border-radius: 4px; margin-right: 6px; }
+</style>
+</head>
+<body>
+
+<h1>我的库表 & 数据专题 产品需求文档 v1.0</h1>
+
+<table class="meta-table">
+  <tr><td>产品名称</td><td>DataPilot 数据地图 - 我的库表 & 数据专题</td></tr>
+  <tr><td>文档版本</td><td>v1.0</td></tr>
+  <tr><td>产品负责人</td><td>王蕊</td></tr>
+  <tr><td>目标读者</td><td>前端研发、后端研发、测试、设计</td></tr>
+  <tr><td>关联文档</td><td>《数据地图首页重构 v1.0》《Copilot 产品需求文档 v1.0》</td></tr>
+  <tr><td>最后更新</td><td>2026-03-23</td></tr>
+</table>
+
+<hr class="divider">
+
+<h2>1. 背景与目标</h2>
+
+<h3>1.1 项目背景</h3>
+<p>
+  数据地图作为企业级数据资产管理平台，除了提供全局搜索和 AI 智能找表能力之外，还需要为用户提供"以人为中心"的资产管理视角和"以主题为中心"的资产组织能力。
+</p>
+<p>
+  <strong>我的库表</strong>模块解决"我的数据在哪里"的问题——用户快速找到自己负责、收藏、最近使用的数据表，并支持批量转交负责人。<br>
+  <strong>数据专题</strong>模块解决"相关数据如何组织"的问题——按业务主题将分散的数据表聚合在一起，方便团队协作与数据消费。
+</p>
+
+<h3>1.2 产品目标</h3>
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th style="width:120px;">模块</th>
+    <th style="width:160px;">目标</th>
+    <th>说明</th>
+    <th style="width:100px;">衡量指标</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>我的库表</td>
+    <td>快速定位个人资产</td>
+    <td>一站式查看我负责的、收藏的、最近访问的数据表</td>
+    <td>页面停留时长 &lt; 30s</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>我的库表</td>
+    <td>降低资产交接成本</td>
+    <td>支持批量选中表并转交给其他负责人</td>
+    <td>转交完成率 > 90%</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>数据专题</td>
+    <td>主题化组织数据</td>
+    <td>按业务域/分析场景将数据表聚合为专题，降低跨表查找成本</td>
+    <td>专题平均表数 > 10</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>数据专题</td>
+    <td>促进团队协作</td>
+    <td>多角色权限（创建人/管理员）+ 关注机制 + 使用说明</td>
+    <td>专题关注率 > 40%</td>
+  </tr>
+</table>
+
+<h3>1.3 功能边界</h3>
+<div class="callout">
+  <strong>本期包含：</strong><br>
+  我的库表（三 Tab 切换 + 搜索 + 批量转交） | 数据专题列表页（CRUD + 关注 + 四维 Tab + 搜索分页） | 数据专题详情页（内联编辑 + 表管理 + 使用说明）
+</div>
+<div class="callout callout-warn">
+  <strong>本期不包含：</strong><br>
+  库表的批量删除/批量加入收藏 | 专题的自动推荐 | 专题内表的拖拽排序 | 真实后端接口对接（本期 Mock）
+</div>
+
+<hr class="divider">
+
+<!-- ============================================ -->
+<!--  PART 1：我的库表 - 完整功能说明              -->
+<!-- ============================================ -->
+
+<h2>2. 我的库表</h2>
+
+<h3>2.1 用户场景</h3>
+
+<div class="scene-card">
+  <h4>场景一：日常找表</h4>
+  <p><strong>角色：</strong>数据开发工程师</p>
+  <p><strong>行为：</strong>进入"我的库表"，在"我负责的"Tab 中搜索关键词，点击表名进入详情</p>
+  <p><strong>价值：</strong>相比全局搜索，缩小范围到个人资产，找表效率提升 3 倍</p>
+</div>
+
+<div class="scene-card">
+  <h4>场景二：离职/转岗交接</h4>
+  <p><strong>角色：</strong>即将离职或转岗的数据开发</p>
+  <p><strong>行为：</strong>在"我负责的"中勾选多张表 → 点击"批量转交" → 选择接收人 → 填写原因 → 确认</p>
+  <p><strong>价值：</strong>避免逐张转交的繁琐操作，保障资产责任链不断裂</p>
+</div>
+
+<div class="scene-card">
+  <h4>场景三：快速回到昨天的工作</h4>
+  <p><strong>角色：</strong>数据分析师</p>
+  <p><strong>行为：</strong>切换到"最近访问"Tab，按访问时间倒序找到昨天正在分析的表</p>
+  <p><strong>价值：</strong>一键直达，无需记忆表名</p>
+</div>
+
+<h3>2.2 页面结构</h3>
+
+<table>
+  <tr>
+    <th style="width:160px;">区域</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>顶部 Banner</td>
+    <td>
+      标题："我的库表"（24px 加粗）<br>
+      副标题："管理您负责、收藏和最近访问的数据表"（14px 灰色）<br>
+      白色背景，24px 内边距
+    </td>
+  </tr>
+  <tr>
+    <td>工具栏</td>
+    <td>
+      左侧：3 个 Tab 按钮（我负责的 / 我收藏的 / 最近访问），每个 Tab 右上角显示数量 badge<br>
+      右侧："批量转交"按钮（仅在"我负责的"Tab 显示，选中表后启用）+ 搜索框（240px）
+    </td>
+  </tr>
+  <tr>
+    <td>表格内容区</td>
+    <td>白色卡片，圆角 12px，内含 Ant Design Table 组件，底部分页器</td>
+  </tr>
+</table>
+
+<h3>2.3 三个 Tab 定义</h3>
+
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th style="width:120px;">Tab 名称</th>
+    <th style="width:100px;">Tab Key</th>
+    <th>数据来源</th>
+    <th style="width:100px;">特有功能</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>我负责的</td>
+    <td>owned</td>
+    <td>当前用户作为 Owner 的数据表</td>
+    <td>支持多选 + 批量转交</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>我收藏的</td>
+    <td>favorites</td>
+    <td>用户手动 Star 收藏的数据表</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>最近访问</td>
+    <td>recent</td>
+    <td>按访问时间倒序排列的浏览记录</td>
+    <td>-</td>
+  </tr>
+</table>
+
+<div class="callout">
+  <strong>Tab 切换交互：</strong>切换 Tab 时自动清空搜索关键词和已选中行，防止跨 Tab 的状态残留。
+</div>
+
+<h3>2.4 表格列定义（TableGroup 组件）</h3>
+
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th style="width:100px;">列名</th>
+    <th style="width:80px;">宽度</th>
+    <th>内容</th>
+    <th style="width:140px;">交互</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>表名</td>
+    <td>25%</td>
+    <td>
+      第一行：database.table_name（等宽字体，主色）<br>
+      第二行：中文名 displayName（灰色小字）
+    </td>
+    <td>点击跳转 /detail/{fqn}；右侧复制图标（复制 db.table_name）</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>表负责人</td>
+    <td>12%</td>
+    <td>UserOutlined 图标 + 所有者名称（多人逗号分隔）</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>数据源</td>
+    <td>10%</td>
+    <td>SourceTag 组件（Hive/StarRocks/MySQL/ClickHouse 等，彩色 badge）</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>分层</td>
+    <td>8%</td>
+    <td>蓝色 Tag（DWA / DWD / DM / ADS / ODS 等）</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>描述</td>
+    <td>自适应</td>
+    <td>单行截断，超长省略号</td>
+    <td>hover 显示完整描述 tooltip</td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>热度</td>
+    <td>10%</td>
+    <td>
+      火焰图标（红色）+ 30 天查询次数<br>
+      眼睛图标（蓝色）+ 30 天浏览次数
+    </td>
+    <td>各自带 tooltip 说明</td>
+  </tr>
+  <tr>
+    <td>7</td>
+    <td>更新时间</td>
+    <td>15%</td>
+    <td>YYYY-MM-DD HH:mm 格式</td>
+    <td>默认降序排序</td>
+  </tr>
+</table>
+
+<h4>分页配置</h4>
+<ul>
+  <li>每页默认 10 条</li>
+  <li>支持切换 pageSize（10 / 20 / 50）</li>
+  <li>底部显示："X-Y 行，共 Z 行"</li>
+</ul>
+
+<h3>2.5 搜索功能</h3>
+
+<table>
+  <tr>
+    <th style="width:120px;">属性</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>搜索范围</td>
+    <td>当前 Tab 的数据列表</td>
+  </tr>
+  <tr>
+    <td>匹配字段</td>
+    <td>表名（name）+ 中文名（displayName），不区分大小写</td>
+  </tr>
+  <tr>
+    <td>搜索方式</td>
+    <td>实时模糊匹配（输入即过滤，无需回车）</td>
+  </tr>
+  <tr>
+    <td>清空</td>
+    <td>搜索框支持一键清空（allow-clear），清空后恢复全量数据</td>
+  </tr>
+</table>
+
+<h3>2.6 批量转交功能</h3>
+
+<h4>2.6.1 触发条件</h4>
+<ul>
+  <li>仅在"我负责的"Tab 下显示"批量转交"按钮</li>
+  <li>用户至少勾选 1 张表后，按钮变为可点击状态（显示已选数量）</li>
+</ul>
+
+<h4>2.6.2 转交弹窗（TransferModal）</h4>
+
+<table>
+  <tr>
+    <th style="width:140px;">元素</th>
+    <th>说明</th>
+    <th style="width:80px;">必填</th>
+  </tr>
+  <tr>
+    <td>弹窗标题</td>
+    <td>"批量转交表负责人"，宽度 520px</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>信息摘要</td>
+    <td>蓝色背景框，显示"已选择 N 张表进行转交"</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>转交表清单</td>
+    <td>以 Tag 列表形式展示选中的表名（最多显示 5 个，超出显示"+N"）</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>接收人</td>
+    <td>下拉选择框，支持按姓名/邮箱模糊搜索，格式："姓名(邮箱)"</td>
+    <td>必填</td>
+  </tr>
+  <tr>
+    <td>转交原因</td>
+    <td>多行文本域，3 行高度，最多 200 字，实时字数统计</td>
+    <td>选填</td>
+  </tr>
+  <tr>
+    <td>操作按钮</td>
+    <td>"确认转交"（接收人为空时禁用）+ "取消"</td>
+    <td>-</td>
+  </tr>
+</table>
+
+<h4>2.6.3 转交流程</h4>
+<ol>
+  <li>用户在"我负责的"Tab 勾选表 → 点击"批量转交"</li>
+  <li>弹窗展示选中的表名清单 + 表单</li>
+  <li>用户搜索并选择接收人，可填写转交原因</li>
+  <li>点击"确认转交" → 按钮进入 loading 态 → 调用 transferTables API</li>
+  <li>成功：提示"已成功转交 N 张表" → 清空选中 → 关闭弹窗 → 刷新列表</li>
+  <li>失败：提示错误信息，按钮恢复可点击</li>
+</ol>
+
+<h3>2.7 数据结构</h3>
+
+<h4>表数据结构</h4>
+<table>
+  <tr>
+    <th style="width:180px;">字段</th>
+    <th style="width:120px;">类型</th>
+    <th>说明</th>
+  </tr>
+  <tr><td>id</td><td>string</td><td>表唯一标识</td></tr>
+  <tr><td>name</td><td>string</td><td>物理表名</td></tr>
+  <tr><td>fullyQualifiedName</td><td>string</td><td>全限定名（hive.db.table）</td></tr>
+  <tr><td>displayName</td><td>string</td><td>中文显示名</td></tr>
+  <tr><td>serviceType</td><td>string</td><td>数据源类型</td></tr>
+  <tr><td>layer</td><td>string</td><td>数仓分层（DWA/DWD/DM/ADS/ODS）</td></tr>
+  <tr><td>description</td><td>string</td><td>表描述</td></tr>
+  <tr><td>updatedAt</td><td>number</td><td>更新时间戳（毫秒）</td></tr>
+  <tr><td>owners</td><td>Array&lt;{name}&gt;</td><td>负责人列表</td></tr>
+  <tr><td>usageSummary.dailyStats.count</td><td>number</td><td>热度基础值（查询 = count*0.8，浏览 = count）</td></tr>
+  <tr><td>database.name</td><td>string</td><td>所属数据库名</td></tr>
+</table>
+
+<h4>接口清单</h4>
+<table>
+  <tr>
+    <th style="width:60px;">方法</th>
+    <th style="width:260px;">路径</th>
+    <th>说明</th>
+    <th style="width:80px;">本期状态</th>
+  </tr>
+  <tr><td>GET</td><td>/v1/tables/owned</td><td>获取当前用户负责的表列表</td><td>Mock</td></tr>
+  <tr><td>GET</td><td>/v1/tables/favorites</td><td>获取当前用户收藏的表列表</td><td>Mock</td></tr>
+  <tr><td>GET</td><td>/v1/tables/recent</td><td>获取最近访问的表列表（按时间倒序）</td><td>Mock</td></tr>
+  <tr><td>POST</td><td>/v1/tables/transfer</td><td>批量转交表负责人（tableIds + targetOwnerId + reason）</td><td>Mock</td></tr>
+</table>
+
+
+<!-- ============================================ -->
+<!--  PART 2：数据专题 - 列表页                    -->
+<!-- ============================================ -->
+
+<hr class="divider">
+
+<h2>3. 数据专题 — 列表页</h2>
+
+<h3>3.1 用户场景</h3>
+
+<div class="scene-card">
+  <h4>场景一：按主题探索数据</h4>
+  <p><strong>角色：</strong>新入职数据分析师</p>
+  <p><strong>行为：</strong>进入"数据专题"，浏览"交易分析""用户画像"等专题卡片，点击感兴趣的专题进入详情查看包含哪些表</p>
+  <p><strong>价值：</strong>以业务主题为线索自上而下探索，比全局搜索更有方向感</p>
+</div>
+
+<div class="scene-card">
+  <h4>场景二：创建业务专题</h4>
+  <p><strong>角色：</strong>数据团队 Leader</p>
+  <p><strong>行为：</strong>点击"新建专题" → 填写名称、标签、描述、可见范围 → 创建后跳转到详情页添加相关表</p>
+  <p><strong>价值：</strong>将散落在各库的相关表聚合为主题，降低团队成员跨表查找成本</p>
+</div>
+
+<div class="scene-card">
+  <h4>场景三：关注感兴趣的专题</h4>
+  <p><strong>角色：</strong>跨部门协作的业务人员</p>
+  <p><strong>行为：</strong>在"全部"Tab 中浏览公开专题，点击星标关注 → 在"我关注的"Tab 中快速回访</p>
+  <p><strong>价值：</strong>个性化收藏，快速定位高频使用的数据集合</p>
+</div>
+
+<h3>3.2 页面结构</h3>
+
+<table>
+  <tr>
+    <th style="width:160px;">区域</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>顶部 Banner</td>
+    <td>
+      标题："数据专题"<br>
+      副标题："按主题组织和管理相关数据表，方便团队协作与数据消费"<br>
+      右侧："新建专题"按钮（主色，PlusOutlined 图标）
+    </td>
+  </tr>
+  <tr>
+    <td>工具栏</td>
+    <td>
+      左侧：4 个 Tab 按钮（全部 / 我管理的 / 我创建的 / 我关注的），每个 Tab 显示计数<br>
+      右侧：搜索框（关键词模糊匹配名称+描述）
+    </td>
+  </tr>
+  <tr>
+    <td>卡片网格</td>
+    <td>
+      响应式栅栏：xs=24, sm=12, lg=8, xl=6（1-4 列自适应）<br>
+      间距：20px<br>
+      底部分页：12 / 24 / 48 条/页
+    </td>
+  </tr>
+  <tr>
+    <td>空状态</td>
+    <td>无数据时显示空状态插图 + "创建第一个专题"按钮</td>
+  </tr>
+</table>
+
+<h3>3.3 四个 Tab 定义</h3>
+
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th style="width:120px;">Tab 名称</th>
+    <th style="width:80px;">Tab Key</th>
+    <th>数据筛选规则</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>全部</td>
+    <td>all</td>
+    <td>公开专题 + 当前用户作为 owner/admin 的私有专题（私有但非自己相关的不展示）</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>我管理的</td>
+    <td>managed</td>
+    <td>当前用户在 admins 列表中的专题</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>我创建的</td>
+    <td>created</td>
+    <td>当前用户为 owner 的专题</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>我关注的</td>
+    <td>followed</td>
+    <td>当前用户已关注（followed=true）的专题</td>
+  </tr>
+</table>
+
+<div class="callout">
+  <strong>Tab 切换交互：</strong>切换 Tab 时清空搜索关键词，分页重置到第 1 页。每个 Tab 名称右侧显示该 Tab 下的专题数量。
+</div>
+
+<h3>3.4 专题卡片（TopicCard）</h3>
+
+<p>每张专题卡片展示以下信息：</p>
+
+<table>
+  <tr>
+    <th style="width:140px;">元素</th>
+    <th>说明</th>
+    <th style="width:140px;">交互</th>
+  </tr>
+  <tr>
+    <td>标题</td>
+    <td>专题名称，单行截断</td>
+    <td>点击卡片跳转 /topics/{id}</td>
+  </tr>
+  <tr>
+    <td>私有标签</td>
+    <td>visibility='private' 时显示锁形图标 + "私有" Tag</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>关注按钮</td>
+    <td>卡片右上角星形图标；已关注时填充 + 金色(#f59e0b)</td>
+    <td>点击切换关注/取消关注</td>
+  </tr>
+  <tr>
+    <td>更多菜单</td>
+    <td>三点图标，仅 owner/admin 可见；下拉：编辑、删除</td>
+    <td>点击阻止冒泡（不触发卡片跳转）</td>
+  </tr>
+  <tr>
+    <td>自定义标签</td>
+    <td>最多显示 3 个 Tag（蓝色背景 + 白色文字）</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>描述</td>
+    <td>灰色文字，2 行截断（-webkit-line-clamp: 2）</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>统计信息</td>
+    <td>表图标 + tableCount | 用户图标 + followerCount</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>底部</td>
+    <td>左：创建人头像 + 名称 | 右：更新时间</td>
+    <td>-</td>
+  </tr>
+</table>
+
+<h4>卡片样式规格</h4>
+<ul>
+  <li>圆角：16px</li>
+  <li>默认阴影：0 1px 3px rgba(0,0,0,0.05)</li>
+  <li>Hover 效果：向上平移 3px + 阴影增强（0 12px 32px rgba(0,0,0,0.06)）</li>
+  <li>顶部渐变装饰条（hover 时显示）</li>
+</ul>
+
+<h3>3.5 CRUD 操作</h3>
+
+<h4>3.5.1 新建专题</h4>
+
+<table>
+  <tr>
+    <th style="width:140px;">表单字段</th>
+    <th>说明</th>
+    <th style="width:80px;">必填</th>
+  </tr>
+  <tr>
+    <td>专题名称</td>
+    <td>文本输入，最多 50 字</td>
+    <td>必填</td>
+  </tr>
+  <tr>
+    <td>专题标签</td>
+    <td>输入标签文字后回车添加，最多 3 个，支持逗号/空格分隔批量添加</td>
+    <td>选填</td>
+  </tr>
+  <tr>
+    <td>可见范围</td>
+    <td>Radio 选择：公开 / 私有</td>
+    <td>必填（默认公开）</td>
+  </tr>
+  <tr>
+    <td>专题描述</td>
+    <td>多行文本域，最多 200 字，实时字数统计</td>
+    <td>选填</td>
+  </tr>
+</table>
+
+<p><strong>创建流程：</strong></p>
+<ol>
+  <li>点击"新建专题" → 弹出创建表单</li>
+  <li>填写信息 → 点击"创建"</li>
+  <li>成功后关闭弹窗 → 刷新列表 → 自动跳转到新专题的详情页（/topics/{newId}）</li>
+</ol>
+
+<h4>3.5.2 编辑专题</h4>
+<ul>
+  <li>入口：卡片右上角更多菜单 → "编辑"（仅 owner/admin 可见）</li>
+  <li>弹窗内容同"新建"，预填当前专题信息</li>
+  <li>保存后刷新列表</li>
+</ul>
+
+<h4>3.5.3 删除专题</h4>
+<ul>
+  <li>入口：卡片右上角更多菜单 → "删除"（仅 owner/admin 可见）</li>
+  <li>二次确认："确定要删除专题「{name}」吗？此操作不可撤销。"</li>
+  <li>确认后调用 deleteTopic API → 刷新列表</li>
+</ul>
+
+<h4>3.5.4 关注 / 取消关注</h4>
+<ul>
+  <li>点击卡片星形图标 → toggle followed 状态</li>
+  <li>关注时 followerCount +1，取消时 -1</li>
+  <li>星形图标在已关注时变为填充 + 金色</li>
+</ul>
+
+<h3>3.6 权限模型</h3>
+
+<table>
+  <tr>
+    <th style="width:140px;">角色</th>
+    <th>判断条件</th>
+    <th>权限</th>
+  </tr>
+  <tr>
+    <td>创建人 (Owner)</td>
+    <td>topic.owner === currentUser</td>
+    <td>所有权限：编辑、删除、管理表、编辑使用说明、管理管理员</td>
+  </tr>
+  <tr>
+    <td>管理员 (Admin)</td>
+    <td>topic.admins.includes(currentUser)</td>
+    <td>编辑、管理表、编辑使用说明（不可删除专题、不可管理管理员）</td>
+  </tr>
+  <tr>
+    <td>普通用户</td>
+    <td>其他</td>
+    <td>查看公开专题、关注/取消关注</td>
+  </tr>
+</table>
+
+<h3>3.7 搜索与分页</h3>
+
+<table>
+  <tr>
+    <th style="width:120px;">属性</th>
+    <th>说明</th>
+  </tr>
+  <tr><td>搜索范围</td><td>当前 Tab 下的专题列表</td></tr>
+  <tr><td>匹配字段</td><td>专题名称 + 描述，不区分大小写</td></tr>
+  <tr><td>搜索方式</td><td>实时模糊匹配</td></tr>
+  <tr><td>默认分页</td><td>每页 12 条</td></tr>
+  <tr><td>可选分页</td><td>12 / 24 / 48 条/页</td></tr>
+  <tr><td>分页重置</td><td>切换 Tab 或输入搜索词时，分页回到第 1 页</td></tr>
+</table>
+
+
+<!-- ============================================ -->
+<!--  PART 3：数据专题 - 详情页 + 接口 + 验收      -->
+<!-- ============================================ -->
+
+<hr class="divider">
+
+<h2>4. 数据专题 — 详情页</h2>
+
+<h3>4.1 页面结构</h3>
+
+<table>
+  <tr>
+    <th style="width:160px;">区域</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>顶部信息卡片</td>
+    <td>
+      操作栏：返回按钮 + 关注星标 + 更多菜单（编辑/删除，owner/admin 可见）<br>
+      标题区：专题图标（36x36 渐变背景）+ 专题名称（可内联编辑）<br>
+      标签区：自定义 Tag 列表（可内联编辑）<br>
+      描述区：专题描述（可内联编辑）<br>
+      元信息条：创建人 | 管理员（可添加）| 数据表数 | 关注人数 | 更新时间
+    </td>
+  </tr>
+  <tr>
+    <td>Tab 内容区</td>
+    <td>
+      Tab 1: 数据表（表格列表 + 搜索 + 添加表按钮）<br>
+      Tab 2: 使用说明（Markdown 编辑/预览）
+    </td>
+  </tr>
+  <tr>
+    <td>底部浮动操作栏</td>
+    <td>仅在有未保存的表变更时显示（slideUp 动画），包含提示文本 + 取消/保存按钮</td>
+  </tr>
+</table>
+
+<h3>4.2 内联编辑</h3>
+
+<p>详情页支持对标题、标签、描述三个字段进行"就地编辑"（仅 owner/admin 可操作）：</p>
+
+<table>
+  <tr>
+    <th style="width:100px;">字段</th>
+    <th style="width:160px;">编辑态组件</th>
+    <th>交互</th>
+  </tr>
+  <tr>
+    <td>标题</td>
+    <td>Input（最多 50 字）</td>
+    <td>点击编辑图标 → 文本变为输入框 → 保存(✓) / 取消(✗) 按钮</td>
+  </tr>
+  <tr>
+    <td>标签</td>
+    <td>Tag Select（最多 3 个）</td>
+    <td>点击编辑图标 → Tag 列表变为可编辑态 → 保存 / 取消</td>
+  </tr>
+  <tr>
+    <td>描述</td>
+    <td>Textarea（最多 200 字）</td>
+    <td>点击编辑图标 → 描述文本变为多行输入 → 保存 / 取消</td>
+  </tr>
+</table>
+
+<div class="callout">
+  <strong>保存逻辑：</strong>每次保存单独调用 updateTopic(id, { field: value }) 接口，成功后重新加载专题详情数据，关闭编辑态。保存按钮为绿色，取消按钮为灰色。
+</div>
+
+<h3>4.3 管理员管理</h3>
+
+<ul>
+  <li>元信息条中的"管理员"字段旁显示 "+" 图标（仅 owner 可见）</li>
+  <li>点击弹出 Select 下拉框，mode="multiple"，支持搜索</li>
+  <li>选择后调用 updateTopic 保存 admins 列表</li>
+</ul>
+
+<h3>4.4 数据表 Tab</h3>
+
+<h4>4.4.1 表格列定义</h4>
+
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th style="width:100px;">列名</th>
+    <th>内容</th>
+    <th style="width:120px;">交互</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>数据表名</td>
+    <td>database.name（灰色小字）+ 表名 displayName（主色链接）</td>
+    <td>点击跳转 /detail/{fqn}</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>表负责人</td>
+    <td>UserOutlined + owner 名称</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>表描述</td>
+    <td>单行截断，hover tooltip 完整展示</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>数据源</td>
+    <td>SourceTag + 类型文本</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>热度</td>
+    <td>火焰图标 + queryCount | 眼睛图标 + viewCount</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>添加时间</td>
+    <td>该表被加入专题的时间（addedAt）</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>7</td>
+    <td>操作</td>
+    <td>"移出"按钮（仅 owner/admin 可见）</td>
+    <td>Popconfirm 二次确认后移出</td>
+  </tr>
+</table>
+
+<h4>4.4.2 添加数据表</h4>
+
+<p>点击"添加数据表"按钮（仅 owner/admin 可见），弹出表选择弹窗：</p>
+
+<table>
+  <tr>
+    <th style="width:140px;">区域</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>左侧面板</td>
+    <td>数据库列表（支持搜索），点击选中某个数据库</td>
+  </tr>
+  <tr>
+    <td>右侧面板</td>
+    <td>该库下的数据表列表（支持搜索），支持多选勾选</td>
+  </tr>
+  <tr>
+    <td>操作</td>
+    <td>"保存"将选中表加入本地暂存，"取消"关闭弹窗</td>
+  </tr>
+</table>
+
+<h4>4.4.3 表变更暂存与保存机制</h4>
+
+<div class="callout callout-green">
+  <strong>核心设计：</strong>表的添加/移出操作不立即调用 API，而是先暂存在前端（localTables），用户确认后一次性保存。这种"编辑-确认"模式避免误操作。
+</div>
+
+<ol>
+  <li><strong>暂存：</strong>添加表或移出表时，仅修改 localTables 数组，设置 hasUnsavedTableChanges = true</li>
+  <li><strong>提示：</strong>底部浮动操作栏滑入，显示"内容已修改，请保存" + "取消"/"保存"按钮</li>
+  <li><strong>保存：</strong>对比原始表列表和 localTables，计算出需要添加和需要移出的表 ID 列表，分别调用 addTableToTopic / removeTableFromTopic 接口</li>
+  <li><strong>取消：</strong>localTables 回退到原始状态，浮动栏消失</li>
+</ol>
+
+<h3>4.5 使用说明 Tab</h3>
+
+<table>
+  <tr>
+    <th style="width:120px;">功能</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>内容格式</td>
+    <td>支持 Markdown 格式（使用 marked 库渲染）</td>
+  </tr>
+  <tr>
+    <td>查看模式</td>
+    <td>渲染后的 HTML（v-html），仅展示</td>
+  </tr>
+  <tr>
+    <td>编辑模式</td>
+    <td>多行 Textarea，仅 owner/admin 可进入编辑</td>
+  </tr>
+  <tr>
+    <td>保存</td>
+    <td>调用 updateUsageNote(topicId, noteText) 接口</td>
+  </tr>
+  <tr>
+    <td>空状态</td>
+    <td>无使用说明时显示提示文案 + "添加说明"按钮</td>
+  </tr>
+</table>
+
+<hr class="divider">
+
+<h2>5. 数据结构与接口契约</h2>
+
+<h3>5.1 专题数据结构</h3>
+
+<table>
+  <tr>
+    <th style="width:160px;">字段</th>
+    <th style="width:160px;">类型</th>
+    <th>说明</th>
+  </tr>
+  <tr><td>id</td><td>number</td><td>专题唯一标识</td></tr>
+  <tr><td>name</td><td>string</td><td>专题名称（最多 50 字）</td></tr>
+  <tr><td>tags</td><td>string[]</td><td>自定义标签（最多 3 个）</td></tr>
+  <tr><td>description</td><td>string</td><td>专题描述（最多 200 字）</td></tr>
+  <tr><td>owner</td><td>string</td><td>创建人（"姓名(账号)"格式）</td></tr>
+  <tr><td>admins</td><td>string[]</td><td>管理员列表</td></tr>
+  <tr><td>visibility</td><td>'public' | 'private'</td><td>可见范围</td></tr>
+  <tr><td>tableCount</td><td>number</td><td>包含的数据表数量</td></tr>
+  <tr><td>followerCount</td><td>number</td><td>关注人数</td></tr>
+  <tr><td>followed</td><td>boolean</td><td>当前用户是否已关注</td></tr>
+  <tr><td>createdAt</td><td>string (YYYY-MM-DD)</td><td>创建日期</td></tr>
+  <tr><td>updatedAt</td><td>string (YYYY-MM-DD)</td><td>最后更新日期</td></tr>
+  <tr><td>tables</td><td>Array&lt;Table&gt;</td><td>专题内的数据表列表</td></tr>
+  <tr><td>usageNote</td><td>string</td><td>使用说明（Markdown 格式）</td></tr>
+</table>
+
+<h3>5.2 专题内表数据结构</h3>
+
+<table>
+  <tr>
+    <th style="width:140px;">字段</th>
+    <th style="width:100px;">类型</th>
+    <th>说明</th>
+  </tr>
+  <tr><td>id</td><td>string</td><td>表 ID</td></tr>
+  <tr><td>name</td><td>string</td><td>物理表名</td></tr>
+  <tr><td>displayName</td><td>string</td><td>中文名称</td></tr>
+  <tr><td>serviceType</td><td>string</td><td>数据源类型</td></tr>
+  <tr><td>database</td><td>string</td><td>数据库名</td></tr>
+  <tr><td>owner</td><td>string</td><td>表负责人</td></tr>
+  <tr><td>description</td><td>string</td><td>表描述</td></tr>
+  <tr><td>addedAt</td><td>string</td><td>加入专题时间</td></tr>
+  <tr><td>queryCount</td><td>number</td><td>30 天查询次数</td></tr>
+  <tr><td>viewCount</td><td>number</td><td>30 天浏览次数</td></tr>
+</table>
+
+<h3>5.3 接口清单</h3>
+
+<table>
+  <tr>
+    <th style="width:60px;">方法</th>
+    <th style="width:280px;">路径</th>
+    <th>说明</th>
+    <th style="width:80px;">本期状态</th>
+  </tr>
+  <tr><td>GET</td><td>/v1/topics</td><td>获取所有专题列表</td><td>Mock</td></tr>
+  <tr><td>GET</td><td>/v1/topics/{id}</td><td>获取专题详情（含 tables + usageNote）</td><td>Mock</td></tr>
+  <tr><td>POST</td><td>/v1/topics</td><td>创建专题</td><td>Mock</td></tr>
+  <tr><td>PUT</td><td>/v1/topics/{id}</td><td>更新专题信息（name/tags/visibility/description/admins）</td><td>Mock</td></tr>
+  <tr><td>DELETE</td><td>/v1/topics/{id}</td><td>删除专题</td><td>Mock</td></tr>
+  <tr><td>POST</td><td>/v1/topics/{id}/follow</td><td>关注/取消关注专题（toggle）</td><td>Mock</td></tr>
+  <tr><td>POST</td><td>/v1/topics/{id}/tables</td><td>向专题添加数据表</td><td>Mock</td></tr>
+  <tr><td>DELETE</td><td>/v1/topics/{id}/tables/{tableId}</td><td>从专题移出数据表</td><td>Mock</td></tr>
+  <tr><td>GET</td><td>/v1/tables/available</td><td>获取可添加到专题的候选表列表</td><td>Mock</td></tr>
+  <tr><td>PUT</td><td>/v1/topics/{id}/usage-note</td><td>更新使用说明</td><td>Mock</td></tr>
+</table>
+
+<hr class="divider">
+
+<h2>6. 验收标准</h2>
+
+<h3>6.1 我的库表 验收清单</h3>
+
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th>验收项</th>
+    <th style="width:60px;">优先级</th>
+  </tr>
+  <tr><td>1</td><td>"我负责的""我收藏的""最近访问"三个 Tab 切换正常，各自展示对应数据</td><td>P0</td></tr>
+  <tr><td>2</td><td>每个 Tab 右上角显示正确的数量 badge</td><td>P1</td></tr>
+  <tr><td>3</td><td>搜索框输入关键词，实时过滤表名和中文名</td><td>P0</td></tr>
+  <tr><td>4</td><td>切换 Tab 时清空搜索词和已选中行</td><td>P0</td></tr>
+  <tr><td>5</td><td>表格 7 列数据正确渲染（表名/负责人/数据源/分层/描述/热度/更新时间）</td><td>P0</td></tr>
+  <tr><td>6</td><td>点击表名跳转到 /detail/{fqn}</td><td>P0</td></tr>
+  <tr><td>7</td><td>复制图标点击后成功复制表名到剪贴板</td><td>P1</td></tr>
+  <tr><td>8</td><td>分页器正常工作（pageSize 切换 + 页码切换 + 总数显示）</td><td>P0</td></tr>
+  <tr><td>9</td><td>"我负责的"Tab 左侧出现复选框，其他 Tab 不显示</td><td>P0</td></tr>
+  <tr><td>10</td><td>勾选表后"批量转交"按钮显示选中数量</td><td>P0</td></tr>
+  <tr><td>11</td><td>转交弹窗正确展示表清单（最多 5 个 + "+N"）</td><td>P1</td></tr>
+  <tr><td>12</td><td>接收人下拉支持姓名/邮箱模糊搜索</td><td>P0</td></tr>
+  <tr><td>13</td><td>接收人为空时"确认转交"按钮禁用</td><td>P0</td></tr>
+  <tr><td>14</td><td>转交成功后提示消息 + 清空选中 + 关闭弹窗</td><td>P0</td></tr>
+</table>
+
+<h3>6.2 数据专题列表页 验收清单</h3>
+
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th>验收项</th>
+    <th style="width:60px;">优先级</th>
+  </tr>
+  <tr><td>1</td><td>4 个 Tab 切换正常，各自显示正确的专题数量</td><td>P0</td></tr>
+  <tr><td>2</td><td>"全部"Tab 不展示非自己相关的私有专题</td><td>P0</td></tr>
+  <tr><td>3</td><td>搜索实时过滤专题名称和描述</td><td>P0</td></tr>
+  <tr><td>4</td><td>卡片网格响应式布局正确（1-4 列自适应）</td><td>P1</td></tr>
+  <tr><td>5</td><td>点击卡片跳转到 /topics/{id}</td><td>P0</td></tr>
+  <tr><td>6</td><td>关注星标 toggle 正确，followerCount 同步更新</td><td>P0</td></tr>
+  <tr><td>7</td><td>更多菜单仅 owner/admin 可见</td><td>P0</td></tr>
+  <tr><td>8</td><td>新建专题表单验证正确（名称必填，标签最多 3 个，描述最多 200 字）</td><td>P0</td></tr>
+  <tr><td>9</td><td>新建成功后跳转到详情页</td><td>P1</td></tr>
+  <tr><td>10</td><td>编辑弹窗预填当前数据，保存后列表刷新</td><td>P0</td></tr>
+  <tr><td>11</td><td>删除操作二次确认，确认后列表刷新</td><td>P0</td></tr>
+  <tr><td>12</td><td>分页正确（默认 12 条，切换 Tab 重置第 1 页）</td><td>P1</td></tr>
+</table>
+
+<h3>6.3 数据专题详情页 验收清单</h3>
+
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th>验收项</th>
+    <th style="width:60px;">优先级</th>
+  </tr>
+  <tr><td>1</td><td>页面正确加载专题信息（标题/标签/描述/元信息）</td><td>P0</td></tr>
+  <tr><td>2</td><td>返回按钮回到 /topics 列表页</td><td>P0</td></tr>
+  <tr><td>3</td><td>关注星标 toggle 正确</td><td>P0</td></tr>
+  <tr><td>4</td><td>标题/标签/描述的内联编辑功能正常（仅 owner/admin）</td><td>P0</td></tr>
+  <tr><td>5</td><td>普通用户不可见编辑图标和更多菜单</td><td>P0</td></tr>
+  <tr><td>6</td><td>数据表 Tab 正确渲染表格（6 列 + 操作列）</td><td>P0</td></tr>
+  <tr><td>7</td><td>点击表名跳转到 /detail/{fqn}</td><td>P0</td></tr>
+  <tr><td>8</td><td>添加数据表弹窗：左侧库列表 + 右侧表列表 + 多选</td><td>P0</td></tr>
+  <tr><td>9</td><td>移出表二次确认后成功移出</td><td>P0</td></tr>
+  <tr><td>10</td><td>表变更后底部浮动栏出现，点击保存后批量提交</td><td>P0</td></tr>
+  <tr><td>11</td><td>点击取消后 localTables 回退，浮动栏消失</td><td>P0</td></tr>
+  <tr><td>12</td><td>使用说明 Tab：Markdown 渲染正确</td><td>P1</td></tr>
+  <tr><td>13</td><td>使用说明编辑/保存流程正常</td><td>P1</td></tr>
+  <tr><td>14</td><td>管理员管理："+"按钮弹出多选下拉，保存后生效</td><td>P1</td></tr>
+</table>
+
+<hr class="divider">
+
+<p style="text-align:center; color:#999; font-size:12px; margin-top:40px;">
+  — 文档结束 —<br>
+  我的库表 & 数据专题 产品需求文档 v1.0 | 产品负责人：王蕊 | 2026-03-23
+</p>
+
+</body>
+</html>

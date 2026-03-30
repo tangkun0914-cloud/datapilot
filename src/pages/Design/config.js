@@ -14,15 +14,16 @@
  *   productModule   产品模块名，仅 catalogTier 为 productModule 时填写，如「数据地图」「数据集成」
  */
 
-import { tableDetail, sampleData, changeHistory, productionInfo } from '@/mock/detail.js'
-import { mockTopics } from '@/mock/topics.js'
+import { tableDetail, sampleData, changeHistory, productionInfo } from '@/mock/DataMap/detail.js'
+import { mockTopics } from '@/mock/DataMap/topics.js'
+import { alertList, filterOptions as monitoringFilterOptions } from '@/mock/Monitoring/monitoring.js'
 
 export const componentGroups = [
   // ═══════════════════════════════════════════════
-  //  L1 平台级组件
+  //  L1 平台级
   // ═══════════════════════════════════════════════
   {
-    groupName: 'L1 平台级组件',
+    groupName: 'L1 平台级',
     groupLevel: 'L1',
     items: [
       {
@@ -44,57 +45,6 @@ export const componentGroups = [
         ],
         usages: [
           { label: '全局路由布局', route: '/home' },
-        ],
-      },
-      {
-        id: 'DataSourceIcon',
-        name: 'DataSourceIcon',
-        label: '数据源图标',
-        catalogTier: 'platform',
-        level: '平台级',
-        domain: '通用',
-        type: 'display',
-        file: 'src/components/DataSourceIcon.vue',
-        desc: '展示不同数据源（MySQL、Hive、StarRocks 等）的图标标识，内置常用数据源的 SVG/图片资源。',
-        defaultProps: { type: 'mysql', size: 32 },
-        previewMultiple: [
-          { label: 'MySQL', props: { type: 'mysql', size: 32 } },
-          { label: 'Hive', props: { type: 'hive', size: 32 } },
-          { label: 'StarRocks', props: { type: 'starrocks', size: 32 } },
-          { label: '默认(未知)', props: { type: 'unknown', size: 32 } },
-        ],
-        props: [
-          { prop: 'type', type: 'String', desc: '数据源类型（mysql, hive, starrocks 等）' },
-          { prop: 'size', type: 'Number', desc: '图标大小（像素），默认 28' },
-        ],
-        usages: [
-          { label: '资产检索', route: '/search' },
-          { label: '资产详情', route: '/detail/example' },
-          { label: '我的库表', route: '/mytables' },
-        ],
-      },
-      {
-        id: 'SourceTag',
-        name: 'SourceTag',
-        label: '数据源标签',
-        catalogTier: 'platform',
-        level: '平台级',
-        domain: '通用',
-        type: 'display',
-        file: 'src/components/SourceTag.vue',
-        desc: '基于 DataSourceIcon 封装的标签组件，固定 20px 尺寸，常用于表格或列表中标识数据源类型。',
-        defaultProps: { type: 'mysql' },
-        previewMultiple: [
-          { label: 'MySQL', props: { type: 'mysql' } },
-          { label: 'Hive', props: { type: 'hive' } },
-          { label: 'StarRocks', props: { type: 'starrocks' } },
-        ],
-        props: [
-          { prop: 'type', type: 'String', desc: '数据源类型' },
-        ],
-        usages: [
-          { label: '资产检索', route: '/search' },
-          { label: '资产详情', route: '/detail/example' },
         ],
       },
       {
@@ -127,536 +77,1284 @@ export const componentGroups = [
           { label: '我的库表', route: '/mytables' },
         ],
       },
+    ]
+  },
+
+  // ═══════════════════════════════════════════════
+  //  L1 数据地图
+  // ═══════════════════════════════════════════════
+  {
+    groupName: 'L1 数据地图',
+    groupLevel: 'L1',
+    children: [
       {
-        id: 'CopilotPanel',
-        name: 'CopilotPanel',
-        label: 'AI 助手面板',
-        catalogTier: 'platform',
-        level: '平台级',
+        groupName: 'L2 通用组件',
+        groupLevel: 'L2',
+        items: [
+
+      {
+        id: 'DataSourceIcon',
+        name: 'DataSourceIcon',
+        label: '数据源图标',
+        catalogTier: 'productModule',
+        productModule: '数据地图',
+        level: '模块级',
         domain: '通用',
-        type: 'interaction',
-        file: 'src/components/Copilot/CopilotPanel.vue',
-        desc: '全局 AI 助手侧边面板，由顶部工具栏触发展开，内嵌 ChatPanel 实现对话功能，支持收起/展开。',
-        demo: () => import('./demos/ChatPanelDemo.vue'),
-        props: [
-          { prop: '(无外部 props)', type: '-', desc: '内部通过 useCopilotStore 管理展开状态和对话数据' },
-        ],
-        usages: [
-          { label: '全局布局（AppLayout 内）', route: '/home' },
-        ],
-      },
-    ],
-  },
-
-  // ═══════════════════════════════════════════════
-  //  L2 首页模块
-  // ═══════════════════════════════════════════════
-  {
-    groupName: 'L2 首页模块',
-    groupLevel: 'L2',
-    items: [
-      {
-        id: 'HeroBanner',
-        name: 'HeroBanner',
-        label: '全局智能检索区',
-        catalogTier: 'productModule',
-        productModule: '数据地图',
-        level: '模块级',
-        domain: '首页',
-        type: 'interaction',
-        file: 'src/pages/Home/HeroBanner.new.vue',
-        desc: '首页核心入口，提供搜索/AI 双模式检索，支持搜索建议、历史记录、热门标签及 AI 快捷提问卡片。',
-        demo: () => import('./demos/HeroBannerDemo.vue'),
-        events: [
-          { event: 'openCopilot', params: '-', desc: '用户通过 AI 模式提问时触发，通知父组件打开 Copilot 面板' },
-        ],
-        children: [
-          { id: 'L3-1', name: '双模式检索入口', data: '搜索/AI 模式切换、关键词输入、搜索建议下拉、历史记录' },
-          { id: 'L3-2', name: '热门搜索标签', data: '订单明细、user_profile、营收报表、dwd_trade、数据质量' },
-          { id: 'L3-3', name: '核心能力快捷入口', data: '智能找表、血缘追溯、数据质量、热门推荐 4 张 AI 快捷卡片' },
-        ],
-        usages: [
-          { label: '首页', route: '/home' },
-        ],
-      },
-      {
-        id: 'RecentList',
-        name: 'RecentList',
-        label: '最近访问资产流',
-        catalogTier: 'productModule',
-        productModule: '数据地图',
-        level: '模块级',
-        domain: '首页',
         type: 'display',
-        file: 'src/pages/Home/RecentList.vue',
-        desc: '展示用户最近交互的数据资产流，支持"最近浏览"、"我的收藏"、"热度榜"三种视图切换。',
-        demo: () => import('./demos/RecentListDemo.vue'),
-        children: [
-          { id: 'L3-1', name: '资产视图分类 Tab', data: '最近浏览、我的收藏、热度榜' },
-          { id: 'L3-2', name: '资产明细列表', data: '数据源图标、库名.表名、中文名、负责人、热度值、浏览量、收藏操作' },
-          { id: 'L3-3', name: '热度排名标识', data: '排名徽章（前3名红色高亮）' },
+        file: 'src/components/DataSourceIcon.vue',
+        desc: '展示不同数据源（MySQL、Hive、StarRocks 等）的图标标识，内置常用数据源的 SVG/图片资源。',
+        defaultProps: { type: 'mysql', size: 32 },
+        previewMultiple: [
+          { label: 'MySQL', props: { type: 'mysql', size: 32 } },
+          { label: 'Hive', props: { type: 'hive', size: 32 } },
+          { label: 'StarRocks', props: { type: 'starrocks', size: 32 } },
+          { label: '默认(未知)', props: { type: 'unknown', size: 32 } },
         ],
-        usages: [
-          { label: '首页', route: '/home' },
-        ],
-      },
-      {
-        id: 'HomeOverview',
-        name: 'HomeOverview',
-        label: '平台数据概览区',
-        catalogTier: 'productModule',
-        productModule: '数据地图',
-        level: '模块级',
-        domain: '首页',
-        type: 'display',
-        file: 'src/pages/Home/index.new.vue',
-        desc: '首页右侧聚合区域，展示平台整体数据资产规模、热门专题推荐以及 AI Copilot 引导入口。',
-        demo: () => import('./demos/HomeOverviewDemo.vue'),
-        children: [
-          { id: 'L3-1', name: '资产规模指标', data: '数据表总数(12,846)、数据库数(386)、数据源数(5)、日活跃查询(1,240)' },
-          { id: 'L3-2', name: '热门专题推荐', data: '专题名称、描述、关联表数量，点击可跳转' },
-          { id: 'L3-3', name: 'AI Copilot 引导入口', data: '渐变色卡片，点击唤起 Copilot 面板' },
-        ],
-        usages: [
-          { label: '首页', route: '/home' },
-        ],
-      },
-    ],
-  },
-
-  // ═══════════════════════════════════════════════
-  //  L2 资产检索模块
-  // ═══════════════════════════════════════════════
-  {
-    groupName: 'L2 资产检索模块',
-    groupLevel: 'L2',
-    items: [
-      {
-        id: 'SearchBar',
-        name: 'SearchBar',
-        label: '搜索输入栏',
-        catalogTier: 'productModule',
-        productModule: '数据地图',
-        level: '模块级',
-        domain: '资产检索',
-        type: 'interaction',
-        file: 'src/pages/Search/SearchBar.vue',
-        desc: '资产检索页顶部搜索输入组件，支持关键词输入、搜索建议下拉和双向绑定。',
-        defaultProps: { modelValue: '' },
         props: [
-          { prop: 'modelValue', type: 'String', desc: '搜索关键词（v-model 绑定）' },
-        ],
-        events: [
-          { event: 'update:modelValue', params: 'value: String', desc: '关键词变化时触发' },
-          { event: 'search', params: 'query: String', desc: '用户确认搜索时触发' },
+          { prop: 'type', type: 'String', desc: '数据源类型（mysql, hive, starrocks 等）' },
+          { prop: 'size', type: 'Number', desc: '图标大小（像素），默认 28' },
         ],
         usages: [
           { label: '资产检索', route: '/search' },
-        ],
-      },
-      {
-        id: 'FilterPanel',
-        name: 'FilterPanel',
-        label: '筛选面板',
-        catalogTier: 'productModule',
-        productModule: '数据地图',
-        level: '模块级',
-        domain: '资产检索',
-        type: 'interaction',
-        file: 'src/pages/Search/FilterPanel.vue',
-        desc: '资产检索的多维度筛选面板，支持按数据类型、检索范围、数据库、负责人等维度过滤，筛选项由 API 动态加载。',
-        props: [
-          { prop: '(无外部 props)', type: '-', desc: '筛选选项通过 onMounted 调用 getFilterOptions() 加载' },
-        ],
-        events: [
-          { event: 'change', params: '{ dataType, searchScope, database, owner }', desc: '任一筛选条件变化时触发，传递当前全部筛选状态' },
-        ],
-        usages: [
-          { label: '资产检索', route: '/search' },
-        ],
-      },
-      {
-        id: 'ResultList',
-        name: 'ResultList',
-        label: '检索结果列表视图',
-        catalogTier: 'productModule',
-        productModule: '数据地图',
-        level: '模块级',
-        domain: '资产检索',
-        type: 'display',
-        file: 'src/pages/Search/ResultList.vue',
-        desc: '以卡片形式展示搜索命中的数据资产列表，包含数据源标识、表名、元数据摘要、字段预览及收藏操作。',
-        demo: () => import('./demos/ResultListDemo.vue'),
-        props: [
-          { prop: 'data', type: 'Array', desc: '搜索结果数据数组' },
-          { prop: 'loading', type: 'Boolean', desc: '是否显示加载状态，默认 false' },
-        ],
-        events: [
-          { event: 'filterByTag', params: 'tag: Object', desc: '点击标签时触发，用于按标签快速筛选' },
-          { event: 'favorite', params: 'item: Object', desc: '收藏/取消收藏时触发' },
-        ],
-        children: [
-          { id: 'L3-1', name: '资产卡片头部', data: '数据源图标、类型标签、库名.表名、中文名、热度/浏览量、收藏' },
-          { id: 'L3-2', name: '资产元数据摘要', data: '所属库、负责人、更新时间、业务域、数仓分层、描述' },
-          { id: 'L3-3', name: '字段预览', data: '前 7 个字段名（hover 显示类型和描述）' },
-        ],
-        usages: [
-          { label: '资产检索', route: '/search' },
-        ],
-      },
-      {
-        id: 'ResultTable',
-        name: 'ResultTable',
-        label: '检索结果表格视图',
-        catalogTier: 'productModule',
-        productModule: '数据地图',
-        level: '模块级',
-        domain: '资产检索',
-        type: 'display',
-        file: 'src/pages/Search/ResultTable.vue',
-        desc: '以表格形式展示搜索结果，支持行选择、导出和复制操作，适用于批量操作场景。',
-        defaultProps: { data: [], loading: false },
-        props: [
-          { prop: 'data', type: 'Array', desc: '搜索结果数据数组' },
-          { prop: 'loading', type: 'Boolean', desc: '是否显示加载状态' },
-        ],
-        events: [
-          { event: 'export', params: '-', desc: '点击导出按钮时触发' },
-          { event: 'copy', params: '-', desc: '点击复制按钮时触发' },
-          { event: 'selectionChange', params: 'keys: Array', desc: '行选择变化时触发' },
-        ],
-        usages: [
-          { label: '资产检索', route: '/search' },
-        ],
-      },
-    ],
-  },
-
-  // ═══════════════════════════════════════════════
-  //  L2 资产详情模块
-  // ═══════════════════════════════════════════════
-  {
-    groupName: 'L2 资产详情模块',
-    groupLevel: 'L2',
-    items: [
-      {
-        id: 'InfoSidebar',
-        name: 'InfoSidebar',
-        label: '资产信息侧栏',
-        catalogTier: 'productModule',
-        productModule: '数据地图',
-        level: '模块级',
-        domain: '资产详情',
-        type: 'display',
-        file: 'src/pages/Detail/InfoSidebar.vue',
-        desc: '资产详情页右侧信息面板，聚合展示数据表的核心元数据：负责人、业务域、标签、存储大小、行数、查询热度等。',
-        defaultProps: { table: tableDetail },
-        props: [
-          { prop: 'table', type: 'Object', desc: '数据表详情对象（required），包含 owners、domain、tags、profile、usageSummary 等字段' },
-        ],
-        usages: [
           { label: '资产详情', route: '/detail/example' },
-        ],
-      },
-      {
-        id: 'FieldDetailTab',
-        name: 'FieldDetailTab',
-        label: '字段详情',
-        catalogTier: 'productModule',
-        productModule: '数据地图',
-        level: '模块级',
-        domain: '资产详情',
-        type: 'display',
-        file: 'src/pages/Detail/FieldDetailTab.vue',
-        desc: '展示数据表全部字段的详细信息，包括字段名、类型、长度、描述、标签、约束及数据质量画像（非空率、唯一值等）。',
-        defaultProps: {
-          columns: tableDetail.columns,
-          tableConstraints: tableDetail.tableConstraints,
-        },
-        props: [
-          { prop: 'columns', type: 'Array', desc: '字段定义数组，每项含 name、dataType、description、tags、profile 等' },
-          { prop: 'tableConstraints', type: 'Array', desc: '表约束数组，如 PRIMARY_KEY' },
-        ],
-        usages: [
-          { label: '资产详情', route: '/detail/example' },
-        ],
-      },
-      {
-        id: 'PreviewTab',
-        name: 'PreviewTab',
-        label: '数据预览',
-        catalogTier: 'productModule',
-        productModule: '数据地图',
-        level: '模块级',
-        domain: '资产详情',
-        type: 'display',
-        file: 'src/pages/Detail/PreviewTab.vue',
-        desc: '展示数据表的样本数据和字段数据画像（分布、空值率、唯一值），通过 tableId 自动加载。',
-        defaultProps: { tableId: '1' },
-        props: [
-          { prop: 'tableId', type: 'String', desc: '数据表 ID，变化时自动重新加载样本数据和画像' },
-        ],
-        usages: [
-          { label: '资产详情', route: '/detail/example' },
-        ],
-      },
-      {
-        id: 'UsageTab',
-        name: 'UsageTab',
-        label: '使用说明',
-        catalogTier: 'productModule',
-        productModule: '数据地图',
-        level: '模块级',
-        domain: '资产详情',
-        type: 'display',
-        file: 'src/pages/Detail/UsageTab.vue',
-        desc: '展示数据表的使用说明文档，支持 Markdown 格式渲染。',
-        defaultProps: { description: '## 使用说明\n\n本表为交易订单明细，T+1 增量同步。\n\n### 推荐查询\n\n```sql\nSELECT * FROM dwd_trade_order_detail WHERE dt = \'20241110\' LIMIT 100\n```' },
-        props: [
-          { prop: 'description', type: 'String', desc: '使用说明内容，支持 Markdown 格式' },
-        ],
-        usages: [
-          { label: '资产详情', route: '/detail/example' },
-        ],
-      },
-      {
-        id: 'ScriptTab',
-        name: 'ScriptTab',
-        label: '建表语句',
-        catalogTier: 'productModule',
-        productModule: '数据地图',
-        level: '模块级',
-        domain: '资产详情',
-        type: 'display',
-        file: 'src/pages/Detail/ScriptTab.vue',
-        desc: '展示数据表的 DDL 建表语句，支持代码高亮和一键复制。',
-        defaultProps: { table: tableDetail },
-        props: [
-          { prop: 'table', type: 'Object', desc: '数据表详情对象，从中提取 columns、name 等字段生成 DDL' },
-        ],
-        usages: [
-          { label: '资产详情', route: '/detail/example' },
-        ],
-      },
-      {
-        id: 'ProductionTab',
-        name: 'ProductionTab',
-        label: '生产信息',
-        catalogTier: 'productModule',
-        productModule: '数据地图',
-        level: '模块级',
-        domain: '资产详情',
-        type: 'display',
-        file: 'src/pages/Detail/ProductionTab.vue',
-        desc: '展示数据表的生产调度信息，包括调度频率、最近执行记录、SLA 达标率和任务成功/失败状态。',
-        defaultProps: { tableId: '1' },
-        props: [
-          { prop: 'tableId', type: 'String', desc: '数据表 ID，变化时自动加载生产信息' },
-        ],
-        usages: [
-          { label: '资产详情', route: '/detail/example' },
-        ],
-      },
-      {
-        id: 'LineageTab',
-        name: 'LineageTab',
-        label: '数据血缘',
-        catalogTier: 'productModule',
-        productModule: '数据地图',
-        level: '模块级',
-        domain: '资产详情',
-        type: 'interaction',
-        file: 'src/pages/Detail/LineageTab.vue',
-        desc: '基于 G6 图形引擎渲染数据表的上下游血缘关系图，支持表级/字段级血缘切换、节点展开、缩放和拖拽。',
-        demo: () => import('./demos/LineageTabDemo.vue'),
-        props: [
-          { prop: 'fqn', type: 'String', desc: '数据表全限定名（fullyQualifiedName），用于加载血缘数据' },
-        ],
-        children: [
-          { id: 'L3-1', name: '血缘关系图', data: '上游节点、中心节点、下游节点、连线（表级/字段级）' },
-          { id: 'L3-2', name: '节点详情', data: '数据源图标、表名、库名、负责人、字段列表' },
-          { id: 'L3-3', name: '血缘操作栏', data: '表级/字段级切换、缩放、全屏' },
-        ],
-        usages: [
-          { label: '资产详情', route: '/detail/example' },
-        ],
-      },
-      {
-        id: 'ChangeHistoryTab',
-        name: 'ChangeHistoryTab',
-        label: '变更记录',
-        catalogTier: 'productModule',
-        productModule: '数据地图',
-        level: '模块级',
-        domain: '资产详情',
-        type: 'display',
-        file: 'src/pages/Detail/ChangeHistoryTab.vue',
-        desc: '展示数据表的 Schema 变更历史时间线，包括字段增减、类型变更、表注释修改等。',
-        defaultProps: { tableId: '1' },
-        props: [
-          { prop: 'tableId', type: 'String', desc: '数据表 ID，变化时自动加载变更记录' },
-        ],
-        usages: [
-          { label: '资产详情', route: '/detail/example' },
-        ],
-      },
-    ],
-  },
-
-  // ═══════════════════════════════════════════════
-  //  L2 数据专题模块
-  // ═══════════════════════════════════════════════
-  {
-    groupName: 'L2 数据专题模块',
-    groupLevel: 'L2',
-    items: [
-      {
-        id: 'TopicCard',
-        name: 'TopicCard',
-        label: '专题卡片',
-        catalogTier: 'productModule',
-        productModule: '数据地图',
-        level: '模块级',
-        domain: '数据专题',
-        type: 'display',
-        file: 'src/pages/Topics/TopicCard.vue',
-        desc: '专题列表中的单张卡片，展示专题名称、标签、描述、表数量、关注人数等信息，支持编辑/删除/关注操作。',
-        defaultProps: { topic: mockTopics[0], canEdit: false },
-        props: [
-          { prop: 'topic', type: 'Object', desc: '专题数据对象（required），含 name、tags、description、tableCount、followerCount 等' },
-          { prop: 'canEdit', type: 'Boolean', desc: '是否显示编辑/删除按钮，默认 false' },
-        ],
-        events: [
-          { event: 'edit', params: 'topic: Object', desc: '点击编辑时触发' },
-          { event: 'delete', params: 'topic: Object', desc: '点击删除时触发' },
-          { event: 'follow', params: 'topic: Object', desc: '点击关注/取关时触发' },
-        ],
-        usages: [
-          { label: '数据专题', route: '/topics' },
-        ],
-      },
-      {
-        id: 'TopicDetail',
-        name: 'TopicDetail',
-        label: '专题详情页',
-        catalogTier: 'productModule',
-        productModule: '数据地图',
-        level: '模块级',
-        domain: '数据专题',
-        type: 'interaction',
-        file: 'src/pages/Topics/TopicDetail.vue',
-        desc: '专题详情完整页面，展示专题元信息、关联数据表列表、使用说明，支持添加/移除表、编辑说明等操作。依赖 route.params.id 加载数据。',
-        demo: () => import('./demos/TopicDetailDemo.vue'),
-        children: [
-          { id: 'L3-1', name: '专题元信息', data: '专题名称、标签、描述、管理员、创建/更新时间、关注按钮' },
-          { id: 'L3-2', name: '关联表管理', data: '数据表列表、添加表弹窗、移除表操作' },
-          { id: 'L3-3', name: '使用说明', data: 'Markdown 文档编辑和渲染' },
-        ],
-        usages: [
-          { label: '专题详情', route: '/topics/1' },
-        ],
-      },
-    ],
-  },
-
-  // ═══════════════════════════════════════════════
-  //  L2 我的库表模块
-  // ═══════════════════════════════════════════════
-  {
-    groupName: 'L2 我的库表模块',
-    groupLevel: 'L2',
-    items: [
-      {
-        id: 'TableGroup',
-        name: 'TableGroup',
-        label: '库表分组列表',
-        catalogTier: 'productModule',
-        productModule: '数据地图',
-        level: '模块级',
-        domain: '我的库表',
-        type: 'display',
-        file: 'src/pages/MyTables/TableGroup.vue',
-        desc: '以分组列表形式展示用户负责的数据表，支持行选择（用于批量转让等操作）和空状态提示。',
-        defaultProps: {
-          tables: [
-            { id: 't1', name: 'dwd_trade_order_detail', displayName: '交易订单明细', serviceType: 'Hive', database: 'dm_trade', owner: '张三(zhangsan)' },
-            { id: 't2', name: 'ads_user_retention_day', displayName: '用户留存日统计', serviceType: 'StarRocks', database: 'dm_user', owner: '张三(zhangsan)' },
-          ],
-          selectable: false,
-        },
-        props: [
-          { prop: 'tables', type: 'Array', desc: '数据表数组' },
-          { prop: 'emptyText', type: 'String', desc: '空状态提示文本，默认 "暂无数据"' },
-          { prop: 'selectable', type: 'Boolean', desc: '是否启用行选择，默认 false' },
-          { prop: 'selectedRowKeys', type: 'Array', desc: '已选中的行 key 数组' },
-        ],
-        events: [
-          { event: 'update:selectedRowKeys', params: 'keys: Array', desc: '选中行变化时触发' },
-        ],
-        usages: [
           { label: '我的库表', route: '/mytables' },
         ],
       },
+
       {
-        id: 'TransferModal',
-        name: 'TransferModal',
-        label: '库表转让弹窗',
+        id: 'SourceTag',
+        name: 'SourceTag',
+        label: '数据源标签',
         catalogTier: 'productModule',
         productModule: '数据地图',
         level: '模块级',
-        domain: '我的库表',
-        type: 'interaction',
-        file: 'src/pages/MyTables/TransferModal.vue',
-        desc: '批量转让数据表负责人的弹窗，需选择目标负责人并填写转让原因。',
-        previewType: 'modal',
-        defaultProps: { tableCount: 3, tableNames: ['dwd_trade_order', 'ads_user_retention', 'dim_product_info'] },
-        props: [
-          { prop: 'open', type: 'Boolean', desc: '弹窗显示状态（v-model:open）' },
-          { prop: 'tableCount', type: 'Number', desc: '待转让表数量' },
-          { prop: 'tableNames', type: 'Array', desc: '待转让表名列表' },
+        domain: '通用',
+        type: 'display',
+        file: 'src/components/SourceTag.vue',
+        desc: '基于 DataSourceIcon 封装的标签组件，固定 20px 尺寸，常用于表格或列表中标识数据源类型。',
+        defaultProps: { type: 'mysql' },
+        previewMultiple: [
+          { label: 'MySQL', props: { type: 'mysql' } },
+          { label: 'Hive', props: { type: 'hive' } },
+          { label: 'StarRocks', props: { type: 'starrocks' } },
         ],
-        events: [
-          { event: 'update:open', params: 'visible: Boolean', desc: '弹窗关闭时触发' },
-          { event: 'confirm', params: '{ targetOwner, reason }', desc: '确认转让时触发，传递目标人和原因' },
+        props: [
+          { prop: 'type', type: 'String', desc: '数据源类型' },
         ],
         usages: [
-          { label: '我的库表', route: '/mytables' },
+          { label: '资产检索', route: '/search' },
+          { label: '资产详情', route: '/detail/example' },
         ],
       },
-    ],
+        ]
+      },
+      {
+        groupName: 'L2 首页',
+        groupLevel: 'L2',
+        items: [
+          {
+            id: 'HeroBanner',
+            name: 'HeroBanner',
+            label: '全局智能检索区',
+            catalogTier: 'productModule',
+            productModule: '数据地图',
+            level: '模块级',
+            domain: '首页',
+            type: 'interaction',
+            file: 'src/pages/DataMap/Home/HeroBanner.new.vue',
+            desc: '首页核心入口，提供搜索/AI 双模式检索，支持搜索建议、历史记录、热门标签及 AI 快捷提问卡片。',
+            demo: () => import('./demos/HeroBannerDemo.vue'),
+            events: [
+              { event: 'openCopilot', params: '-', desc: '用户通过 AI 模式提问时触发，通知父组件打开 Copilot 面板' },
+            ],
+            children: [
+              { id: 'L3-1', name: '双模式检索入口', data: '搜索/AI 模式切换、关键词输入、搜索建议下拉、历史记录' },
+              { id: 'L3-2', name: '热门搜索标签', data: '订单明细、user_profile、营收报表、dwd_trade、数据质量' },
+              { id: 'L3-3', name: '核心能力快捷入口', data: '本期仅智能找表：业务用途 / 关键词 / 项目范围 / 专题范围 4 张卡片（与 Copilot 一致）' },
+            ],
+            usages: [
+              { label: '首页', route: '/home' },
+            ],
+          },
+          {
+            id: 'RecentList',
+            name: 'RecentList',
+            label: '最近访问资产流',
+            catalogTier: 'productModule',
+            productModule: '数据地图',
+            level: '模块级',
+            domain: '首页',
+            type: 'display',
+            file: 'src/pages/DataMap/Home/RecentList.vue',
+            desc: '展示用户最近交互的数据资产流，支持"最近浏览"、"我的收藏"、"热度榜"三种视图切换。',
+            demo: () => import('./demos/RecentListDemo.vue'),
+            children: [
+              { id: 'L3-1', name: '资产视图分类 Tab', data: '最近浏览、我的收藏、热度榜' },
+              { id: 'L3-2', name: '资产明细列表', data: '数据源图标、库名.表名、中文名、负责人、热度值、浏览量、收藏操作' },
+              { id: 'L3-3', name: '热度排名标识', data: '排名徽章（前3名红色高亮）' },
+            ],
+            usages: [
+              { label: '首页', route: '/home' },
+            ],
+          },
+          {
+            id: 'HomeOverview',
+            name: 'HomeOverview',
+            label: '平台数据概览区',
+            catalogTier: 'productModule',
+            productModule: '数据地图',
+            level: '模块级',
+            domain: '首页',
+            type: 'display',
+            file: 'src/pages/DataMap/Home/index.new.vue',
+            desc: '首页右侧聚合区域，展示平台整体数据资产规模、热门专题推荐以及 AI Copilot 引导入口。',
+            demo: () => import('./demos/HomeOverviewDemo.vue'),
+            children: [
+              { id: 'L3-1', name: '资产规模指标', data: '数据表总数(12,846)、数据库数(386)、数据源数(5)、日活跃查询(1,240)' },
+              { id: 'L3-2', name: '热门专题推荐', data: '专题名称、描述、关联表数量，点击可跳转' },
+              { id: 'L3-3', name: 'AI Copilot 引导入口', data: '渐变色卡片，点击唤起 Copilot 面板' },
+            ],
+            usages: [
+              { label: '首页', route: '/home' },
+            ],
+          },
+        ]
+      },
+      {
+        groupName: 'L2 资产检索模块',
+        groupLevel: 'L2',
+        items: [
+          {
+            id: 'SearchBar',
+            name: 'SearchBar',
+            label: '搜索输入栏',
+            catalogTier: 'productModule',
+            productModule: '数据地图',
+            level: '模块级',
+            domain: '资产检索',
+            type: 'interaction',
+            file: 'src/pages/DataMap/Search/SearchBar.vue',
+            desc: '资产检索页顶部搜索输入组件，支持关键词输入、搜索建议下拉和双向绑定。',
+            defaultProps: { modelValue: '' },
+            props: [
+              { prop: 'modelValue', type: 'String', desc: '搜索关键词（v-model 绑定）' },
+            ],
+            events: [
+              { event: 'update:modelValue', params: 'value: String', desc: '关键词变化时触发' },
+              { event: 'search', params: 'query: String', desc: '用户确认搜索时触发' },
+            ],
+            usages: [
+              { label: '资产检索', route: '/search' },
+            ],
+          },
+          {
+            id: 'FilterPanel',
+            name: 'FilterPanel',
+            label: '筛选面板',
+            catalogTier: 'productModule',
+            productModule: '数据地图',
+            level: '模块级',
+            domain: '资产检索',
+            type: 'interaction',
+            file: 'src/pages/DataMap/Search/FilterPanel.vue',
+            desc: '资产检索的多维度筛选面板，支持按数据类型、检索范围、数据库、负责人等维度过滤，筛选项由 API 动态加载。',
+            props: [
+              { prop: '(无外部 props)', type: '-', desc: '筛选选项通过 onMounted 调用 getFilterOptions() 加载' },
+            ],
+            events: [
+              { event: 'change', params: '{ dataType, searchScope, database, owner }', desc: '任一筛选条件变化时触发，传递当前全部筛选状态' },
+            ],
+            usages: [
+              { label: '资产检索', route: '/search' },
+            ],
+          },
+          {
+            id: 'ResultList',
+            name: 'ResultList',
+            label: '检索结果列表视图',
+            catalogTier: 'productModule',
+            productModule: '数据地图',
+            level: '模块级',
+            domain: '资产检索',
+            type: 'display',
+            file: 'src/pages/DataMap/Search/ResultList.vue',
+            desc: '以卡片形式展示搜索命中的数据资产列表，包含数据源标识、表名、元数据摘要、字段预览及收藏操作。',
+            demo: () => import('./demos/ResultListDemo.vue'),
+            props: [
+              { prop: 'data', type: 'Array', desc: '搜索结果数据数组' },
+              { prop: 'loading', type: 'Boolean', desc: '是否显示加载状态，默认 false' },
+            ],
+            events: [
+              { event: 'filterByTag', params: 'tag: Object', desc: '点击标签时触发，用于按标签快速筛选' },
+              { event: 'favorite', params: 'item: Object', desc: '收藏/取消收藏时触发' },
+            ],
+            children: [
+              { id: 'L3-1', name: '资产卡片头部', data: '数据源图标、类型标签、库名.表名、中文名、热度/浏览量、收藏' },
+              { id: 'L3-2', name: '资产元数据摘要', data: '所属库、负责人、更新时间、业务域、数仓分层、描述' },
+              { id: 'L3-3', name: '字段预览', data: '前 7 个字段名（hover 显示类型和描述）' },
+            ],
+            usages: [
+              { label: '资产检索', route: '/search' },
+            ],
+          },
+          {
+            id: 'ResultTable',
+            name: 'ResultTable',
+            label: '检索结果表格视图',
+            catalogTier: 'productModule',
+            productModule: '数据地图',
+            level: '模块级',
+            domain: '资产检索',
+            type: 'display',
+            file: 'src/pages/DataMap/Search/ResultTable.vue',
+            desc: '以表格形式展示搜索结果，支持行选择、导出和复制操作，适用于批量操作场景。',
+            defaultProps: { data: [], loading: false },
+            props: [
+              { prop: 'data', type: 'Array', desc: '搜索结果数据数组' },
+              { prop: 'loading', type: 'Boolean', desc: '是否显示加载状态' },
+            ],
+            events: [
+              { event: 'export', params: '-', desc: '点击导出按钮时触发' },
+              { event: 'copy', params: '-', desc: '点击复制按钮时触发' },
+              { event: 'selectionChange', params: 'keys: Array', desc: '行选择变化时触发' },
+            ],
+            usages: [
+              { label: '资产检索', route: '/search' },
+            ],
+          },
+        ]
+      },
+      {
+        groupName: 'L2 资产详情模块',
+        groupLevel: 'L2',
+        items: [
+          {
+            id: 'InfoSidebar',
+            name: 'InfoSidebar',
+            label: '资产信息侧栏',
+            catalogTier: 'productModule',
+            productModule: '数据地图',
+            level: '模块级',
+            domain: '资产详情',
+            type: 'display',
+            file: 'src/pages/DataMap/Detail/InfoSidebar.vue',
+            desc: '资产详情页右侧信息面板，聚合展示数据表的核心元数据：负责人、业务域、标签、存储大小、行数、查询热度等。',
+            defaultProps: { table: tableDetail },
+            props: [
+              { prop: 'table', type: 'Object', desc: '数据表详情对象（required），包含 owners、domain、tags、profile、usageSummary 等字段' },
+            ],
+            usages: [
+              { label: '资产详情', route: '/detail/example' },
+            ],
+          },
+          {
+            id: 'FieldDetailTab',
+            name: 'FieldDetailTab',
+            label: '字段详情',
+            catalogTier: 'productModule',
+            productModule: '数据地图',
+            level: '模块级',
+            domain: '资产详情',
+            type: 'display',
+            file: 'src/pages/DataMap/Detail/FieldDetailTab.vue',
+            desc: '展示数据表全部字段的详细信息，包括字段名、类型、长度、描述、标签、约束及数据质量画像（非空率、唯一值等）。',
+            defaultProps: {
+              columns: tableDetail.columns,
+              tableConstraints: tableDetail.tableConstraints,
+            },
+            props: [
+              { prop: 'columns', type: 'Array', desc: '字段定义数组，每项含 name、dataType、description、tags、profile 等' },
+              { prop: 'tableConstraints', type: 'Array', desc: '表约束数组，如 PRIMARY_KEY' },
+            ],
+            usages: [
+              { label: '资产详情', route: '/detail/example' },
+            ],
+          },
+          {
+            id: 'PreviewTab',
+            name: 'PreviewTab',
+            label: '数据预览',
+            catalogTier: 'productModule',
+            productModule: '数据地图',
+            level: '模块级',
+            domain: '资产详情',
+            type: 'display',
+            file: 'src/pages/DataMap/Detail/PreviewTab.vue',
+            desc: '展示数据表的样本数据和字段数据画像（分布、空值率、唯一值），通过 tableId 自动加载。',
+            defaultProps: { tableId: '1' },
+            props: [
+              { prop: 'tableId', type: 'String', desc: '数据表 ID，变化时自动重新加载样本数据和画像' },
+            ],
+            usages: [
+              { label: '资产详情', route: '/detail/example' },
+            ],
+          },
+          {
+            id: 'UsageTab',
+            name: 'UsageTab',
+            label: '使用说明',
+            catalogTier: 'productModule',
+            productModule: '数据地图',
+            level: '模块级',
+            domain: '资产详情',
+            type: 'display',
+            file: 'src/pages/DataMap/Detail/UsageTab.vue',
+            desc: '展示数据表的使用说明文档，支持 Markdown 格式渲染。',
+            defaultProps: { description: '## 使用说明\n\n本表为交易订单明细，T+1 增量同步。\n\n### 推荐查询\n\n```sql\nSELECT * FROM dwd_trade_order_detail WHERE dt = \'20241110\' LIMIT 100\n```' },
+            props: [
+              { prop: 'description', type: 'String', desc: '使用说明内容，支持 Markdown 格式' },
+            ],
+            usages: [
+              { label: '资产详情', route: '/detail/example' },
+            ],
+          },
+          {
+            id: 'ScriptTab',
+            name: 'ScriptTab',
+            label: '建表语句',
+            catalogTier: 'productModule',
+            productModule: '数据地图',
+            level: '模块级',
+            domain: '资产详情',
+            type: 'display',
+            file: 'src/pages/DataMap/Detail/ScriptTab.vue',
+            desc: '展示数据表的 DDL 建表语句，支持代码高亮和一键复制。',
+            defaultProps: { table: tableDetail },
+            props: [
+              { prop: 'table', type: 'Object', desc: '数据表详情对象，从中提取 columns、name 等字段生成 DDL' },
+            ],
+            usages: [
+              { label: '资产详情', route: '/detail/example' },
+            ],
+          },
+          {
+            id: 'ProductionTab',
+            name: 'ProductionTab',
+            label: '生产信息',
+            catalogTier: 'productModule',
+            productModule: '数据地图',
+            level: '模块级',
+            domain: '资产详情',
+            type: 'display',
+            file: 'src/pages/DataMap/Detail/ProductionTab.vue',
+            desc: '展示数据表的生产调度信息，包括调度频率、最近执行记录、SLA 达标率和任务成功/失败状态。',
+            defaultProps: { tableId: '1' },
+            props: [
+              { prop: 'tableId', type: 'String', desc: '数据表 ID，变化时自动加载生产信息' },
+            ],
+            usages: [
+              { label: '资产详情', route: '/detail/example' },
+            ],
+          },
+          {
+            id: 'LineageTab',
+            name: 'LineageTab',
+            label: '数据血缘',
+            catalogTier: 'productModule',
+            productModule: '数据地图',
+            level: '模块级',
+            domain: '资产详情',
+            type: 'interaction',
+            file: 'src/pages/DataMap/Detail/LineageTab.vue',
+            desc: '基于 G6 图形引擎渲染数据表的上下游血缘关系图，支持表级/字段级血缘切换、节点展开、缩放和拖拽。',
+            demo: () => import('./demos/LineageTabDemo.vue'),
+            props: [
+              { prop: 'fqn', type: 'String', desc: '数据表全限定名（fullyQualifiedName），用于加载血缘数据' },
+            ],
+            children: [
+              { id: 'L3-1', name: '血缘关系图', data: '上游节点、中心节点、下游节点、连线（表级/字段级）' },
+              { id: 'L3-2', name: '节点详情', data: '数据源图标、表名、库名、负责人、字段列表' },
+              { id: 'L3-3', name: '血缘操作栏', data: '表级/字段级切换、缩放、全屏' },
+            ],
+            usages: [
+              { label: '资产详情', route: '/detail/example' },
+            ],
+          },
+          {
+            id: 'ChangeHistoryTab',
+            name: 'ChangeHistoryTab',
+            label: '变更记录',
+            catalogTier: 'productModule',
+            productModule: '数据地图',
+            level: '模块级',
+            domain: '资产详情',
+            type: 'display',
+            file: 'src/pages/DataMap/Detail/ChangeHistoryTab.vue',
+            desc: '展示数据表的 Schema 变更历史时间线，包括字段增减、类型变更、表注释修改等。',
+            defaultProps: { tableId: '1' },
+            props: [
+              { prop: 'tableId', type: 'String', desc: '数据表 ID，变化时自动加载变更记录' },
+            ],
+            usages: [
+              { label: '资产详情', route: '/detail/example' },
+            ],
+          },
+        ]
+      },
+      {
+        groupName: 'L2 数据专题模块',
+        groupLevel: 'L2',
+        items: [
+          {
+            id: 'TopicCard',
+            name: 'TopicCard',
+            label: '专题卡片',
+            catalogTier: 'productModule',
+            productModule: '数据地图',
+            level: '模块级',
+            domain: '数据专题',
+            type: 'display',
+            file: 'src/pages/DataMap/Topics/TopicCard.vue',
+            desc: '专题列表中的单张卡片，展示专题名称、标签、描述、表数量、关注人数等信息，支持编辑/删除/关注操作。',
+            defaultProps: { topic: mockTopics[0], canEdit: false },
+            props: [
+              { prop: 'topic', type: 'Object', desc: '专题数据对象（required），含 name、tags、description、tableCount、followerCount 等' },
+              { prop: 'canEdit', type: 'Boolean', desc: '是否显示编辑/删除按钮，默认 false' },
+            ],
+            events: [
+              { event: 'edit', params: 'topic: Object', desc: '点击编辑时触发' },
+              { event: 'delete', params: 'topic: Object', desc: '点击删除时触发' },
+              { event: 'follow', params: 'topic: Object', desc: '点击关注/取关时触发' },
+            ],
+            usages: [
+              { label: '数据专题', route: '/topics' },
+            ],
+          },
+          {
+            id: 'TopicDetail',
+            name: 'TopicDetail',
+            label: '专题详情页',
+            catalogTier: 'productModule',
+            productModule: '数据地图',
+            level: '模块级',
+            domain: '数据专题',
+            type: 'interaction',
+            file: 'src/pages/DataMap/Topics/TopicDetail.vue',
+            desc: '专题详情完整页面，展示专题元信息、关联数据表列表、使用说明，支持添加/移除表、编辑说明等操作。依赖 route.params.id 加载数据。',
+            demo: () => import('./demos/TopicDetailDemo.vue'),
+            children: [
+              { id: 'L3-1', name: '专题元信息', data: '专题名称、标签、描述、管理员、创建/更新时间、关注按钮' },
+              { id: 'L3-2', name: '关联表管理', data: '数据表列表、添加表弹窗、移除表操作' },
+              { id: 'L3-3', name: '使用说明', data: 'Markdown 文档编辑和渲染' },
+            ],
+            usages: [
+              { label: '专题详情', route: '/topics/1' },
+            ],
+          },
+        ]
+      },
+      {
+        groupName: 'L2 我的库表模块',
+        groupLevel: 'L2',
+        items: [
+          {
+            id: 'TableGroup',
+            name: 'TableGroup',
+            label: '库表分组列表',
+            catalogTier: 'productModule',
+            productModule: '数据地图',
+            level: '模块级',
+            domain: '我的库表',
+            type: 'display',
+            file: 'src/pages/DataMap/MyTables/TableGroup.vue',
+            desc: '以分组列表形式展示用户负责的数据表，支持行选择（用于批量转让等操作）和空状态提示。',
+            defaultProps: {
+              tables: [
+                { id: 't1', name: 'dwd_trade_order_detail', displayName: '交易订单明细', serviceType: 'Hive', database: 'dm_trade', owner: '张三(zhangsan)' },
+                { id: 't2', name: 'ads_user_retention_day', displayName: '用户留存日统计', serviceType: 'StarRocks', database: 'dm_user', owner: '张三(zhangsan)' },
+              ],
+              selectable: false,
+            },
+            props: [
+              { prop: 'tables', type: 'Array', desc: '数据表数组' },
+              { prop: 'emptyText', type: 'String', desc: '空状态提示文本，默认 "暂无数据"' },
+              { prop: 'selectable', type: 'Boolean', desc: '是否启用行选择，默认 false' },
+              { prop: 'selectedRowKeys', type: 'Array', desc: '已选中的行 key 数组' },
+            ],
+            events: [
+              { event: 'update:selectedRowKeys', params: 'keys: Array', desc: '选中行变化时触发' },
+            ],
+            usages: [
+              { label: '我的库表', route: '/mytables' },
+            ],
+          },
+          {
+            id: 'TransferModal_MyTables',
+            name: 'TransferModal',
+            label: '库表转让弹窗',
+            catalogTier: 'productModule',
+            productModule: '数据地图',
+            level: '模块级',
+            domain: '我的库表',
+            type: 'interaction',
+            file: 'src/pages/DataMap/MyTables/TransferModal.vue',
+            desc: '批量转让数据表负责人的弹窗，需选择目标负责人并填写转让原因。',
+            previewType: 'modal',
+            defaultProps: { tableCount: 3, tableNames: ['dwd_trade_order', 'ads_user_retention', 'dim_product_info'] },
+            props: [
+              { prop: 'open', type: 'Boolean', desc: '弹窗显示状态（v-model:open）' },
+              { prop: 'tableCount', type: 'Number', desc: '待转让表数量' },
+              { prop: 'tableNames', type: 'Array', desc: '待转让表名列表' },
+            ],
+            events: [
+              { event: 'update:open', params: 'visible: Boolean', desc: '弹窗关闭时触发' },
+              { event: 'confirm', params: '{ targetOwner, reason }', desc: '确认转让时触发，传递目标人和原因' },
+            ],
+            usages: [
+              { label: '我的库表', route: '/mytables' },
+            ],
+          },
+        ]
+      },
+      {
+        groupName: 'L2 AI COPILOT模块',
+        groupLevel: 'L2',
+        items: [
+          {
+            id: 'CopilotPortalDemo',
+            name: 'CopilotPortal',
+            label: '新版 Copilot 首页概念',
+            catalogTier: 'productModule',
+            productModule: '数据地图',
+            level: '模块级',
+            domain: 'AI Copilot',
+            type: 'interaction',
+            file: 'src/pages/Design/demos/CopilotPortalDemo.vue',
+            desc: '基于千问/ChatGPT交互范式的全新数据地图首页概念 Demo。包含左侧个人工作台（会话历史、收藏）和中心沉浸式对话检索区域。',
+            demo: () => import('./demos/CopilotPortalDemo.vue'),
+            props: [],
+            usages: [
+              { label: '新版首页概念', route: '/home' },
+            ],
+          },
+          {
+            id: 'PilotLogo',
+            name: 'PilotLogo',
+            label: 'DataPilot Logo',
+            catalogTier: 'platform',
+            level: '平台级',
+            domain: 'AI Copilot',
+            type: 'display',
+            file: 'src/components/Copilot/PilotLogo.vue',
+            desc: 'DataPilot 星形 SVG Logo（源自 data-agent PilotLogo）。type=color 时为紫渐变，主色与 Copilot 统一为 rgba(108, 76, 155)；支持 white/dark 纯色用于深浅背景。ChatPanel 欢迎区等处使用。',
+            demo: () => import('./demos/PilotLogoDemo.vue'),
+            props: [
+              { prop: 'size', type: 'Number', desc: '图标边长（px），默认 24' },
+              { prop: 'type', type: 'String', desc: 'color（渐变）| white | dark，默认 color' },
+            ],
+            children: [
+              { id: 'L3-1', name: '渐变', data: 'linearGradient，--agent-primary 默认 rgba(108, 76, 155)' },
+              { id: 'L3-2', name: '中心点', data: '白色圆点' },
+            ],
+            usages: [
+              { label: 'ChatPanel 欢迎区', route: '/home' },
+              { label: 'Copilot 全屏', route: '/copilot' },
+            ],
+          },
+          {
+            id: 'CopilotPanel',
+            name: 'CopilotPanel',
+            label: 'AI 助手面板',
+            catalogTier: 'productModule',
+            productModule: '数据地图',
+            level: '模块级',
+            domain: 'AI Copilot',
+            type: 'interaction',
+            file: 'src/components/Copilot/CopilotPanel.vue',
+            desc: '全局 AI 助手侧边面板（420px），支持 chat/list 双视图切换。chat 视图内嵌 ChatPanel 聊天，list 视图展示 SessionList 会话列表。顶部提供全屏、会话管理、新建对话、关闭等操作。',
+            demo: () => import('./demos/CopilotPanelDemo.vue'),
+            props: [
+              { prop: '(无外部 props)', type: '-', desc: '内部通过 useCopilotStore 管理展开状态、视图模式和会话数据' },
+            ],
+            children: [
+              { id: 'L3-1', name: 'Header 操作栏', data: '全屏按钮、会话管理切换、新建对话、关闭' },
+              { id: 'L3-2', name: 'Chat 视图', data: 'ChatPanel 聊天面板' },
+              { id: 'L3-3', name: 'List 视图', data: 'SessionList 会话列表（搜索/筛选/管理）' },
+            ],
+            usages: [
+              { label: '全局布局（AppLayout 内）', route: '/home' },
+            ],
+          },
+          {
+            id: 'CopilotFull',
+            name: 'CopilotFull',
+            label: 'AI 全屏对话页',
+            catalogTier: 'productModule',
+            productModule: '数据地图',
+            level: '模块级',
+            domain: 'AI Copilot',
+            type: 'interaction',
+            file: 'src/components/Copilot/CopilotFull.vue',
+            desc: 'Copilot 全屏模式页面，采用 split-layout 左右分栏：左侧 280px 会话列表（SessionList）+ 右侧聊天区（ChatPanel）。支持会话切换、新建对话、退出全屏。',
+            demo: () => import('./demos/CopilotFullDemo.vue'),
+            props: [
+              { prop: '(无外部 props)', type: '-', desc: '通过路由 /copilot 进入，内部使用 useCopilotStore 管理状态' },
+            ],
+            children: [
+              { id: 'L3-1', name: '左侧会话列表', data: 'SessionList 组件 + 新建对话按钮' },
+              { id: 'L3-2', name: '右侧聊天区', data: 'Header（标题/退出/关闭）+ ChatPanel' },
+            ],
+            usages: [
+              { label: 'AI Copilot 全屏页', route: '/copilot' },
+            ],
+          },
+          {
+            id: 'SessionList',
+            name: 'SessionList',
+            label: '会话列表',
+            catalogTier: 'productModule',
+            productModule: '数据地图',
+            level: '模块级',
+            domain: 'AI Copilot',
+            type: 'interaction',
+            file: 'src/components/Copilot/SessionList.vue',
+            desc: 'Copilot 会话管理列表组件，支持搜索关键词、按模块筛选、会话卡片展示（标题/摘要/标签/时间）、重命名和删除操作。区分当前会话/历史会话两组。',
+            demo: () => import('./demos/SessionListDemo.vue'),
+            props: [
+              { prop: 'sessions', type: 'Array', desc: '会话数组，每项含 id/title/summary/tags/module/ts/status' },
+              { prop: 'isFullscreen', type: 'Boolean', desc: '是否全屏模式（影响激活态判断逻辑），默认 false' },
+              { prop: 'viewingSessionId', type: 'Number|String|null', desc: '当前查看的会话 ID（全屏模式下使用）' },
+            ],
+            events: [
+              { event: 'select', params: 'session: Object', desc: '点击会话卡片时触发' },
+              { event: 'delete', params: 'session: Object', desc: '删除会话时触发' },
+            ],
+            children: [
+              { id: 'L3-1', name: '搜索筛选区', data: '模块下拉选择 + 关键词搜索输入' },
+              { id: 'L3-2', name: '当前会话组', data: 'status=ACTIVE 的会话卡片' },
+              { id: 'L3-3', name: '历史会话组', data: '非 ACTIVE 的会话卡片（含模块标签/摘要/标签/时间）' },
+            ],
+            usages: [
+              { label: 'CopilotPanel（list 视图）', route: '/home' },
+              { label: 'CopilotFull（左侧栏）', route: '/copilot' },
+            ],
+          },
+          {
+            id: 'ChatPanel',
+            name: 'ChatPanel',
+            label: 'AI 对话面板',
+            catalogTier: 'platform',
+            level: '平台级',
+            domain: 'AI Copilot',
+            type: 'interaction',
+            file: 'src/components/Copilot/ChatPanel.vue',
+            desc: '核心 AI 对话组件。本期仅「智能找表」：空态展示欢迎页（Logo + 4 种找表范围卡片：业务用途/关键词/项目范围/专题范围），对话中支持多轮消息、简易 Markdown 渲染、用户消息行内编辑（覆盖重写/仅回退）、消息复制、点赞/踩反馈、Agent 意图标签、输入栏左侧「选择意图」下拉、@ 提及表名、打字指示器、自动滚动。消息数据通过 useCopilotStore 全局共享。',
+            demo: () => import('./demos/ChatPanelDemo.vue'),
+            props: [
+              { prop: 'fullscreen', type: 'Boolean', desc: '是否全屏模式，默认 false' },
+            ],
+            children: [
+              { id: 'L3-1', name: '欢迎页', data: 'PilotLogo（主色 rgba(108, 76, 155)）、标题、副标题、4 张智能找表范围卡片（业务用途/关键词/项目范围/专题）' },
+              { id: 'L3-2', name: '消息列表', data: '用户消息（紫色气泡）、AI 回复（白色气泡+Markdown）、ResultCards 表卡片' },
+              { id: 'L3-3', name: '消息反馈', data: '复制、点赞、踩（AI 消息）；编辑、复制（用户消息，编辑时用 UserMessageInlineEditor）' },
+              { id: 'L3-4', name: '输入区', data: '文本输入框、意图选择（a-select，与欢迎卡片对齐）、@ 提及下拉、发送按钮' },
+            ],
+            usages: [
+              { label: 'CopilotPanel', route: '/home' },
+              { label: 'CopilotFull', route: '/copilot' },
+            ],
+          },
+        ]
+      }
+    ]
   },
 
   // ═══════════════════════════════════════════════
-  //  L2 AI Copilot 模块
+  //  L1 监控运维
   // ═══════════════════════════════════════════════
   {
-    groupName: 'L2 AI Copilot 模块',
-    groupLevel: 'L2',
-    items: [
+    groupName: 'L1 监控运维',
+    groupLevel: 'L1',
+    children: [
       {
-        id: 'ChatPanel',
-        name: 'ChatPanel',
-        label: 'AI 对话面板',
-        catalogTier: 'platform',
-        level: '平台级',
-        domain: 'AI Copilot',
-        type: 'interaction',
-        file: 'src/components/Copilot/ChatPanel.vue',
-        desc: '核心 AI 对话组件，支持多轮对话、流式输出、快捷建议、代码高亮，依赖 useCopilotStore 管理对话状态。',
-        demo: () => import('./demos/ChatPanelDemo.vue'),
+        groupName: 'L2 告警列表页',
+        groupLevel: 'L2',
+        items: [
+
+      {
+        id: 'AlertStatusBadge',
+        name: 'AlertStatusBadge',
+        label: '告警状态徽章',
+        catalogTier: 'productModule',
+        productModule: '监控运维',
+        level: '模块级',
+        domain: '告警中心',
+        type: 'display',
+        file: 'src/pages/Monitoring/components/AlertStatusBadge.vue',
+        desc: '统一展示告警生命周期状态（触发中、处理中、已屏蔽、已转交、已解决、误报）的徽章组件，含图标与配色。供 AlertCard、详情抽屉及任意列表/表格列复用。',
+        demo: () => import('./demos/AlertStatusBadgeDemo.vue'),
         props: [
-          { prop: 'fullscreen', type: 'Boolean', desc: '是否全屏模式，默认 false。全屏时隐藏部分 UI 元素' },
+          {
+            prop: 'status',
+            type: 'String',
+            desc: '必填。枚举：firing（触发中）、acked（处理中）、silenced（已屏蔽）、transferred（已转交）、resolved（已解决）、falsePositive（误报）',
+          },
         ],
         children: [
-          { id: 'L3-1', name: '对话消息流', data: '用户消息、AI 回复（Markdown 渲染）、时间戳' },
-          { id: 'L3-2', name: '输入区', data: '文本输入框、发送按钮、快捷建议标签' },
-          { id: 'L3-3', name: '对话管理', data: '清空对话、对话历史' },
+          { id: 'L3-1', name: '图标', data: 'ThunderboltFilled / LoadingOutlined / BellFilled / WarningOutlined 或文本符号' },
+          { id: 'L3-2', name: '样式', data: '各状态独立边框与文字色，误报为透明底+描边' },
         ],
         usages: [
-          { label: 'Copilot 面板', route: '/home' },
-          { label: 'AI Copilot 全屏页', route: '/copilot' },
+          { label: '告警事件列表', route: '/monitoring/alerts' },
+          { label: '组件库', route: '/design' },
         ],
       },
-    ],
-  },
+          {
+            id: 'AlertCard',
+            name: 'AlertCard',
+            label: '告警事件卡片',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '模块级',
+            domain: '告警中心',
+            type: 'display',
+            file: 'src/pages/Monitoring/AlertList/AlertCard.vue',
+            desc: '单条告警事件的展示卡片，集成状态标识、操作按钮组、元信息区和日志摘要。根据 severity 和 status 自动切换 ERROR(红)/WARN(蓝)/已解决(绿)/误报(橙) 主题边框色和操作按钮集。',
+            demo: () => import('./demos/AlertCardDemo.vue'),
+            props: [
+              { prop: 'alert', type: 'Object', desc: '告警对象（required），核心字段：id, title, severity(ERROR/WARN), status(firing/acked/silenced/transferred/resolved/falsePositive), source, monitorEvent, triggerTime, owner 等' },
+              { prop: 'checked', type: 'Boolean', desc: '是否被勾选（用于批量操作），默认 false' },
+            ],
+            events: [
+              { event: 'check', params: 'checked: Boolean', desc: '勾选状态变化' },
+              { event: 'titleClick', params: 'alert: Object', desc: '点击告警标题，通常用于打开详情抽屉' },
+              { event: 'action', params: 'type: String, alert: Object', desc: '操作按钮点击，type 为 claim/silence/resolve/transfer/falsePositive' },
+            ],
+            children: [
+              { id: 'L3-1', name: '卡片头部', data: '等级标签、标题链接、状态徽章、调度信息、恢复类型标签' },
+              { id: 'L3-2', name: '操作按钮组', data: '根据 status 动态切换：认领/屏蔽/已解决/转交/误报' },
+              { id: 'L3-3', name: '元信息区', data: '触发时间、来源、监控事件、通知次数、升级信息、屏蔽/转交/误报详情' },
+              { id: 'L3-4', name: '日志摘要', data: '调用 AlertLogSection 子组件，智能提取日志片段' },
+              { id: 'L3-5', name: '底部信息栏', data: '事件ID、负责人、操作人' },
+            ],
+            usages: [
+              { label: '告警事件列表', route: '/monitoring/alerts' },
+            ],
+          },
+          {
+            id: 'FilterSection',
+            name: 'FilterSection',
+            label: '告警筛选区',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '模块级',
+            domain: '告警中心',
+            type: 'interaction',
+            file: 'src/pages/Monitoring/AlertList/FilterSection.vue',
+            desc: '告警列表的筛选区域，支持来源、任务名/数据表名（动态切换）、事件ID、监控事件、事件状态、告警等级、调度批次、负责人等多维度筛选，支持展开/收起。',
+            defaultProps: { filterOptions: monitoringFilterOptions },
+            props: [
+              { prop: 'filterOptions', type: 'Object', desc: '筛选选项配置，含 sources, events, statuses, levels, owners, operators 数组' },
+            ],
+            events: [
+              { event: 'query', params: 'formData: Object', desc: '点击查询时触发，传递当前筛选表单值' },
+              { event: 'reset', params: '-', desc: '点击重置时触发' },
+            ],
+            usages: [
+              { label: '告警事件列表', route: '/monitoring/alerts' },
+            ],
+          },
+          {
+            id: 'StatsCards',
+            name: 'StatsCards',
+            label: '告警统计卡片',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '模块级',
+            domain: '告警中心',
+            type: 'display',
+            file: 'src/pages/Monitoring/AlertList/StatsCards.vue',
+            desc: '告警列表顶部的统计概览卡片组，展示我的待处理、我的新增、全部待处理、今日新增等指标，支持点击切换筛选。',
+            defaultProps: {
+              cards: [
+                { label: '我的待处理', value: 20, color: '#ff4d4f' },
+                { label: '我的新增', value: 10, color: '#fa8c16' },
+                { label: '全部待处理', value: 10, color: '#1677ff' },
+                { label: '今日新增', value: 6, color: '#52c41a' },
+              ],
+              activeIndex: 0,
+            },
+            props: [
+              { prop: 'cards', type: 'Array', desc: '统计卡片数组，每项含 label, value, color' },
+              { prop: 'activeIndex', type: 'Number', desc: '当前激活卡片索引' },
+            ],
+            events: [
+              { event: 'select', params: 'index: Number', desc: '点击卡片时触发' },
+            ],
+            usages: [
+              { label: '告警事件列表', route: '/monitoring/alerts' },
+            ],
+          },
+          {
+            id: 'BulkActionBar',
+            name: 'BulkActionBar',
+            label: '批量操作悬浮栏',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '模块级',
+            domain: '告警中心',
+            type: 'interaction',
+            file: 'src/pages/Monitoring/AlertList/BulkActionBar.vue',
+            desc: '告警列表底部悬浮操作栏，展示已选数量并提供批量认领、误报、屏蔽、转交、已解决等操作。勾选数为 0 时自动隐藏。',
+            defaultProps: { count: 3 },
+            props: [
+              { prop: 'count', type: 'Number', desc: '当前勾选的告警数量，为 0 时隐藏' },
+            ],
+            events: [
+              { event: 'bulk', params: 'action: String', desc: '批量操作，action: claim/falsePositive/silence/transfer/resolve' },
+              { event: 'cancel', params: '-', desc: '取消全部勾选' },
+            ],
+            usages: [
+              { label: '告警事件列表', route: '/monitoring/alerts' },
+            ],
+          },
+          {
+            id: 'ResolveModal',
+            name: 'ResolveModal',
+            label: '已解决弹窗',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '模块级',
+            domain: '告警中心',
+            type: 'interaction',
+            file: 'src/pages/Monitoring/modals/ResolveModal.vue',
+            previewType: 'modal',
+            desc: '标记告警为已解决的表单弹窗，要求填写故障根因（级联选择）和可选诊断备注。',
+            props: [
+              { prop: 'open', type: 'Boolean', desc: '弹窗显示状态（v-model:open）' },
+            ],
+            events: [
+              { event: 'update:open', params: 'val: Boolean', desc: '弹窗开关变化' },
+              { event: 'submit', params: '{ rootCause, remark }', desc: '提交故障根因' },
+            ],
+            usages: [
+              { label: '告警事件列表', route: '/monitoring/alerts' },
+            ],
+          },
+          {
+            id: 'TransferModal_Monitoring',
+            name: 'TransferModal',
+            label: '转交弹窗',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '模块级',
+            domain: '告警中心',
+            type: 'interaction',
+            file: 'src/pages/Monitoring/modals/TransferModal.vue',
+            previewType: 'modal',
+            desc: '将告警转交给其他用户的表单弹窗，支持多选目标用户和搜索过滤。',
+            defaultProps: { users: ['王蕊', '王博', '李雷'] },
+            props: [
+              { prop: 'open', type: 'Boolean', desc: '弹窗显示状态（v-model:open）' },
+              { prop: 'users', type: 'Array', desc: '可选用户列表' },
+            ],
+            events: [
+              { event: 'update:open', params: 'val: Boolean', desc: '弹窗开关变化' },
+              { event: 'submit', params: '{ targetUsers }', desc: '提交转交目标' },
+            ],
+            usages: [
+              { label: '告警事件列表', route: '/monitoring/alerts' },
+            ],
+          },
+          {
+            id: 'SilenceModal',
+            name: 'SilenceModal',
+            label: '屏蔽弹窗',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '模块级',
+            domain: '告警中心',
+            type: 'interaction',
+            file: 'src/pages/Monitoring/modals/SilenceModal.vue',
+            previewType: 'modal',
+            desc: '设置告警屏蔽规则的表单弹窗，选择屏蔽时长（1h~24h）和可选原因。',
+            props: [
+              { prop: 'open', type: 'Boolean', desc: '弹窗显示状态（v-model:open）' },
+            ],
+            events: [
+              { event: 'update:open', params: 'val: Boolean', desc: '弹窗开关变化' },
+              { event: 'submit', params: '{ duration, reason }', desc: '提交屏蔽配置' },
+            ],
+            usages: [
+              { label: '告警事件列表', route: '/monitoring/alerts' },
+            ],
+          },
+          {
+            id: 'FalsePositiveModal',
+            name: 'FalsePositiveModal',
+            label: '误报弹窗',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '模块级',
+            domain: '告警中心',
+            type: 'interaction',
+            file: 'src/pages/Monitoring/modals/FalsePositiveModal.vue',
+            previewType: 'modal',
+            desc: '将告警标记为误报的表单弹窗，选择误报原因（预期内变化/阈值不合理/测试数据/其他）和可选说明。',
+            props: [
+              { prop: 'open', type: 'Boolean', desc: '弹窗显示状态（v-model:open）' },
+            ],
+            events: [
+              { event: 'update:open', params: 'val: Boolean', desc: '弹窗开关变化' },
+              { event: 'submit', params: '{ reasonType, remark }', desc: '提交误报原因' },
+            ],
+            usages: [
+              { label: '告警事件列表', route: '/monitoring/alerts' },
+            ],
+          },
+          {
+            id: 'HistoryModal',
+            name: 'HistoryModal',
+            label: '操作历史弹窗',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '模块级',
+            domain: '告警中心',
+            type: 'display',
+            file: 'src/pages/Monitoring/modals/HistoryModal.vue',
+            previewType: 'modal',
+            desc: '以时间线展示告警事件的操作历史记录，每条含时间、操作描述和可选详情。',
+            defaultProps: {
+              historyItems: [
+                { time: '2026-03-19 14:00', action: '触发告警', color: 'red' },
+                { time: '2026-03-19 14:05', action: '王蕊 认领了告警', color: 'blue' },
+                { time: '2026-03-19 15:30', action: '王蕊 标记为已解决', detail: '根因：上游延迟', color: 'green' },
+              ],
+            },
+            props: [
+              { prop: 'open', type: 'Boolean', desc: '弹窗显示状态（v-model:open）' },
+              { prop: 'historyItems', type: 'Array', desc: '历史记录数组，每项含 time, action, detail?, color?' },
+            ],
+            events: [
+              { event: 'update:open', params: 'val: Boolean', desc: '弹窗开关变化' },
+            ],
+            usages: [
+              { label: '告警事件列表', route: '/monitoring/alerts' },
+            ],
+          },
+        ]
+      },
+      {
+        groupName: 'L2 告警详情页',
+        groupLevel: 'L2',
+        items: [
+          {
+            id: 'AlertDetailDrawer',
+            name: 'AlertDetailDrawer',
+            label: '告警详情抽屉',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '模块级',
+            domain: '告警中心',
+            type: 'interaction',
+            file: 'src/pages/Monitoring/AlertDetail/AlertDetailDrawer.vue',
+            desc: '告警事件的详情侧边抽屉，展示完整告警信息、进度时间线、质量规则明细（仅质量监控）、日志片段和操作按钮。',
+            previewType: 'modal',
+            defaultProps: { alert: alertList[0] },
+            props: [
+              { prop: 'open', type: 'Boolean', desc: '抽屉显示状态' },
+              { prop: 'alert', type: 'Object', desc: '告警对象，与 AlertCard 使用相同数据结构' },
+            ],
+            events: [
+              { event: 'close', params: '-', desc: '关闭抽屉' },
+              { event: 'action', params: 'type: String, alert: Object', desc: '操作按钮，type 同 AlertCard' },
+            ],
+            children: [
+              { id: 'L3-1', name: '详情头部', data: '等级标签、标题（可复制）、状态徽章、责任人、事件ID' },
+              { id: 'L3-2', name: '基础信息', data: '监控事件、调度周期/批次、任务实例、触发时间、持续时间' },
+              { id: 'L3-3', name: '进度时间线', data: 'ProgressTimeline + alertProgressTimelineScenarios.js 生成步骤' },
+              { id: 'L3-4', name: '质量规则明细', data: 'RuleDetailTable 子组件（仅质量监控来源显示）' },
+              { id: 'L3-5', name: '日志片段', data: 'AlertLogSection 子组件' },
+            ],
+            usages: [
+              { label: '告警事件列表', route: '/monitoring/alerts' },
+            ],
+          },
+          {
+            id: 'ProgressTimeline',
+            name: 'ProgressTimeline',
+            label: '进度时间线',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '模块级',
+            domain: '告警中心',
+            type: 'display',
+            file: 'src/pages/Monitoring/AlertDetail/ProgressTimeline.vue',
+            desc: '水平进度时间线，展示告警生命周期各阶段。步骤数据与多场景定义集中在同目录 alertProgressTimelineScenarios.js（对齐原型「监控事件详情页进度补充」及「系统恢复」HTML）。业务侧使用 buildTimelineStepsFromAlert(alert)；演示/测试可使用 getTimelineStepsForScenario(TimelineScenarioId.xxx, ctx)。',
+            demo: () => import('./demos/ProgressTimelineDemo.vue'),
+            defaultProps: {
+              steps: [
+                { icon: 'alert-circle', title: '触发告警', time: '2026-03-19 14:00', status: 'completed' },
+                { icon: 'send', title: '通知发送', status: 'completed' },
+                { icon: 'user-check', title: '已认领', person: '王蕊', status: 'current' },
+                { icon: 'check-circle', title: '已解决', status: 'pending' },
+              ],
+            },
+            props: [
+              { prop: 'steps', type: 'Array', desc: '步骤数组：icon, title, time?, person?, timeRange?, tag?, multiTime?, status(completed|current|pending)' },
+            ],
+            children: [
+              { id: 'TL-S1', name: '场景一', data: 'fire_pending — 触发中待认领（4 步）' },
+              { id: 'TL-S2', name: '场景二', data: 'acked_processing — 已认领处理中' },
+              { id: 'TL-S3', name: '场景三', data: 'resolved_manual_with_ack / resolved_manual_no_ack — 人工已解决' },
+              { id: 'TL-S4', name: '场景四', data: 'silenced — 已屏蔽' },
+              { id: 'TL-ST', name: '转交', data: 'transferred — 已转交' },
+              { id: 'TL-S5', name: '场景五', data: 'false_positive_direct — 直接误报' },
+              { id: 'TL-S6', name: '场景六', data: 'false_positive_after_ack — 认领后误报' },
+              { id: 'TL-S7', name: '场景七', data: 'firing_silenced — 触发中已静默（需 silenceTimeRange）' },
+              { id: 'TL-S8', name: '场景八', data: 'notify_escalation — 通知升级（5 步）' },
+              { id: 'TL-SYS', name: '系统恢复', data: 'system_recovery_single / multi — 自动恢复（3 步）' },
+            ],
+            usages: [
+              { label: '告警详情抽屉', route: '/monitoring/alerts' },
+            ],
+          },
+          {
+            id: 'AlertProgressTimelineScenarios',
+            name: 'alertProgressTimelineScenarios',
+            label: '告警进度场景（数据模块）',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '模块级',
+            domain: '告警中心',
+            type: 'logic',
+            file: 'src/pages/Monitoring/AlertDetail/alertProgressTimelineScenarios.js',
+            desc: '告警详情进度条的「场景 → steps」纯数据模块：导出 TimelineScenarioId、getTimelineStepsForScenario、buildTimelineStepsFromAlert、alertToTimelineContext。与原型 HTML 场景一一对应。预览区与「进度时间线」组件相同，展示各场景下的渲染效果。',
+            demo: () => import('./demos/ProgressTimelineDemo.vue'),
+            props: [
+              { prop: 'buildTimelineStepsFromAlert(alert)', type: 'Function', desc: '根据告警对象自动匹配场景并返回 steps，供 AlertDetailDrawer 使用' },
+              { prop: 'getTimelineStepsForScenario(id, ctx)', type: 'Function', desc: '按 TimelineScenarioId 与演示上下文生成 steps' },
+              { prop: 'TimelineScenarioId', type: 'Object', desc: '场景常量枚举（freeze）' },
+              { prop: 'alertToTimelineContext(alert)', type: 'Function', desc: '告警对象 → 时间线上下文字段' },
+            ],
+            children: [
+              { id: 'TL-DATA-1', name: '数据源', data: '与 ProgressTimeline 共用步骤结构，不依赖 Vue 组件' },
+            ],
+            usages: [
+              { label: 'AlertDetailDrawer', route: '/monitoring/alerts' },
+            ],
+          },
+          {
+            id: 'AlertLogSection',
+            name: 'AlertLogSection',
+            label: '告警日志片段',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '模块级',
+            domain: '告警中心',
+            type: 'display',
+            file: 'src/pages/Monitoring/AlertDetail/AlertLogSection.vue',
+            desc: '告警日志摘要展示组件，根据 monitorEvent 类型智能提取关键日志片段（错误关键词定位、SLA 摘要、末尾 N 行等），支持复制和全屏查看。',
+            defaultProps: { alert: alertList[0] },
+            props: [
+              { prop: 'alert', type: 'Object', desc: '告警对象（required），从中提取 monitorEvent, source, logSnippet, fullLog 等字段' },
+            ],
+            usages: [
+              { label: '告警事件卡片', route: '/monitoring/alerts' },
+              { label: '告警详情抽屉', route: '/monitoring/alerts' },
+            ],
+          },
+          {
+            id: 'RuleDetailTable',
+            name: 'RuleDetailTable',
+            label: '质量规则明细表',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '模块级',
+            domain: '告警中心',
+            type: 'display',
+            file: 'src/pages/Monitoring/AlertDetail/RuleDetailTable.vue',
+            desc: '质量监控告警的规则检测明细表格，展示规则名、检测列、条件、预期值、实际值和是否通过。仅在 source 为质量监控时使用。',
+            defaultProps: {
+              rules: [
+                { ruleName: '空值率检查', column: 'order_id', condition: '空值率 ≤', expected: '0.1%', actual: '5.2%', passed: false },
+                { ruleName: '唯一性检查', column: 'order_id', condition: '唯一值占比 ≥', expected: '99.9%', actual: '99.95%', passed: true },
+              ],
+            },
+            props: [
+              { prop: 'rules', type: 'Array', desc: '规则数组，每项含 ruleName, column, condition, expected, actual, passed' },
+            ],
+            usages: [
+              { label: '告警详情抽屉（质量监控）', route: '/monitoring/alerts' },
+            ],
+          },
+        ]
+      },
+      {
+        groupName: 'L2 通知策略',
+        groupLevel: 'L2',
+        items: [
+          {
+            id: 'LevelRuleBox',
+            name: 'LevelRuleBox',
+            label: '告警等级通知规则块',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '模块级',
+            domain: '通知策略',
+            type: 'interaction',
+            file: 'src/pages/Monitoring/NotifyStrategy/LevelRuleBox.vue',
+            desc: '单个告警等级的通知接收人和渠道配置面板（任务负责人/指定人员/On-call），ERROR 和 WARN 复用同一组件。',
+            defaultProps: {
+              level: 'ERROR',
+              rules: {
+                owner: { enabled: true, channels: ['feishu'] },
+                specific: { enabled: false, users: [], channels: ['feishu'] },
+                oncall: { enabled: false, groups: [], channels: ['feishu'] },
+              },
+              userOptions: [
+                { value: 'u_wangrui', label: '王蕊 (ruiwang1)' },
+                { value: 'u_lilei', label: '李雷 (lilei)' },
+              ],
+              oncallOptions: [
+                { value: 'sre', label: '大数据SRE值班组' },
+                { value: 'dba', label: '数据库值班组' },
+              ],
+            },
+            props: [
+              { prop: 'level', type: 'String', desc: "'ERROR' | 'WARN'" },
+              { prop: 'rules', type: 'Object', desc: '规则对象，含 owner/specific/oncall 三组' },
+              { prop: 'userOptions', type: 'Array', desc: '人员选项' },
+              { prop: 'oncallOptions', type: 'Array', desc: '值班组选项' },
+            ],
+            usages: [
+              { label: '新建通知策略', route: '/monitoring/strategies' },
+            ],
+          },
+          {
+            id: 'CreateStrategy',
+            name: 'CreateStrategy',
+            label: '新建通知策略抽屉',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '模块级',
+            domain: '通知策略',
+            type: 'interaction',
+            file: 'src/pages/Monitoring/NotifyStrategy/CreateStrategy.vue',
+            previewType: 'modal',
+            defaultProps: { },
+            desc: '右侧抽屉，分三步配置通知策略：基础信息 → 告警通知规则（ERROR/WARN） → 发送策略配置（频次/静默/升级）。',
+            props: [
+              { prop: 'open', type: 'Boolean', desc: '控制抽屉显示/隐藏' },
+            ],
+            events: [
+              { event: 'close', params: '-', desc: '关闭抽屉' },
+              { event: 'submit', params: 'data: Object', desc: '提交策略配置' },
+            ],
+            children: [
+              { id: 'CS-1', name: 'Step 1 基础信息', data: '策略名称、描述' },
+              { id: 'CS-2', name: 'Step 2 通知规则', data: 'LevelRuleBox × 2（ERROR + WARN）' },
+              { id: 'CS-3', name: 'Step 3 发送策略', data: '频次控制、静默时间(WARN)、通知升级(ERROR)' },
+            ],
+            usages: [
+              { label: '通知策略列表', route: '/monitoring/strategies' },
+            ],
+          },
+          {
+            id: 'StrategyFilter',
+            name: 'StrategyFilter',
+            label: '通知策略筛选区',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '模块级',
+            domain: '通知策略',
+            type: 'interaction',
+            file: 'src/pages/Monitoring/NotifyStrategy/StrategyFilter.vue',
+            desc: '通知策略列表页的顶部筛选区域，包含策略名称搜索、创建人下拉选择以及新建/刷新操作。',
+            demo: () => import('./demos/StrategyFilterDemo.vue'),
+            props: [
+              { prop: 'searchName', type: 'String', desc: '搜索的策略名称 (v-model)' },
+              { prop: 'searchCreator', type: 'String', desc: '搜索的创建人 (v-model)' },
+            ],
+            events: [
+              { event: 'update:searchName', params: 'value: String', desc: '策略名称更新' },
+              { event: 'update:searchCreator', params: 'value: String', desc: '创建人更新' },
+              { event: 'refresh', params: '-', desc: '点击刷新按钮' },
+              { event: 'create', params: '-', desc: '点击新建策略按钮' },
+            ],
+            usages: [
+              { label: '通知策略列表', route: '/monitoring/strategies' },
+            ],
+          },
+          {
+            id: 'StrategyTable',
+            name: 'StrategyTable',
+            label: '通知策略表格',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '模块级',
+            domain: '通知策略',
+            type: 'display',
+            file: 'src/pages/Monitoring/NotifyStrategy/StrategyTable.vue',
+            desc: '通知策略列表展示表格，包含策略信息、状态开关和相关操作（编辑、查看、复制、删除）。',
+            demo: () => import('./demos/StrategyTableDemo.vue'),
+            props: [
+              { prop: 'dataSource', type: 'Array', desc: '表格数据源' },
+              { prop: 'pagination', type: 'Object|Boolean', desc: '分页配置' },
+            ],
+            events: [
+              { event: 'statusChange', params: 'record, val', desc: '状态开关切换' },
+              { event: 'edit', params: 'record', desc: '点击编辑' },
+              { event: 'view', params: 'record', desc: '点击查看' },
+              { event: 'copy', params: 'record', desc: '点击复制' },
+              { event: 'delete', params: 'record', desc: '点击删除' },
+            ],
+            usages: [
+              { label: '通知策略列表', route: '/monitoring/strategies' },
+            ],
+          },
+          {
+            id: 'StatusSwitch',
+            name: 'StatusSwitch',
+            label: '策略状态开关',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '模块级',
+            domain: '通知策略',
+            type: 'interaction',
+            file: 'src/pages/Monitoring/NotifyStrategy/StatusSwitch.vue',
+            desc: '通知策略的启用/禁用开关。开启直接切换，关闭时弹出 Popconfirm 二次确认。',
+            defaultProps: { value: true },
+            props: [
+              { prop: 'value', type: 'Boolean', desc: '当前开关状态' },
+            ],
+            events: [
+              { event: 'change', params: 'checked: Boolean', desc: '状态变更后触发' },
+            ],
+            usages: [
+              { label: '通知策略列表', route: '/monitoring/strategies' },
+            ],
+          },
+        ]
+      },
+      {
+        groupName: 'L2 手机端告警落地页',
+        groupLevel: 'L2',
+        items: [
+          {
+            id: 'AlertLanding',
+            name: 'AlertLanding',
+            label: '手机端告警落地页',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '模块级',
+            domain: '告警中心',
+            type: 'display',
+            file: 'src/pages/Monitoring/Mobile/AlertLanding.vue',
+            desc: '移动端独立路由页面（无 AppLayout），展示单条告警详情。包含告警头部信息、进度时间线、详细属性列表、底部操作栏，支持入场动画和安全区适配。',
+            previewMultiple: [
+              { label: '数据开发告警', route: '/monitoring/mobile/alert/1' },
+              { label: '质量监控告警', route: '/monitoring/mobile/alert/2' }
+            ],
+            props: [
+              { prop: '(无外部 props)', type: '-', desc: '通过路由参数 route.params.eventId 获取告警 ID，并调用 API 获取数据' },
+            ],
+            usages: [
+              { label: '独立路由', route: '/monitoring/mobile/alert/1' },
+            ],
+          },
+        ]
+      }
+    ]
+  }
 ]

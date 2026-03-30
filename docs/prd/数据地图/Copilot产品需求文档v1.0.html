@@ -1,0 +1,1607 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>DataPilot Copilot 产品需求文档 v1.0</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: #fff; color: #1f2329; line-height: 1.8; padding: 48px 64px; max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  h2 { font-size: 20px; font-weight: 700; margin: 40px 0 16px; padding-bottom: 8px; border-bottom: 1px solid #e5e6eb; }
+  h3 { font-size: 16px; font-weight: 600; margin: 24px 0 12px; }
+  h4 { font-size: 14px; font-weight: 600; margin: 16px 0 8px; }
+  p { font-size: 14px; margin-bottom: 12px; }
+  ul, ol { font-size: 14px; padding-left: 24px; margin-bottom: 12px; }
+  li { margin-bottom: 6px; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+  th, td { border: 1px solid #dee0e3; padding: 10px 12px; text-align: left; }
+  th { background: #f5f6f7; font-weight: 600; color: #1f2329; }
+  td { color: #444; }
+  .meta-table { width: auto; margin-bottom: 32px; }
+  .meta-table td { border: none; padding: 4px 24px 4px 0; color: #666; font-size: 13px; }
+  .meta-table td:first-child { color: #999; width: 80px; }
+  .callout { background: #f0f5ff; border-left: 3px solid #3370ff; border-radius: 4px; padding: 12px 16px; margin: 16px 0; font-size: 13px; color: #1f2329; }
+  .callout-warn { background: #fff7e6; border-left-color: #ff8800; }
+  .tag { display: inline-block; background: #f0ecff; color: #6c4c9b; font-size: 12px; padding: 2px 8px; border-radius: 4px; margin-right: 6px; }
+  .divider { border: none; border-top: 1px solid #e5e6eb; margin: 40px 0; }
+  .scene-card { background: #fafbfc; border: 1px solid #eee; border-radius: 8px; padding: 16px 20px; margin-bottom: 16px; }
+  .scene-card strong { color: #6c4c9b; }
+</style>
+</head>
+<body>
+
+<!-- ============================================ -->
+<!--  PART 1：文档概述 + 用户场景                  -->
+<!-- ============================================ -->
+
+<h1>DataPilot Copilot 产品需求文档 v1.0</h1>
+
+<table class="meta-table">
+  <tr><td>产品名称</td><td>DataPilot 数据地图 - Copilot 智能助手</td></tr>
+  <tr><td>文档版本</td><td>v1.0</td></tr>
+  <tr><td>产品负责人</td><td>王蕊</td></tr>
+  <tr><td>目标读者</td><td>前端研发、后端研发、测试、设计</td></tr>
+  <tr><td>关联文档</td><td>《数据地图首页重构 v1.0》《数据地图重构 v1.0》《Copilot 竞品分析与产品规划》</td></tr>
+  <tr><td>最后更新</td><td>2026-03-23</td></tr>
+</table>
+
+<hr class="divider">
+
+<h2>1. 背景与目标</h2>
+
+<h3>1.1 项目背景</h3>
+<p>
+  数据地图首页已完成 UI 重构（全局搜索 + 最近访问 + 资产大盘），但核心的 AI 智能助手（Copilot）模块尚未在需求文档中完整定义其交互细节和产品逻辑。
+</p>
+<p>
+  Copilot 是数据地图"从人找表到表找人"智能化升级的核心载体，承担着自然语言找表、个性化推荐、反馈闭环三大职责。本文档将 Copilot 作为独立模块，详细定义其全部功能、交互流程和技术契约，供研发团队评审和开发。
+</p>
+
+<h3>1.2 产品目标</h3>
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th style="width:180px;">目标</th>
+    <th>说明</th>
+    <th style="width:100px;">衡量指标</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>降低找表门槛</td>
+    <td>用户无需知道表名/库名，通过自然语言描述业务需求即可获得推荐</td>
+    <td>搜索转化率 > 60%</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>主动推荐（表找人）</td>
+    <td>基于用户画像（部门、角色、负责表血缘），打开即推荐高相关表</td>
+    <td>推荐点击率 > 30%</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>建立反馈闭环</td>
+    <td>点赞/点踩 + 结构化反馈，为推荐算法持续迭代提供数据</td>
+    <td>反馈率 > 15%</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>多场景覆盖</td>
+    <td>支持侧边栏快捷问答 + 全屏沉浸式对话两种模式</td>
+    <td>全屏使用占比 > 20%</td>
+  </tr>
+</table>
+
+<h3>1.3 功能边界（本期范围）</h3>
+<div class="callout">
+  <strong>本期（v1.0）包含：</strong><br>
+  Copilot 侧边栏 / 全屏模式、欢迎区与智能推荐、四大意图找表、对话交互（含打字机效果）、点赞/点踩反馈、会话管理（新建/切换/重命名/删除）、用户消息编辑（覆盖重写/仅回退）
+</div>
+<div class="callout callout-warn">
+  <strong>本期不包含：</strong><br>
+  血缘问答与图高亮、SQL 自动生成、字段级业务翻译、真实大模型接口对接（本期使用 Mock）、后台推荐策略配置
+</div>
+
+<hr class="divider">
+
+<h2>2. 目标用户与核心场景</h2>
+
+<h3>2.1 目标用户</h3>
+<table>
+  <tr>
+    <th>用户角色</th>
+    <th>典型任务</th>
+    <th>使用频率</th>
+  </tr>
+  <tr>
+    <td>数据开发工程师</td>
+    <td>按表名/字段名精准查找、查看血缘上下游</td>
+    <td>高频（日均 5-10 次）</td>
+  </tr>
+  <tr>
+    <td>数据分析师</td>
+    <td>按业务场景模糊查找（如"用户留存分析需要哪些表"）</td>
+    <td>中频（日均 2-5 次）</td>
+  </tr>
+  <tr>
+    <td>业务人员 / PM</td>
+    <td>不懂技术术语，用自然语言描述数据需求</td>
+    <td>低频（周均 3-5 次）</td>
+  </tr>
+  <tr>
+    <td>新入职员工</td>
+    <td>了解公司有哪些数据资产，快速上手</td>
+    <td>集中（入职首周高频）</td>
+  </tr>
+</table>
+
+<h3>2.2 核心用户场景</h3>
+
+<div class="scene-card">
+  <h4>场景一：打开即推荐（表找人）</h4>
+  <p><strong>角色：</strong>数据开发工程师张三，交易数据组</p>
+  <p><strong>行为：</strong>每天打开数据地图，点击顶部 Copilot 按钮</p>
+  <p><strong>预期：</strong>Copilot 自动问候 "Hi 张三，你好！作为交易数据组的数据开发工程师..."，并推荐 3-5 张与其部门/负责表血缘相关的高频表卡片</p>
+  <p><strong>价值：</strong>零输入即可获得个性化推荐，缩短每日找表路径</p>
+</div>
+
+<div class="scene-card">
+  <h4>场景二：按业务用途模糊找表（人找表）</h4>
+  <p><strong>角色：</strong>数据分析师，不知道具体表名</p>
+  <p><strong>行为：</strong>点击意图卡片"按业务用途找表"，输入 "我想分析最近一个月的渠道转化漏斗"</p>
+  <p><strong>预期：</strong>Copilot 返回解释文本 + 推荐表卡片列表，用户点击卡片直接跳转到表详情页</p>
+  <p><strong>价值：</strong>自然语言描述业务需求即可定位数据表，无需了解库表命名规则</p>
+</div>
+
+<div class="scene-card">
+  <h4>场景三：按关键词 / 项目 / 专题范围精准找表</h4>
+  <p><strong>角色：</strong>数据开发工程师，明确知道要搜索的范围</p>
+  <p><strong>行为：</strong>点击"指定项目范围找表"，输入 "风控项目里有哪些用户画像表"</p>
+  <p><strong>预期：</strong>Copilot 在指定范围内检索，返回匹配结果</p>
+  <p><strong>价值：</strong>缩小检索范围，提升精准度</p>
+</div>
+
+<div class="scene-card">
+  <h4>场景四：对推荐不满意，提交反馈</h4>
+  <p><strong>角色：</strong>任意用户</p>
+  <p><strong>行为：</strong>AI 推荐的表不准确，用户点击"踩"，在内联反馈卡片中勾选"找不到想要的表"并补充说明</p>
+  <p><strong>预期：</strong>反馈卡片在消息下方平滑展开（不弹窗），提交后显示"感谢反馈"</p>
+  <p><strong>价值：</strong>结构化反馈数据驱动推荐算法迭代</p>
+</div>
+
+<div class="scene-card">
+  <h4>场景五：全屏沉浸式多轮对话</h4>
+  <p><strong>角色：</strong>数据分析师，需要深度探索</p>
+  <p><strong>行为：</strong>在侧边栏点击"全屏"按钮，进入独立 Copilot 页面，左侧查看历史会话，右侧持续对话</p>
+  <p><strong>预期：</strong>全屏模式下欢迎区更大、对话空间更宽敞，支持会话切换和管理</p>
+  <p><strong>价值：</strong>复杂分析场景下的沉浸式体验</p>
+</div>
+
+
+<!-- ============================================ -->
+<!--  PART 2：功能模块详细说明（上）                -->
+<!--  入口触发 / 欢迎区 / 意图系统                 -->
+<!-- ============================================ -->
+
+<hr class="divider">
+
+<h2>3. 功能模块详细说明</h2>
+
+<h3>3.1 Copilot 入口与触发方式</h3>
+
+<p>Copilot 提供 3 种入口，覆盖不同使用场景：</p>
+
+<table>
+  <tr>
+    <th style="width:50px;">序号</th>
+    <th style="width:160px;">入口</th>
+    <th>触发方式</th>
+    <th style="width:160px;">触发后行为</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>顶部导航栏按钮</td>
+    <td>页面右上角常驻紫色按钮（图标 + "Copilot" 文字），点击 toggle 开关</td>
+    <td>打开/关闭右侧 420px 侧边栏</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>首页 HeroBanner AI 入口</td>
+    <td>首页搜索框切换到"AI 问数"模式，输入问题后回车</td>
+    <td>打开侧边栏 + 自动将问题填入输入框并发送</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>全屏模式入口</td>
+    <td>侧边栏 Header 点击"全屏"图标按钮；或直接访问 /copilot 路由</td>
+    <td>跳转到独立全屏页面（左右分栏布局）</td>
+  </tr>
+</table>
+
+<h4>3.1.1 侧边栏模式</h4>
+<ul>
+  <li><strong>宽度：</strong>固定 420px，从右侧推入（CSS transition 动画）</li>
+  <li><strong>层级：</strong>不覆盖主内容区，主内容区宽度自适应收缩</li>
+  <li><strong>Header 高度：</strong>40px，包含品牌图标 + 标题 + 操作按钮组（全屏 / 历史会话 / 新建对话 / 关闭）</li>
+  <li><strong>关闭方式：</strong>点击关闭按钮，或再次点击顶部导航栏 Copilot 按钮</li>
+</ul>
+
+<h4>3.1.2 全屏模式</h4>
+<ul>
+  <li><strong>路由：</strong>/copilot</li>
+  <li><strong>布局：</strong>左侧会话列表（280px，浅灰背景 #f9f9f9）+ 右侧对话区（flex 自适应，白色背景）</li>
+  <li><strong>退出：</strong>点击左上角返回按钮 → 回到上一页面，并自动打开侧边栏 Copilot</li>
+  <li><strong>欢迎区尺寸放大：</strong>Logo 72px（侧边栏为 48px）、标题 26px（侧边栏为 18px）</li>
+</ul>
+
+<hr class="divider">
+
+<h3>3.2 欢迎区与智能推荐（表找人）</h3>
+
+<p>欢迎区是用户打开 Copilot 后看到的第一屏，承担"品牌感知 + 意图引导 + 主动推荐"三重职责。</p>
+
+<h4>3.2.1 欢迎区 - 完整模式（初始状态，无用户消息时）</h4>
+
+<table>
+  <tr>
+    <th style="width:140px;">元素</th>
+    <th>说明</th>
+    <th style="width:180px;">样式规格</th>
+  </tr>
+  <tr>
+    <td>品牌 Logo</td>
+    <td>PilotLogo 八角星形 SVG，紫色渐变填充，白色中心点</td>
+    <td>侧边栏 48px / 全屏 72px</td>
+  </tr>
+  <tr>
+    <td>标题</td>
+    <td>"DataPilot Copilot"</td>
+    <td>侧边栏 18px / 全屏 26px, font-weight 700</td>
+  </tr>
+  <tr>
+    <td>副标题</td>
+    <td>"智能找表 & 个性推荐，可从业务用途、关键词、项目范围、专题范围四种方式描述需求。"</td>
+    <td>13px, 色值 #8c8c8c</td>
+  </tr>
+  <tr>
+    <td>意图引导卡片</td>
+    <td>4 张卡片，2 列网格排列（详见 3.3 意图系统）</td>
+    <td>圆角 8px, 悬浮阴影, 紫色高亮</td>
+  </tr>
+</table>
+
+<h4>3.2.2 欢迎区 - 紧凑模式（用户发出第一条消息后）</h4>
+
+<div class="callout">
+  <strong>自动切换逻辑：</strong>当对话消息列表中出现至少一条 role='user' 的消息时，欢迎区自动从"完整模式"过渡到"紧凑模式"，为对话内容让出空间。
+</div>
+
+<table>
+  <tr>
+    <th style="width:140px;">变化项</th>
+    <th>完整模式</th>
+    <th>紧凑模式</th>
+  </tr>
+  <tr>
+    <td>布局方向</td>
+    <td>垂直居中（flex-column, center）</td>
+    <td>水平一行（flex-row）</td>
+  </tr>
+  <tr>
+    <td>Logo</td>
+    <td>48px / 72px</td>
+    <td>28px，与标题同行</td>
+  </tr>
+  <tr>
+    <td>标题</td>
+    <td>18px / 26px</td>
+    <td>14px，与 Logo 同行</td>
+  </tr>
+  <tr>
+    <td>副标题</td>
+    <td>显示</td>
+    <td>隐藏</td>
+  </tr>
+  <tr>
+    <td>意图卡片</td>
+    <td>2 列网格卡片</td>
+    <td>横排小药丸按钮（pill, 16px 圆角）</td>
+  </tr>
+  <tr>
+    <td>内边距</td>
+    <td>32px padding, 24px gap</td>
+    <td>16px 16px 8px</td>
+  </tr>
+</table>
+
+<h4>3.2.3 智能推荐（Greeting Message）</h4>
+
+<p>打开 Copilot 或新建对话时，系统自动发送一条 Greeting 消息（role='assistant', isGreeting=true）：</p>
+
+<table>
+  <tr>
+    <th style="width:120px;">字段</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>问候文本</td>
+    <td>
+      模板：<br>
+      "Hi {userName}，你好！<br>
+      作为 <strong>{department}</strong> 的 <strong>{role}</strong>，以下是为你推荐的常用数据表："<br><br>
+      变量来源：用户登录信息（name / department / role）
+    </td>
+  </tr>
+  <tr>
+    <td>推荐表卡片</td>
+    <td>3~5 张表卡片（ResultCards 组件），基于用户画像 + 负责表血缘推荐</td>
+  </tr>
+  <tr>
+    <td>"查看更多"按钮</td>
+    <td>仅 Greeting 消息底部显示 "查看更多推荐表 >"，点击带参跳转至搜索结果页（/search?q=推荐关键词）</td>
+  </tr>
+</table>
+
+<h4>3.2.4 推荐列表产品逻辑</h4>
+
+<p>推荐列表是 Copilot "表找人"能力的核心，需要在用户零输入的情况下，精准推荐 3~5 张高相关性数据表。以下定义完整的推荐策略和排序规则。</p>
+
+<h4>Step 1：候选集召回（多路召回）</h4>
+
+<p>系统从以下 4 个维度并行召回候选表，每路最多返回 20 张表：</p>
+
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th style="width:140px;">召回路</th>
+    <th>逻辑说明</th>
+    <th style="width:80px;">权重系数</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>血缘关联召回</td>
+    <td>
+      获取当前用户负责的所有表（ownedTables）→ 查找这些表的<strong>上游 1~2 跳</strong>和<strong>下游 1~2 跳</strong>血缘表 → 去除用户自身负责的表<br>
+      <em>核心逻辑：你负责的表的上下游，大概率是你日常需要关注的表</em>
+    </td>
+    <td>0.35</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>部门热表召回</td>
+    <td>
+      获取当前用户所在部门（department）→ 统计该部门所有成员在过去 30 天内<strong>查询频次 Top 20</strong> 的表 → 去除用户自身负责的表<br>
+      <em>核心逻辑：同部门同事高频查询的表，对你也可能有价值</em>
+    </td>
+    <td>0.25</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>个人行为召回</td>
+    <td>
+      获取当前用户过去 30 天内的<strong>搜索关键词 + 浏览记录 + 收藏列表</strong> → 基于关键词匹配 + 协同过滤，召回相关表<br>
+      <em>核心逻辑：你最近在找什么，系统帮你找更多相关的</em>
+    </td>
+    <td>0.25</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>角色画像召回</td>
+    <td>
+      基于用户角色（role）匹配预定义的角色-表域映射规则：<br>
+      - 数据开发 → 偏好 DWD/DWA 层表<br>
+      - 数据分析 → 偏好 DM/ADS 层表<br>
+      - 业务人员 → 偏好 ADS 报表层<br>
+      → 在对应分层中按全局热度排序召回<br>
+      <em>核心逻辑：兜底策略，确保新用户也有合理推荐</em>
+    </td>
+    <td>0.15</td>
+  </tr>
+</table>
+
+<h4>Step 2：去重与合并</h4>
+
+<ul>
+  <li>以 fullyQualifiedName 为唯一键，合并 4 路召回结果</li>
+  <li>同一张表被多路召回时，取<strong>各路权重之和</strong>作为该表的综合得分</li>
+  <li><strong>去除黑名单表</strong>：系统表、临时表、已下线表不进入推荐</li>
+</ul>
+
+<h4>Step 3：排序打分</h4>
+
+<p>每张候选表按以下公式计算最终得分：</p>
+
+<div class="callout">
+  <strong>综合得分 = 召回权重得分 × 0.5 + 热度分 × 0.2 + 新鲜度分 × 0.15 + 质量分 × 0.15</strong>
+</div>
+
+<table>
+  <tr>
+    <th style="width:120px;">得分维度</th>
+    <th style="width:100px;">分值范围</th>
+    <th>计算规则</th>
+  </tr>
+  <tr>
+    <td>召回权重得分</td>
+    <td>0 ~ 1</td>
+    <td>各路召回权重系数之和（被多路召回则叠加）</td>
+  </tr>
+  <tr>
+    <td>热度分</td>
+    <td>0 ~ 1</td>
+    <td>近 30 天查询次数归一化（min-max 归一到 [0,1]）</td>
+  </tr>
+  <tr>
+    <td>新鲜度分</td>
+    <td>0 ~ 1</td>
+    <td>表最后更新时间：7 天内=1.0，30 天内=0.6，超过 30 天=0.2</td>
+  </tr>
+  <tr>
+    <td>质量分</td>
+    <td>0 ~ 1</td>
+    <td>表元数据完整度：有描述 +0.3、有负责人 +0.3、有标签 +0.2、通过 DQ 检测 +0.2</td>
+  </tr>
+</table>
+
+<h4>Step 4：截断与输出</h4>
+
+<ul>
+  <li>按综合得分降序排列，取 <strong>Top 3~5</strong> 张表作为最终推荐结果</li>
+  <li>若用户负责的表 ≤ 2 张（新用户），跳过血缘召回，角色画像召回权重提升至 0.4</li>
+  <li>若总候选 &lt; 3 张，以全局热度 Top 表补足至 3 张（保底策略）</li>
+</ul>
+
+<h4>推荐结果展示规则</h4>
+
+<table>
+  <tr>
+    <th style="width:160px;">场景</th>
+    <th>展示策略</th>
+  </tr>
+  <tr>
+    <td>正常推荐（≥3 张表）</td>
+    <td>展示 3~5 张表卡片 + "查看更多推荐表" 按钮</td>
+  </tr>
+  <tr>
+    <td>推荐不足（&lt;3 张表）</td>
+    <td>展示所有候选 + 全局热度补足 + "查看更多推荐表" 按钮</td>
+  </tr>
+  <tr>
+    <td>完全无推荐数据</td>
+    <td>不展示表卡片，问候语改为引导文案："你可以试试以下方式找到需要的数据表 →"，突出意图卡片</td>
+  </tr>
+  <tr>
+    <td>"查看更多"跳转</td>
+    <td>跳转到 /search?q={department关键词}&source=copilot_recommend，搜索页自动执行推荐扩展查询</td>
+  </tr>
+</table>
+
+<h4>推荐刷新策略</h4>
+
+<table>
+  <tr>
+    <th style="width:180px;">触发时机</th>
+    <th>行为</th>
+  </tr>
+  <tr>
+    <td>新建对话</td>
+    <td>重新调用推荐接口，获取最新推荐列表</td>
+  </tr>
+  <tr>
+    <td>切换回已有会话</td>
+    <td>展示该会话创建时的推荐快照（不重新请求）</td>
+  </tr>
+  <tr>
+    <td>用户登录后首次打开</td>
+    <td>重新请求，确保推荐结果反映最新行为数据</td>
+  </tr>
+  <tr>
+    <td>推荐缓存</td>
+    <td>客户端缓存 5 分钟，避免短时间内重复请求</td>
+  </tr>
+</table>
+
+<hr class="divider">
+
+<h3>3.3 意图系统（四大智能找表意图）</h3>
+
+<p>意图系统是 Copilot "人找表"能力的核心，通过 4 种预设意图引导用户高效描述需求。</p>
+
+<h4>3.3.1 四大意图定义</h4>
+
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th style="width:160px;">意图名称</th>
+    <th style="width:120px;">意图 ID</th>
+    <th style="width:80px;">图标</th>
+    <th>输入框占位提示</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>按业务用途找表</td>
+    <td>smart_find_business</td>
+    <td>AppstoreOutlined</td>
+    <td>"描述你的业务场景或分析目的..."</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>按关键词找表</td>
+    <td>smart_find_keyword</td>
+    <td>SearchOutlined</td>
+    <td>"输入表名、库名、字段名等关键词..."</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>指定项目范围找表</td>
+    <td>smart_find_project</td>
+    <td>DeploymentUnitOutlined</td>
+    <td>"描述项目名称和你要找的数据..."</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>指定专题范围找表</td>
+    <td>smart_find_topic</td>
+    <td>TagsOutlined</td>
+    <td>"指定数据专题，描述你的需求..."</td>
+  </tr>
+</table>
+
+<h4>3.3.2 意图交互流程</h4>
+
+<ol>
+  <li><strong>触发：</strong>用户点击欢迎区的意图卡片（完整模式）或意图药丸按钮（紧凑模式）</li>
+  <li><strong>激活态：</strong>
+    <ul>
+      <li>输入框左侧出现紫色意图标签（pill），显示意图名称，带关闭 x 按钮</li>
+      <li>输入框 placeholder 切换为该意图的专属提示文案</li>
+      <li>输入框自动聚焦，等待用户输入</li>
+    </ul>
+  </li>
+  <li><strong>发送：</strong>用户输入文本后按 Enter 或点击发送按钮
+    <ul>
+      <li>消息携带 intentId 字段发送至后端</li>
+      <li>发送后自动清除意图激活态（一次性使用）</li>
+    </ul>
+  </li>
+  <li><strong>取消：</strong>点击意图标签上的 x 按钮，清除意图激活态，恢复默认 placeholder</li>
+</ol>
+
+<h4>3.3.3 意图识别产品逻辑</h4>
+
+<p>用户发送消息时，后端需要完成"意图识别 → 参数提取 → 检索执行 → 结果组装"四个阶段。以下逐一定义每种意图的完整处理逻辑。</p>
+
+<h4 style="margin-top:24px; color:#6c4c9b;">意图一：按业务用途找表 (smart_find_business)</h4>
+
+<table>
+  <tr>
+    <th style="width:120px;">阶段</th>
+    <th>逻辑说明</th>
+  </tr>
+  <tr>
+    <td>适用场景</td>
+    <td>用户不知道具体表名，只能描述业务需求。<br>例："我想分析渠道转化漏斗"、"查看上个月的退款数据"、"做用户留存分析需要哪些表"</td>
+  </tr>
+  <tr>
+    <td>意图识别</td>
+    <td>
+      <strong>主动触发：</strong>用户点击意图卡片后输入，消息携带 intentId=smart_find_business<br>
+      <strong>被动识别：</strong>用户直接输入自然语言（无 intentId），由 LLM 判断输入中包含业务场景描述 → 自动分类为此意图<br>
+      <strong>识别信号词：</strong>"分析""看看""查看""了解""哪些表能""什么数据可以"
+    </td>
+  </tr>
+  <tr>
+    <td>参数提取</td>
+    <td>
+      LLM 从自然语言中提取：<br>
+      1. <strong>业务域</strong>（business_domain）：交易/用户/营销/风控/财务/供应链/内容 等<br>
+      2. <strong>分析目的</strong>（analysis_purpose）：转化分析/留存分析/漏斗/趋势/对比/归因 等<br>
+      3. <strong>时间范围</strong>（time_range）：如 "上个月""最近7天"（可选）<br>
+      4. <strong>指标关键词</strong>（metric_keywords）：如 "GMV""DAU""转化率"（可选）
+    </td>
+  </tr>
+  <tr>
+    <td>检索执行</td>
+    <td>
+      1. 根据 business_domain 锁定候选表范围（按表的 domain/tag 标签过滤）<br>
+      2. 用 analysis_purpose + metric_keywords 对候选表做<strong>语义相似度匹配</strong>（表描述 + 字段描述 + 业务术语表）<br>
+      3. 按语义相似度得分降序排列<br>
+      4. 取 Top 3~8 张表
+    </td>
+  </tr>
+  <tr>
+    <td>结果组装</td>
+    <td>
+      <strong>回复文本模板：</strong><br>
+      "根据你描述的「{analysis_purpose}」场景，我在 <strong>{business_domain}</strong> 域为你找到以下 {N} 张相关数据表："<br><br>
+      <strong>附带表卡片列表</strong>（ResultCards），每张卡片额外展示<strong>匹配原因标签</strong>：<br>
+      - "业务域匹配" / "描述相关" / "字段包含{keyword}" / "同部门高频使用"
+    </td>
+  </tr>
+  <tr>
+    <td>兜底策略</td>
+    <td>若语义匹配结果 &lt; 2 张表：<br>
+      1. 降级为关键词搜索（提取输入中的名词作为关键词）<br>
+      2. 若仍无结果，回复："暂未找到完全匹配的数据表，你可以换个描述方式试试，或者试试 <strong>按关键词找表</strong>。"</td>
+  </tr>
+</table>
+
+<h4 style="margin-top:24px; color:#6c4c9b;">意图二：按关键词找表 (smart_find_keyword)</h4>
+
+<table>
+  <tr>
+    <th style="width:120px;">阶段</th>
+    <th>逻辑说明</th>
+  </tr>
+  <tr>
+    <td>适用场景</td>
+    <td>用户知道部分表名、库名、字段名或技术关键词。<br>例："order_detail"、"dwd 层的支付表"、"包含 user_id 字段的表"</td>
+  </tr>
+  <tr>
+    <td>意图识别</td>
+    <td>
+      <strong>主动触发：</strong>intentId=smart_find_keyword<br>
+      <strong>被动识别信号：</strong>输入中包含下划线命名（xxx_xxx）、分层前缀（dwd/dwa/dm/ads/ods）、"字段""列名""库""schema"等技术词汇
+    </td>
+  </tr>
+  <tr>
+    <td>参数提取</td>
+    <td>
+      1. <strong>关键词列表</strong>（keywords）：按空格/逗号拆分，保留原始形态<br>
+      2. <strong>匹配范围</strong>（match_scope）：自动判断用户意图——<br>
+      &nbsp;&nbsp;- 包含下划线 → 优先匹配<strong>表名/字段名</strong><br>
+      &nbsp;&nbsp;- 包含中文 → 优先匹配<strong>表描述/中文名/业务术语</strong><br>
+      &nbsp;&nbsp;- 包含分层前缀 → 增加<strong>分层过滤条件</strong><br>
+      3. <strong>分层过滤</strong>（layer_filter）：如 "dwd" → 仅搜索 DWD 层（可选）
+    </td>
+  </tr>
+  <tr>
+    <td>检索执行</td>
+    <td>
+      多维度并行检索，按权重合并：<br>
+      1. <strong>表名精确匹配</strong>（权重 0.4）：fullyQualifiedName / name LIKE '%keyword%'<br>
+      2. <strong>字段名匹配</strong>（权重 0.25）：字段 name LIKE '%keyword%'，返回所属表<br>
+      3. <strong>描述/中文名匹配</strong>（权重 0.2）：displayName / description 全文检索<br>
+      4. <strong>标签匹配</strong>（权重 0.15）：tag / glossary 术语表匹配<br><br>
+      结果按综合相关度分排序，取 Top 5~10 张表
+    </td>
+  </tr>
+  <tr>
+    <td>结果组装</td>
+    <td>
+      <strong>回复文本模板：</strong><br>
+      "关键词 「{keywords}」 的搜索结果，共找到 {N} 张相关表{layerFilter ? '（限定 ' + layer + ' 层）' : ''}："<br><br>
+      <strong>表卡片列表</strong>，每张卡片高亮匹配命中位置：<br>
+      - 表名命中 → 表名中关键词加粗<br>
+      - 字段命中 → 卡片下方额外显示 "匹配字段：{field_name}"<br>
+      - 描述命中 → 描述文本中关键词高亮
+    </td>
+  </tr>
+  <tr>
+    <td>兜底策略</td>
+    <td>若精确匹配无结果：<br>
+      1. 尝试<strong>模糊匹配</strong>（编辑距离 ≤ 2 的拼写纠错）<br>
+      2. 若仍无结果，回复："未找到包含「{keyword}」的数据表。建议检查拼写，或试试 <strong>按业务用途找表</strong> 用自然语言描述需求。"
+    </td>
+  </tr>
+</table>
+
+<h4 style="margin-top:24px; color:#6c4c9b;">意图三：指定项目范围找表 (smart_find_project)</h4>
+
+<table>
+  <tr>
+    <th style="width:120px;">阶段</th>
+    <th>逻辑说明</th>
+  </tr>
+  <tr>
+    <td>适用场景</td>
+    <td>用户只想在特定项目空间内检索表。<br>例："风控项目里有哪些用户画像表"、"交易中台项目下的 DWD 层表"</td>
+  </tr>
+  <tr>
+    <td>意图识别</td>
+    <td>
+      <strong>主动触发：</strong>intentId=smart_find_project<br>
+      <strong>被动识别信号：</strong>"项目""project""空间""workspace" + 具体项目名称
+    </td>
+  </tr>
+  <tr>
+    <td>参数提取</td>
+    <td>
+      1. <strong>项目名称</strong>（project_name）：LLM 从输入中提取，与项目列表做模糊匹配确认<br>
+      2. <strong>附加查询</strong>（sub_query）：项目范围确定后，输入中的剩余部分作为子查询<br>
+      3. <strong>若项目名模糊</strong>：返回候选项目列表让用户选择（"你是指以下哪个项目？"）
+    </td>
+  </tr>
+  <tr>
+    <td>检索执行</td>
+    <td>
+      1. 根据 project_name 获取该项目空间下<strong>所有已注册的表</strong>（project → databases → tables）<br>
+      2. 若有 sub_query → 在项目范围内执行<strong>意图一（业务用途）</strong>或<strong>意图二（关键词）</strong>的检索逻辑（自动判断）<br>
+      3. 若无 sub_query → 按热度排序返回该项目下 Top 10 的高频表
+    </td>
+  </tr>
+  <tr>
+    <td>结果组装</td>
+    <td>
+      <strong>回复文本模板：</strong><br>
+      "在项目 <strong>「{project_name}」</strong> 范围内{sub_query ? '，与「' + sub_query + '」相关的' : '热门'}数据表如下："<br><br>
+      <strong>表卡片列表</strong>，每张卡片额外显示<strong>项目标签</strong>（蓝色 badge）
+    </td>
+  </tr>
+  <tr>
+    <td>消歧交互</td>
+    <td>
+      当项目名称匹配到多个项目时：<br>
+      回复："找到多个相关项目，请确认你要查找的是哪一个：" + 项目名称列表（可点击选择）<br>
+      用户点击后系统自动以该项目 + 原始 sub_query 重新检索
+    </td>
+  </tr>
+  <tr>
+    <td>兜底策略</td>
+    <td>
+      项目不存在：回复 "未找到名为「{project_name}」的项目，当前可用的项目有：{projectList}。"<br>
+      项目下无表：回复 "项目「{project_name}」下暂无注册的数据表。"
+    </td>
+  </tr>
+</table>
+
+<h4 style="margin-top:24px; color:#6c4c9b;">意图四：指定专题范围找表 (smart_find_topic)</h4>
+
+<table>
+  <tr>
+    <th style="width:120px;">阶段</th>
+    <th>逻辑说明</th>
+  </tr>
+  <tr>
+    <td>适用场景</td>
+    <td>用户想在已有的数据专题内检索或浏览表。<br>例："交易分析专题里有哪些表"、"用户画像专题里和留存相关的表"</td>
+  </tr>
+  <tr>
+    <td>意图识别</td>
+    <td>
+      <strong>主动触发：</strong>intentId=smart_find_topic<br>
+      <strong>被动识别信号：</strong>"专题""主题""topic""域" + 具体专题名称或业务域关键词
+    </td>
+  </tr>
+  <tr>
+    <td>参数提取</td>
+    <td>
+      1. <strong>专题名称</strong>（topic_name）：LLM 提取，与专题列表做模糊匹配<br>
+      2. <strong>附加查询</strong>（sub_query）：专题确定后的附加过滤条件<br>
+      3. <strong>若专题名模糊</strong>：返回候选专题列表（含 tableCount 和 description）让用户选择
+    </td>
+  </tr>
+  <tr>
+    <td>检索执行</td>
+    <td>
+      1. 根据 topic_name 获取该专题下的<strong>所有关联表</strong>（topic.tables）<br>
+      2. 若有 sub_query → 在专题表列表中做<strong>语义匹配或关键词匹配</strong><br>
+      3. 若无 sub_query → 按热度排序返回全部表（≤20 张直接返回，&gt;20 张取 Top 20）<br>
+      4. <strong>权限过滤：</strong>若专题为私有（visibility='private'）且用户非 owner/admin → 返回权限不足提示
+    </td>
+  </tr>
+  <tr>
+    <td>结果组装</td>
+    <td>
+      <strong>回复文本模板：</strong><br>
+      "专题 <strong>「{topic_name}」</strong>（共 {tableCount} 张表）{sub_query ? '中与「' + sub_query + '」相关的' : '包含以下'}数据表："<br><br>
+      <strong>表卡片列表</strong> + 底部显示 "查看专题详情 >" 链接（跳转 /topics/{topicId}）
+    </td>
+  </tr>
+  <tr>
+    <td>消歧交互</td>
+    <td>
+      匹配到多个专题时：<br>
+      回复："找到多个相关专题：" + 专题卡片列表（名称 + 描述 + 表数量），用户点击选择后重新检索
+    </td>
+  </tr>
+  <tr>
+    <td>兜底策略</td>
+    <td>
+      专题不存在：回复 "未找到名为「{topic_name}」的数据专题。当前热门专题有：{topicList}。"<br>
+      权限不足：回复 "专题「{topic_name}」为私有专题，你暂无查看权限，请联系专题管理员 {owner}。"
+    </td>
+  </tr>
+</table>
+
+<h4 style="margin-top:24px;">意图识别优先级与冲突处理</h4>
+
+<p>当用户直接输入自然语言（无 intentId）时，LLM 需自动判断意图类型。以下是判断优先级和冲突处理规则：</p>
+
+<table>
+  <tr>
+    <th style="width:40px;">优先级</th>
+    <th style="width:120px;">判断条件</th>
+    <th style="width:160px;">分类为</th>
+    <th>示例</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>明确提到"专题"/"主题"</td>
+    <td>smart_find_topic</td>
+    <td>"交易分析专题里有什么表"</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>明确提到"项目"/"空间"</td>
+    <td>smart_find_project</td>
+    <td>"风控项目下的用户表"</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>包含技术命名/下划线</td>
+    <td>smart_find_keyword</td>
+    <td>"order_detail"、"dwd层支付"</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>纯自然语言业务描述</td>
+    <td>smart_find_business</td>
+    <td>"我想看渠道转化数据"</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>无法判断意图</td>
+    <td>smart_find_business（兜底）</td>
+    <td>同时走关键词+语义双路检索</td>
+  </tr>
+</table>
+
+<div class="callout">
+  <strong>多轮对话上下文继承：</strong>在同一会话中，如果用户上一轮指定了项目/专题范围，当前轮未明确新范围时，默认<strong>继承上一轮的范围约束</strong>。用户可通过"换个范围""全局搜索"等表述主动解除范围限制。
+</div>
+
+<h4>3.3.4 AI 回复结构总览</h4>
+
+<p>所有意图的 AI 回复均遵循统一结构：</p>
+
+<table>
+  <tr>
+    <th style="width:140px;">回复组成</th>
+    <th>说明</th>
+    <th style="width:80px;">是否必须</th>
+  </tr>
+  <tr>
+    <td>范围确认文本</td>
+    <td>确认检索的范围和条件（如项目名/专题名/业务域），让用户确认理解正确</td>
+    <td>必须</td>
+  </tr>
+  <tr>
+    <td>匹配说明</td>
+    <td>简要说明找到多少张表、按什么排序</td>
+    <td>必须</td>
+  </tr>
+  <tr>
+    <td>表卡片列表</td>
+    <td>ResultCards 组件渲染，每张卡片含匹配原因标签</td>
+    <td>有结果时必须</td>
+  </tr>
+  <tr>
+    <td>追问引导</td>
+    <td>尾部添加引导文案：如"需要进一步了解某张表的详情或血缘关系吗？"</td>
+    <td>建议</td>
+  </tr>
+  <tr>
+    <td>兜底文案</td>
+    <td>无结果时的友好提示 + 替代方案建议</td>
+    <td>无结果时必须</td>
+  </tr>
+</table>
+
+<h4>3.3.4 推荐表卡片（ResultCards）</h4>
+
+<p>每张表卡片展示以下信息：</p>
+
+<table>
+  <tr>
+    <th style="width:140px;">元素</th>
+    <th>说明</th>
+    <th style="width:160px;">交互</th>
+  </tr>
+  <tr>
+    <td>表全限定名</td>
+    <td>格式：database.table_name，等宽字体，主色</td>
+    <td>点击跳转到 /detail/{fqn}</td>
+  </tr>
+  <tr>
+    <td>表中文名</td>
+    <td>displayName，灰色小字</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>数据源标签</td>
+    <td>SourceTag 组件（Hive / StarRocks / MySQL / ClickHouse 等），彩色 badge</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>描述</td>
+    <td>单行截断，12px 灰色</td>
+    <td>hover 显示完整描述 tooltip</td>
+  </tr>
+</table>
+
+<div class="callout">
+  <strong>设计要点：</strong>卡片整体可点击，hover 态有边框高亮 + 微阴影提升。点击后在新 Tab 或当前页面跳转到表详情页（/detail/{fullyQualifiedName}）。
+</div>
+
+
+<!-- ============================================ -->
+<!--  PART 3：功能模块详细说明（下）                -->
+<!--  对话交互 / 反馈机制 / 会话管理               -->
+<!-- ============================================ -->
+
+<hr class="divider">
+
+<h3>3.4 对话交互</h3>
+
+<h4>3.4.1 消息类型与气泡样式</h4>
+
+<table>
+  <tr>
+    <th style="width:100px;">消息角色</th>
+    <th style="width:100px;">对齐方式</th>
+    <th style="width:120px;">气泡样式</th>
+    <th style="width:100px;">头像</th>
+    <th>Hover 操作</th>
+  </tr>
+  <tr>
+    <td>用户消息</td>
+    <td>右对齐</td>
+    <td>紫色背景 rgba(108,76,155)，白色文字，圆角 14px</td>
+    <td>灰色圆形（#f0f0f0），用户首字母</td>
+    <td>编辑、复制</td>
+  </tr>
+  <tr>
+    <td>AI 消息</td>
+    <td>左对齐</td>
+    <td>白色背景，#e8ecf1 边框，圆角 14px</td>
+    <td>PilotLogo 28px 紫色渐变</td>
+    <td>复制、点赞、点踩</td>
+  </tr>
+  <tr>
+    <td>Greeting 消息</td>
+    <td>左对齐</td>
+    <td>同 AI 消息，额外包含推荐表卡片 + "查看更多"按钮</td>
+    <td>同 AI 消息</td>
+    <td>同 AI 消息</td>
+  </tr>
+</table>
+
+<h4>3.4.2 AI 回复内容渲染</h4>
+<ul>
+  <li><strong>文本：</strong>支持基础 Markdown 渲染（加粗 **text**），不支持完整 Markdown</li>
+  <li><strong>表卡片：</strong>AI 消息的 tables 字段不为空时，在文本下方渲染 ResultCards 组件</li>
+  <li><strong>打字机效果：</strong>AI 回复时先显示"正在思考"动画（3 个跳动圆点），600ms 后开始逐字输出</li>
+</ul>
+
+<h4>3.4.3 输入框交互</h4>
+
+<table>
+  <tr>
+    <th style="width:140px;">交互</th>
+    <th>行为</th>
+  </tr>
+  <tr>
+    <td>发送消息</td>
+    <td>Enter 发送（非空时）；Shift+Enter 换行</td>
+  </tr>
+  <tr>
+    <td>意图激活态</td>
+    <td>输入框左侧显示紫色 pill 标签（意图名称 + x 关闭），输入区宽度自适应收缩</td>
+  </tr>
+  <tr>
+    <td>空消息保护</td>
+    <td>输入内容为空（或仅空白字符）时，发送按钮禁用，Enter 无响应</td>
+  </tr>
+  <tr>
+    <td>AI 回复中</td>
+    <td>输入框可继续输入，但发送按钮变为 loading 态，不可重复发送</td>
+  </tr>
+  <tr>
+    <td>默认 Placeholder</td>
+    <td>"输入你的问题，按 Enter 发送..."</td>
+  </tr>
+</table>
+
+<h4>3.4.4 用户消息编辑（覆盖重写 / 仅回退）</h4>
+
+<p>用户可对已发送的消息进行编辑，支持两种操作模式：</p>
+
+<table>
+  <tr>
+    <th style="width:120px;">操作</th>
+    <th>行为</th>
+    <th>适用场景</th>
+  </tr>
+  <tr>
+    <td>覆盖重写</td>
+    <td>替换当前消息内容 → 删除该消息之后的所有消息 → 以新内容重新发送，触发 AI 回复</td>
+    <td>用户想修改提问并重新获取回答</td>
+  </tr>
+  <tr>
+    <td>仅回退</td>
+    <td>删除当前消息及其之后的所有消息，不触发新的 AI 回复</td>
+    <td>用户想撤回提问，回到之前的对话状态</td>
+  </tr>
+  <tr>
+    <td>取消</td>
+    <td>关闭编辑器，不做任何修改</td>
+    <td>误触编辑</td>
+  </tr>
+</table>
+
+<div class="callout">
+  <strong>编辑器 UI：</strong>点击用户消息的"编辑"按钮后，消息气泡原地替换为 3 行 textarea（预填原文并全选），下方显示"覆盖重写"、"仅回退"、"取消"三个操作按钮。按 ESC 等同于取消。
+</div>
+
+<hr class="divider">
+
+<h3>3.5 反馈机制（点赞 / 点踩）</h3>
+
+<h4>3.5.1 反馈操作入口</h4>
+<ul>
+  <li>每条 AI 消息 hover 时，在气泡右下角显示操作栏：复制 | 点赞 | 点踩</li>
+  <li>点赞和点踩互斥：点击其中一个会取消另一个</li>
+  <li>再次点击同一个按钮可取消反馈（toggle 行为）</li>
+</ul>
+
+<h4>3.5.2 点赞</h4>
+<ul>
+  <li>点击后图标变为实心 + 主色高亮</li>
+  <li>仅记录 feedback='like'，不展开任何表单</li>
+</ul>
+
+<h4>3.5.3 点踩 + 内联反馈卡片</h4>
+
+<p>点击"踩"后，在该消息气泡正下方平滑展开（slideDown 动画）内联反馈卡片，不使用全局弹窗，保持对话沉浸感。</p>
+
+<table>
+  <tr>
+    <th style="width:140px;">表单元素</th>
+    <th>说明</th>
+    <th style="width:100px;">必填</th>
+  </tr>
+  <tr>
+    <td>问题分类标签</td>
+    <td>
+      6 个可多选的 Tag 按钮：<br>
+      1. 找不到想要的表<br>
+      2. 表/字段信息不准<br>
+      3. 血缘关系错误<br>
+      4. 意图理解偏差<br>
+      5. 回答卡顿/不完整<br>
+      6. 其他
+    </td>
+    <td>必填（至少选 1 个）</td>
+  </tr>
+  <tr>
+    <td>补充说明</td>
+    <td>Textarea 文本域，placeholder "请描述具体问题..."</td>
+    <td>选填，最多 150 字（实时字数统计）</td>
+  </tr>
+  <tr>
+    <td>操作按钮</td>
+    <td>"取消"（关闭卡片）+ "提交"（禁用态直到至少选 1 个分类）</td>
+    <td>-</td>
+  </tr>
+</table>
+
+<div class="callout">
+  <strong>提交后行为：</strong>
+  <ul style="margin:8px 0 0 0;">
+    <li>反馈卡片收起，踩图标保持高亮（表示已提交反馈）</li>
+    <li>反馈数据（dislikeReasonIds + dislikeDetail）存储在该条消息对象上</li>
+    <li>后续对接后端时，提交至 POST /v1/copilot/feedback 接口</li>
+  </ul>
+</div>
+
+<hr class="divider">
+
+<h3>3.6 会话管理</h3>
+
+<h4>3.6.1 会话生命周期</h4>
+
+<table>
+  <tr>
+    <th style="width:120px;">状态</th>
+    <th style="width:100px;">标识</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>活跃</td>
+    <td>ACTIVE</td>
+    <td>当前正在进行的对话，同一时刻只有 1 个 ACTIVE 会话</td>
+  </tr>
+  <tr>
+    <td>挂起</td>
+    <td>SUSPENDED</td>
+    <td>之前活跃但被新会话替代的会话，可随时恢复</td>
+  </tr>
+  <tr>
+    <td>归档</td>
+    <td>ARCHIVED</td>
+    <td>较早的历史会话</td>
+  </tr>
+</table>
+
+<h4>3.6.2 会话列表视图</h4>
+
+<p>在侧边栏点击"历史会话"按钮，或在全屏模式左侧面板中展示：</p>
+
+<table>
+  <tr>
+    <th style="width:140px;">元素</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>搜索框</td>
+    <td>关键词搜索 + 模块下拉筛选（如"数据地图"、"数据开发"等）</td>
+  </tr>
+  <tr>
+    <td>分组展示</td>
+    <td>"当前会话"（ACTIVE）在上，"历史会话"（SUSPENDED + ARCHIVED）在下</td>
+  </tr>
+  <tr>
+    <td>会话卡片</td>
+    <td>
+      每张卡片包含：<br>
+      - 标题（可编辑）<br>
+      - 模块标签（badge 样式）<br>
+      - 摘要（单行截断）<br>
+      - 标签组（任务类型、表名、问题类型等，带图标）<br>
+      - 时间戳（今天 HH:mm / 昨天 HH:mm / MM-DD HH:mm）
+    </td>
+  </tr>
+  <tr>
+    <td>右键/更多菜单</td>
+    <td>重命名、删除</td>
+  </tr>
+</table>
+
+<h4>3.6.3 会话操作</h4>
+
+<table>
+  <tr>
+    <th style="width:120px;">操作</th>
+    <th>行为</th>
+    <th>触发位置</th>
+  </tr>
+  <tr>
+    <td>新建对话</td>
+    <td>创建新 ACTIVE 会话 → 原 ACTIVE 变为 SUSPENDED → 注入 Greeting 消息 → 切换到对话视图</td>
+    <td>Header "+" 按钮</td>
+  </tr>
+  <tr>
+    <td>切换会话</td>
+    <td>点击历史会话卡片 → 加载该会话的消息记录 → 切换到对话视图</td>
+    <td>会话列表中点击卡片</td>
+  </tr>
+  <tr>
+    <td>重命名</td>
+    <td>弹出输入框修改会话标题</td>
+    <td>卡片更多菜单</td>
+  </tr>
+  <tr>
+    <td>删除</td>
+    <td>二次确认后删除；若删除的是 ACTIVE 会话，自动切换到最近的 SUSPENDED 会话</td>
+    <td>卡片更多菜单</td>
+  </tr>
+</table>
+
+
+<!-- ============================================ -->
+<!--  PART 4：交互规范 + 接口契约 + 验收标准        -->
+<!-- ============================================ -->
+
+<hr class="divider">
+
+<h2>4. 交互与视觉规范</h2>
+
+<h3>4.1 色彩体系</h3>
+<table>
+  <tr>
+    <th style="width:160px;">用途</th>
+    <th style="width:200px;">色值</th>
+    <th>应用场景</th>
+  </tr>
+  <tr>
+    <td>品牌紫（主色）</td>
+    <td>rgba(108, 76, 155, 1)</td>
+    <td>用户消息气泡、意图标签、Logo 渐变起始色、操作高亮</td>
+  </tr>
+  <tr>
+    <td>品牌紫（渐变终止）</td>
+    <td>rgba(142, 110, 185, 1)</td>
+    <td>Logo 渐变终止色、按钮渐变</td>
+  </tr>
+  <tr>
+    <td>AI 消息背景</td>
+    <td>#FFFFFF + border #e8ecf1</td>
+    <td>AI 回复气泡</td>
+  </tr>
+  <tr>
+    <td>操作栏 Hover</td>
+    <td>#f5f5f5</td>
+    <td>消息操作按钮悬浮态</td>
+  </tr>
+  <tr>
+    <td>反馈卡片背景</td>
+    <td>#fafafa</td>
+    <td>点踩反馈卡片</td>
+  </tr>
+  <tr>
+    <td>全屏左栏背景</td>
+    <td>#f9f9f9</td>
+    <td>全屏模式会话列表区</td>
+  </tr>
+</table>
+
+<h3>4.2 动效规范</h3>
+<table>
+  <tr>
+    <th style="width:180px;">动效</th>
+    <th style="width:160px;">参数</th>
+    <th>触发场景</th>
+  </tr>
+  <tr>
+    <td>侧边栏推入/收起</td>
+    <td>CSS transition, 300ms ease</td>
+    <td>打开/关闭 Copilot 侧边栏</td>
+  </tr>
+  <tr>
+    <td>反馈卡片展开/收起</td>
+    <td>slideDown / slideUp, 200ms</td>
+    <td>点踩后展开、取消/提交后收起</td>
+  </tr>
+  <tr>
+    <td>打字机思考动画</td>
+    <td>3 个圆点，bounce 关键帧，循环</td>
+    <td>AI 回复生成中（600ms 延迟后开始）</td>
+  </tr>
+  <tr>
+    <td>欢迎区模式切换</td>
+    <td>CSS transition, 平滑过渡</td>
+    <td>完整模式 → 紧凑模式</td>
+  </tr>
+  <tr>
+    <td>消息滚动</td>
+    <td>scrollIntoView({ behavior: 'smooth' })</td>
+    <td>新消息产生时自动滚动到底部</td>
+  </tr>
+</table>
+
+<h3>4.3 尺寸规格</h3>
+<table>
+  <tr>
+    <th>元素</th>
+    <th>侧边栏模式</th>
+    <th>全屏模式</th>
+  </tr>
+  <tr>
+    <td>面板宽度</td>
+    <td>420px（固定）</td>
+    <td>左栏 280px + 右栏 flex</td>
+  </tr>
+  <tr>
+    <td>Header 高度</td>
+    <td>40px</td>
+    <td>40px</td>
+  </tr>
+  <tr>
+    <td>消息气泡最大宽度</td>
+    <td>80% 容器宽度</td>
+    <td>80% 容器宽度</td>
+  </tr>
+  <tr>
+    <td>头像尺寸</td>
+    <td>28px</td>
+    <td>28px</td>
+  </tr>
+  <tr>
+    <td>输入框最小高度</td>
+    <td>40px（单行）</td>
+    <td>40px（单行）</td>
+  </tr>
+</table>
+
+<hr class="divider">
+
+<h2>5. 数据结构与接口契约</h2>
+
+<p>以下为前后端对接的核心数据结构，本期前端先用 Mock 实现，后端按此契约开发真实接口。</p>
+
+<h3>5.1 消息数据结构</h3>
+
+<table>
+  <tr>
+    <th style="width:160px;">字段</th>
+    <th style="width:200px;">类型</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>role</td>
+    <td>'user' | 'assistant'</td>
+    <td>消息发送方</td>
+  </tr>
+  <tr>
+    <td>content</td>
+    <td>string</td>
+    <td>消息文本内容（支持基础 Markdown）</td>
+  </tr>
+  <tr>
+    <td>tables</td>
+    <td>Array | undefined</td>
+    <td>AI 消息附带的推荐表列表（仅 assistant）</td>
+  </tr>
+  <tr>
+    <td>isGreeting</td>
+    <td>boolean | undefined</td>
+    <td>是否为 Greeting 消息（控制"查看更多"按钮展示）</td>
+  </tr>
+  <tr>
+    <td>feedback</td>
+    <td>null | 'like' | 'dislike'</td>
+    <td>用户反馈状态</td>
+  </tr>
+  <tr>
+    <td>dislikeReasonIds</td>
+    <td>string[] | undefined</td>
+    <td>踩的原因 ID 数组</td>
+  </tr>
+  <tr>
+    <td>dislikeDetail</td>
+    <td>string | undefined</td>
+    <td>踩的补充说明（最多 150 字）</td>
+  </tr>
+  <tr>
+    <td>intentId</td>
+    <td>string | undefined</td>
+    <td>该消息关联的意图 ID（仅 user）</td>
+  </tr>
+</table>
+
+<h3>5.2 会话数据结构</h3>
+
+<table>
+  <tr>
+    <th style="width:120px;">字段</th>
+    <th style="width:200px;">类型</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>id</td>
+    <td>number | string</td>
+    <td>会话唯一标识</td>
+  </tr>
+  <tr>
+    <td>title</td>
+    <td>string</td>
+    <td>会话标题（支持重命名）</td>
+  </tr>
+  <tr>
+    <td>status</td>
+    <td>'ACTIVE' | 'SUSPENDED' | 'ARCHIVED'</td>
+    <td>会话状态</td>
+  </tr>
+  <tr>
+    <td>module</td>
+    <td>string</td>
+    <td>所属模块（如"数据地图"）</td>
+  </tr>
+  <tr>
+    <td>tags</td>
+    <td>Array&lt;{ type, label }&gt;</td>
+    <td>会话标签（任务类型、涉及表名等）</td>
+  </tr>
+  <tr>
+    <td>summary</td>
+    <td>string</td>
+    <td>会话摘要（单行展示）</td>
+  </tr>
+  <tr>
+    <td>ts</td>
+    <td>ISO 8601 string</td>
+    <td>最后活跃时间</td>
+  </tr>
+  <tr>
+    <td>messages</td>
+    <td>Array&lt;Message&gt;</td>
+    <td>该会话的消息列表</td>
+  </tr>
+</table>
+
+<h3>5.3 推荐表数据结构</h3>
+
+<table>
+  <tr>
+    <th style="width:180px;">字段</th>
+    <th style="width:120px;">类型</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>id</td>
+    <td>string</td>
+    <td>表唯一标识</td>
+  </tr>
+  <tr>
+    <td>name</td>
+    <td>string</td>
+    <td>表名</td>
+  </tr>
+  <tr>
+    <td>fullyQualifiedName</td>
+    <td>string</td>
+    <td>全限定名（用于路由跳转）</td>
+  </tr>
+  <tr>
+    <td>displayName</td>
+    <td>string</td>
+    <td>中文显示名</td>
+  </tr>
+  <tr>
+    <td>serviceType</td>
+    <td>'Hive' | 'StarRocks' | 'MySQL' | ...</td>
+    <td>数据源类型</td>
+  </tr>
+  <tr>
+    <td>description</td>
+    <td>string</td>
+    <td>表描述</td>
+  </tr>
+  <tr>
+    <td>database.name</td>
+    <td>string</td>
+    <td>所属数据库名</td>
+  </tr>
+</table>
+
+<h3>5.4 接口清单（后端待实现）</h3>
+
+<table>
+  <tr>
+    <th style="width:60px;">方法</th>
+    <th style="width:280px;">路径</th>
+    <th>说明</th>
+    <th style="width:80px;">本期状态</th>
+  </tr>
+  <tr>
+    <td>GET</td>
+    <td>/v1/copilot/conversations</td>
+    <td>获取当前用户的会话列表</td>
+    <td>Mock</td>
+  </tr>
+  <tr>
+    <td>POST</td>
+    <td>/v1/copilot/conversations</td>
+    <td>创建新会话</td>
+    <td>Mock</td>
+  </tr>
+  <tr>
+    <td>GET</td>
+    <td>/v1/copilot/conversations/{id}/messages</td>
+    <td>获取指定会话的消息列表</td>
+    <td>Mock</td>
+  </tr>
+  <tr>
+    <td>POST</td>
+    <td>/v1/copilot/conversations/{id}/messages</td>
+    <td>发送消息（含 intentId），返回 AI 回复</td>
+    <td>Mock</td>
+  </tr>
+  <tr>
+    <td>PUT</td>
+    <td>/v1/copilot/conversations/{id}</td>
+    <td>重命名 / 修改会话状态</td>
+    <td>Mock</td>
+  </tr>
+  <tr>
+    <td>DELETE</td>
+    <td>/v1/copilot/conversations/{id}</td>
+    <td>删除会话</td>
+    <td>Mock</td>
+  </tr>
+  <tr>
+    <td>POST</td>
+    <td>/v1/copilot/feedback</td>
+    <td>提交消息反馈（like/dislike + 原因）</td>
+    <td>Mock</td>
+  </tr>
+  <tr>
+    <td>GET</td>
+    <td>/v1/copilot/recommendations</td>
+    <td>获取个性化推荐表（Greeting 使用）</td>
+    <td>Mock</td>
+  </tr>
+</table>
+
+<hr class="divider">
+
+<h2>6. 验收标准</h2>
+
+<h3>6.1 功能验收清单</h3>
+
+<table>
+  <tr>
+    <th style="width:40px;">序号</th>
+    <th style="width:100px;">模块</th>
+    <th>验收项</th>
+    <th style="width:60px;">优先级</th>
+  </tr>
+  <tr><td>1</td><td>入口</td><td>点击顶部导航 Copilot 按钮，侧边栏从右侧滑入/滑出</td><td>P0</td></tr>
+  <tr><td>2</td><td>入口</td><td>首页 HeroBanner AI 模式输入问题后，侧边栏打开并自动发送该问题</td><td>P0</td></tr>
+  <tr><td>3</td><td>入口</td><td>侧边栏点击全屏按钮跳转到 /copilot，返回时自动打开侧边栏</td><td>P1</td></tr>
+  <tr><td>4</td><td>欢迎区</td><td>新建对话时显示完整欢迎区（Logo + 标题 + 副标题 + 4 张意图卡片）</td><td>P0</td></tr>
+  <tr><td>5</td><td>欢迎区</td><td>用户发送第一条消息后，欢迎区自动切换为紧凑模式</td><td>P0</td></tr>
+  <tr><td>6</td><td>推荐</td><td>新建对话时自动注入 Greeting 消息，包含个性化问候 + 推荐表卡片</td><td>P0</td></tr>
+  <tr><td>7</td><td>推荐</td><td>Greeting 消息底部显示"查看更多推荐表"按钮，点击跳转搜索页</td><td>P1</td></tr>
+  <tr><td>8</td><td>意图</td><td>点击意图卡片后，输入框出现紫色意图标签 + 对应 placeholder</td><td>P0</td></tr>
+  <tr><td>9</td><td>意图</td><td>发送带意图的消息后，意图标签自动清除</td><td>P0</td></tr>
+  <tr><td>10</td><td>意图</td><td>点击意图标签 x 按钮可取消意图</td><td>P0</td></tr>
+  <tr><td>11</td><td>对话</td><td>用户消息右对齐紫色气泡，AI 消息左对齐白色气泡</td><td>P0</td></tr>
+  <tr><td>12</td><td>对话</td><td>AI 回复前显示 3 个跳动圆点的思考动画</td><td>P1</td></tr>
+  <tr><td>13</td><td>对话</td><td>AI 回复包含表卡片时，正确渲染 ResultCards</td><td>P0</td></tr>
+  <tr><td>14</td><td>对话</td><td>点击表卡片跳转到 /detail/{fqn}</td><td>P0</td></tr>
+  <tr><td>15</td><td>编辑</td><td>用户消息 hover 显示编辑按钮，点击后原地替换为 textarea</td><td>P1</td></tr>
+  <tr><td>16</td><td>编辑</td><td>"覆盖重写"删除后续消息并重新发送；"仅回退"删除后续消息不发送</td><td>P1</td></tr>
+  <tr><td>17</td><td>反馈</td><td>AI 消息 hover 显示复制/点赞/点踩按钮</td><td>P0</td></tr>
+  <tr><td>18</td><td>反馈</td><td>点赞/点踩 toggle 行为正确，互斥</td><td>P0</td></tr>
+  <tr><td>19</td><td>反馈</td><td>点踩展开内联反馈卡片，至少选 1 个分类才能提交</td><td>P0</td></tr>
+  <tr><td>20</td><td>反馈</td><td>补充说明最多 150 字，实时字数统计</td><td>P1</td></tr>
+  <tr><td>21</td><td>会话</td><td>点击"+"新建对话，原会话变为 SUSPENDED</td><td>P0</td></tr>
+  <tr><td>22</td><td>会话</td><td>会话列表分组展示（当前/历史），支持搜索和模块筛选</td><td>P1</td></tr>
+  <tr><td>23</td><td>会话</td><td>切换会话正确加载历史消息</td><td>P0</td></tr>
+  <tr><td>24</td><td>会话</td><td>重命名、删除操作正常，删除 ACTIVE 自动切换</td><td>P1</td></tr>
+  <tr><td>25</td><td>全屏</td><td>/copilot 页面左右分栏布局正确，会话列表 + 对话区</td><td>P1</td></tr>
+  <tr><td>26</td><td>全屏</td><td>全屏模式欢迎区 Logo/标题尺寸放大</td><td>P2</td></tr>
+</table>
+
+<hr class="divider">
+
+<h2>7. 后续迭代规划</h2>
+
+<table>
+  <tr>
+    <th style="width:80px;">版本</th>
+    <th style="width:160px;">功能</th>
+    <th>说明</th>
+  </tr>
+  <tr>
+    <td>v1.1</td>
+    <td>真实接口对接</td>
+    <td>Mock 替换为后端大模型 API + 推荐系统接口，支持 SSE 流式回复</td>
+  </tr>
+  <tr>
+    <td>v1.1</td>
+    <td>血缘问答</td>
+    <td>"这张表的上游是什么？" → 返回血缘图 + 高亮节点</td>
+  </tr>
+  <tr>
+    <td>v1.2</td>
+    <td>SQL 自动生成</td>
+    <td>描述查询需求 → 生成可执行 SQL + 代码高亮</td>
+  </tr>
+  <tr>
+    <td>v1.2</td>
+    <td>字段级业务翻译</td>
+    <td>"user_id 是什么含义？" → 返回业务含义 + 关联指标</td>
+  </tr>
+  <tr>
+    <td>v2.0</td>
+    <td>元数据自动补全</td>
+    <td>AI 辅助填写表/字段的业务描述、标签、分类</td>
+  </tr>
+  <tr>
+    <td>v2.0</td>
+    <td>数据质量对话</td>
+    <td>"这张表最近有质量问题吗？" → 返回 DQ 检测结果摘要</td>
+  </tr>
+</table>
+
+<hr class="divider">
+
+<p style="text-align:center; color:#999; font-size:12px; margin-top:40px;">
+  — 文档结束 —<br>
+  DataPilot Copilot 产品需求文档 v1.0 | 产品负责人：王蕊 | 2026-03-23
+</p>
+
+</body>
+</html>

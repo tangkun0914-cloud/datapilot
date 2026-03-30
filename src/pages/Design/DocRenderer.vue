@@ -23,13 +23,24 @@
         </template>
         <template v-else-if="config.previewType === 'modal' && resolvedComponent">
           <a-button type="primary" @click="modalVisible = true">打开弹窗</a-button>
-          <component :is="resolvedComponent" v-model:open="modalVisible" v-bind="config.defaultProps" />
+          <component
+            :is="resolvedComponent"
+            :open="modalVisible"
+            @close="modalVisible = false"
+            @update:open="val => modalVisible = val"
+            v-bind="config.defaultProps || {}"
+          />
         </template>
         <template v-else-if="config.previewMultiple">
           <div class="preview-multiple">
             <div v-for="item in config.previewMultiple" :key="item.label" class="preview-item">
-              <component :is="resolvedComponent" v-bind="item.props" />
-              <span class="preview-item-label">{{ item.label }}</span>
+              <template v-if="item.route">
+                <a-button type="primary" @click="$router.push(item.route)">打开 {{ item.label }}</a-button>
+              </template>
+              <template v-else>
+                <component :is="resolvedComponent" v-bind="item.props" />
+                <span class="preview-item-label">{{ item.label }}</span>
+              </template>
             </div>
           </div>
         </template>

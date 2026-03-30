@@ -35,16 +35,16 @@
 
       <!-- 分组导航 -->
       <div class="sidebar-nav">
-        <!-- 子模块级：按 L3 扁平列表展示 -->
+        <!-- 子模块级：按产品名称分组展示 L3 -->
         <template v-if="levelTab === 'submodule'">
-          <div class="nav-group">
+          <div v-for="group in filteredL3Groups" :key="group.productModule" class="nav-group">
             <div class="nav-group-title">
               <span class="nav-group-badge badge-L3">L3</span>
-              子模块索引
+              <span class="nav-group-title-text">{{ group.productModule }}</span>
             </div>
             <ul class="nav-list nav-list-l3">
               <li
-                v-for="row in filteredL3Rows"
+                v-for="row in group.rows"
                 :key="row.key"
                 :class="{ active: activeId === row.parentId }"
                 @click="activeId = row.parentId"
@@ -54,7 +54,7 @@
               </li>
             </ul>
           </div>
-          <div v-if="filteredL3Rows.length === 0" class="nav-empty">
+          <div v-if="filteredL3Groups.length === 0" class="nav-empty">
             无匹配子模块
           </div>
         </template>
@@ -76,7 +76,7 @@
               <span class="nav-group-title-text">{{ group.displayTitle || group.groupName.replace(/^L[12]\s+/, '') }}</span>
             </div>
             <p v-if="group.emptyHint" class="nav-group-empty-hint">{{ group.emptyHint }}</p>
-            <ul v-if="group.items.length" class="nav-list">
+            <ul v-if="group.items && group.items.length" class="nav-list">
               <li
                 v-for="item in group.items"
                 :key="item.id"
@@ -87,6 +87,27 @@
                 <span class="nav-item-label">{{ item.label }}</span>
               </li>
             </ul>
+
+            <!-- 渲染子分组 -->
+            <div v-if="group.children && group.children.length" class="nav-subgroups">
+              <div v-for="child in group.children" :key="child.groupName" class="nav-subgroup">
+                <div class="nav-subgroup-title">
+                  <span class="nav-group-badge badge-L2">L2</span>
+                  <span class="nav-group-title-text">{{ child.displayTitle || child.groupName.replace(/^L[12]\s+/, '') }}</span>
+                </div>
+                <ul v-if="child.items && child.items.length" class="nav-list">
+                  <li
+                    v-for="item in child.items"
+                    :key="item.id"
+                    :class="{ active: activeId === item.id }"
+                    @click="activeId = item.id"
+                  >
+                    <span class="nav-item-name">{{ item.name }}</span>
+                    <span class="nav-item-label">{{ item.label }}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
 
           <div v-if="showNavEmpty" class="nav-empty">
@@ -115,7 +136,7 @@ import DocRenderer from './DocRenderer.vue'
 import { componentGroups } from './config.js'
 
 /** 模块级 Tab 下产品模块展示顺序（未在列表中的模块若有组件会排在后面） */
-const PRODUCT_MODULE_ORDER = ['数据地图', '数据集成']
+const PRODUCT_MODULE_ORDER = ['数据地图', '监控运维', '数据集成']
 
 const levelTabs = [
   { key: 'all', label: '全部', hint: '按源码目录分组，列出全部组件' },
@@ -129,11 +150,26 @@ const levelTab = ref('all')
 const activeId = ref(componentGroups[0]?.items[0]?.id || '')
 
 const totalCount = computed(() =>
-  componentGroups.reduce((sum, g) => sum + g.items.length, 0)
+  componentGroups.reduce((sum, g) => {
+    let count = g.items ? g.items.length : 0
+    if (g.children) {
+      count += g.children.reduce((s, c) => s + (c.items ? c.items.length : 0), 0)
+    }
+    return sum + count
+  }, 0)
 )
 
 function allItemsFlat() {
-  return componentGroups.flatMap(g => g.items)
+  const items = []
+  for (const g of componentGroups) {
+    if (g.items) items.push(...g.items)
+    if (g.children) {
+      for (const c of g.children) {
+        if (c.items) items.push(...c.items)
+      }
+    }
+  }
+  return items
 }
 
 function itemMatchesQuery(item, q) {
@@ -197,18 +233,17 @@ function buildProductModuleGroups() {
 /** 所有含 L3 的扁平行（用于子模块 Tab） */
 const l3Rows = computed(() => {
   const list = []
-  for (const g of componentGroups) {
-    for (const item of g.items) {
-      const children = item.children || []
-      for (const c of children) {
-        list.push({
-          key: `${item.id}-${c.id}`,
-          parentId: item.id,
-          parentName: item.name,
-          childName: c.name,
-          childData: c.data || '',
-        })
-      }
+  for (const item of allItemsFlat()) {
+    const children = item.children || []
+    for (const c of children) {
+      list.push({
+        key: `${item.id}-${c.id}`,
+        parentId: item.id,
+        parentName: item.name,
+        childName: c.name,
+        childData: c.data || '',
+        productModule: item.productModule || (item.catalogTier === 'platform' ? '平台级' : '未分类')
+      })
     }
   }
   return list
@@ -225,6 +260,30 @@ const filteredL3Rows = computed(() => {
   )
 })
 
+const filteredL3Groups = computed(() => {
+  const map = new Map()
+  for (const row of filteredL3Rows.value) {
+    const pm = row.productModule
+    if (!map.has(pm)) map.set(pm, [])
+    map.get(pm).push(row)
+  }
+  const groups = []
+  for (const name of PRODUCT_MODULE_ORDER) {
+    if (map.has(name)) {
+      groups.push({ productModule: name, rows: map.get(name) })
+      map.delete(name)
+    }
+  }
+  if (map.has('平台级')) {
+    groups.push({ productModule: '平台级', rows: map.get('平台级') })
+    map.delete('平台级')
+  }
+  for (const [pm, rows] of map) {
+    groups.push({ productModule: pm, rows })
+  }
+  return groups
+})
+
 const filteredGroups = computed(() => {
   if (levelTab.value === 'submodule') return []
   const q = searchText.value.toLowerCase().trim()
@@ -232,11 +291,20 @@ const filteredGroups = computed(() => {
   if (levelTab.value === 'all') {
     if (!q) return componentGroups
     return componentGroups
-      .map(group => ({
-        ...group,
-        items: group.items.filter(item => itemMatchesQuery(item, q)),
-      }))
-      .filter(group => group.items.length > 0)
+      .map(group => {
+        const newGroup = { ...group }
+        if (newGroup.items) {
+          newGroup.items = newGroup.items.filter(item => itemMatchesQuery(item, q))
+        }
+        if (newGroup.children) {
+          newGroup.children = newGroup.children.map(child => ({
+            ...child,
+            items: child.items ? child.items.filter(item => itemMatchesQuery(item, q)) : []
+          })).filter(child => child.items.length > 0)
+        }
+        return newGroup
+      })
+      .filter(group => (group.items && group.items.length > 0) || (group.children && group.children.length > 0))
   }
 
   if (levelTab.value === 'platform') {
@@ -284,7 +352,7 @@ const showNavEmpty = computed(() => {
   if (levelTab.value === 'submodule') return false
   const groups = filteredGroups.value
   if (!groups.length) return true
-  const hasItems = groups.some(g => g.items.length)
+  const hasItems = groups.some(g => (g.items && g.items.length) || (g.children && g.children.some(c => c.items && c.items.length)))
   const hasPlaceholder = groups.some(g => g.emptyHint)
   return !hasItems && !hasPlaceholder
 })
@@ -295,7 +363,13 @@ const sidebarCountText = computed(() => {
     const n = filteredL3Rows.value.length
     return searchText.value.trim() ? `${n} / ${total} 个子模块` : `${total} 个子模块`
   }
-  const visible = filteredGroups.value.reduce((s, g) => s + g.items.length, 0)
+  const visible = filteredGroups.value.reduce((s, g) => {
+    let count = g.items ? g.items.length : 0
+    if (g.children) {
+      count += g.children.reduce((subSum, c) => subSum + (c.items ? c.items.length : 0), 0)
+    }
+    return s + count
+  }, 0)
   const q = searchText.value.trim()
   if (levelTab.value === 'all' && !q) {
     return `${totalCount.value} 个组件`
@@ -317,16 +391,34 @@ watch([levelTab, searchText], () => {
     return
   }
   const groups = filteredGroups.value
-  const exists = groups.some(g => g.items.some(i => i.id === activeId.value))
+  const exists = groups.some(g => {
+    if (g.items && g.items.some(i => i.id === activeId.value)) return true
+    if (g.children && g.children.some(c => c.items && c.items.some(i => i.id === activeId.value))) return true
+    return false
+  })
   if (!exists && groups.length) {
-    activeId.value = groups[0].items[0].id
+    if (groups[0].items && groups[0].items.length) {
+      activeId.value = groups[0].items[0].id
+    } else if (groups[0].children && groups[0].children.length && groups[0].children[0].items.length) {
+      activeId.value = groups[0].children[0].items[0].id
+    }
   }
 })
 
 const activeConfig = computed(() => {
   for (const group of componentGroups) {
-    const found = group.items.find(item => item.id === activeId.value)
-    if (found) return found
+    if (group.items) {
+      const found = group.items.find(item => item.id === activeId.value)
+      if (found) return found
+    }
+    if (group.children) {
+      for (const child of group.children) {
+        if (child.items) {
+          const found = child.items.find(item => item.id === activeId.value)
+          if (found) return found
+        }
+      }
+    }
   }
   return null
 })
@@ -496,6 +588,20 @@ const activeConfig = computed(() => {
   color: #94a3b8;
   text-transform: uppercase;
   letter-spacing: 0.3px;
+}
+
+.nav-subgroup {
+  margin-top: 4px;
+}
+
+.nav-subgroup-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 20px 6px 28px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
 }
 
 .nav-group-badge {

@@ -9,7 +9,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import HeroBanner from '@/pages/Home/HeroBanner.new.vue'
+import HeroBanner from '@/pages/DataMap/Home/HeroBanner.new.vue'
 
 const copilotTriggered = ref(false)
 
