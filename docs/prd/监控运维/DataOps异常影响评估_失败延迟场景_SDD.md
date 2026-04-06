@@ -29,7 +29,7 @@
 **事件状态**指告警生命周期状态（与拓扑节点 `impactStatus`、实例 `status` 不同维度）。
 
 - **单一数据源**：告警事件列表（如 `AlertCard` + `AlertStatusBadge`）与 **影响评估**（`ImpactAssessmentDrawer` 等）顶部展示的「事件状态」，必须来自**同一条告警对象上的同一字段**，推荐字段名为 **`status`**（与列表 Mock/API 一致）。
-- **枚举与展示对齐**：取值须与列表侧一致（如 `firing`、`acked`、`resolved`、`silenced`、`transferred`、`falsePositive` 等，以后端契约为准）；**中文标签、Tag 颜色、图标**须与列表共用**同一套映射**（同一组件或同一工具函数），禁止在影响评估内单独写一套文案或误用 `severity` 代替事件状态。
+- **枚举与展示对齐**：取值须与列表侧一致（如 `firing`、`acked`、`resolved`、`silenced`、`falsePositive` 等，以后端契约为准）；**中文标签、Tag 颜色、图标**须与列表共用**同一套映射**（同一组件或同一工具函数），禁止在影响评估内单独写一套文案或误用 `severity` 代替事件状态。
 - **入口传参**：从列表或详情打开影响评估时，须传入与当前行一致的 **告警快照**（含 `id`、`status` 等），避免仅按 `eventId` 拉数导致与列表展示漂移。
 
 ### 1.3 能力边界（与 PRD 1.3 对齐）
@@ -106,7 +106,7 @@ src/
 | **TopologyCanvas** | `TopologyCanvas.vue` | 由 Drawer 左侧挂载 | G6 画布，`topologyData`；缩放/平移/折叠展开/节点点击 |
 | **CanvasToolbar** | `components/CanvasToolbar.vue` | 组合于 TopologyCanvas | 【仅看核心链路】开关、缩放、适应视图、图例（【刷新】按钮位于页面右上角，非画布工具栏） |
 | **AssessmentPanel** | `AssessmentPanel.vue` | 由 Drawer 右侧挂载 | AI 总结 + 3 个 Tab + 底部操作区；支持折叠/收起；`summaryData`、`alert` |
-| **StatsAndSLA** | `components/StatsAndSLA.vue` | 组合于 AssessmentPanel Tab1 | 统计（基于全量下游数据）、受影响负责人、SLA 破线判定（仅展示已破线任务） |
+| **StatsAndSLA** | `components/StatsAndSLA.vue` | 组合于 AssessmentPanel Tab1 | 统计（基于全量下游数据，受影响实例总数/核心实例数）、受影响负责人、SLA 破线判定（仅展示已破线任务） |
 | **GlobalImpactList** | `components/GlobalImpactList.vue` | 组合于 AssessmentPanel Tab2 | 所有告警类型统一展示下游任务实例清单（全量数据，不依赖画布展开状态），每页 100 条分页，支持"仅看核心任务"筛选；点击行联动拓扑高亮 |
 | **ErrorLogViewer** | `components/ErrorLogViewer.vue` | 组合于 AssessmentPanel Tab3 | 当前告警节点日志摘要（与详情抽屉复用同一接口）；点击画布节点时联动展示该节点日志；未运行/依赖等待状态节点展示空白 |
 | **ActionBar** | `components/ActionBar.vue` | 组合于 AssessmentPanel 底部 | 一键拉群（本期可用）；挂起/重跑/置成功（后期置灰 + Tooltip） |
@@ -147,7 +147,7 @@ src/
   - 画布仍支持逐层展开浏览（+/−），但数据来自快照。
   - 工具栏：隐藏【刷新】按钮，**保留**【仅看核心链路】开关（基于快照数据穿透）。
   - ActionBar：所有按钮隐藏，不支持任何操作。
-  - 若 `exists === false`（从未评估过），提示「该告警未进行过影响评估」并关闭抽屉。
+  - 由于后端预计算机制，快照始终存在（`exists` 恒为 `true`）。
 
 #### AssessmentPanel 面板折叠/收起
 
@@ -176,7 +176,7 @@ src/
 - **Events**：`confirm(payload)`、`cancel`。
 - **Step 0 去重检查**：点击「一键拉群」时，先检查当前告警是否已创建过应急群（通过 `checkWarRoomExists(eventId)` 或 `createWarRoom` 接口返回 `alreadyExists`）。若已创建 → Toast 提示「当前告警已创建应急群，请勿重复创建」，流程终止，**不弹出弹窗**。
 - **弹窗内容**（首次创建时弹出）：
-  - 群名称：自动生成（格式 `【故障应急】{任务名} {监控事件}`），支持手动编辑。
+  - 群名称：自动生成（格式 `【故障应急】{告警等级} {任务名} {监控事件}`，如 `【故障应急】ERROR dwd_fund_df_repayment 运行失败`），支持手动编辑。
   - 成员列表：从 `ownerMatrix` 提取，`a-checkbox-group` 渲染，默认全选，支持勾选/取消。
   - 底部按钮：「取消」+ 「确认创建」。
 - **确认流程**：点击确认 → 按钮 loading → 调用 `createWarRoom()` → 成功 Toast + 群链接（可点击跳转到企业微信） / 失败 Toast + 按钮恢复。
@@ -289,7 +289,7 @@ G6.registerNode('impact-task-node', {
   - **点击「−」控件**：立即隐藏该节点延伸出的**所有下游子图**（递归移除），控件切换回「+」。
   - **严格遵循"逐层探索，拒绝全量渲染"原则**。
 - **节点交互**：
-  - **悬浮 (Hover)**：显示 G6.Tooltip，内容为节点完整任务名（若被截断）、负责人、任务类型、运行时长、报错摘要。
+  - **悬浮 (Hover)**：显示 G6.Tooltip，内容仅为节点完整任务名（便于复制）。
   - **点击 (Click)**：右侧 Panel 联动，Tab 切换到"日志详情"并展示该节点的日志。
 - **画布操作**：支持鼠标滚轮缩放、拖拽平移、`fitView` 自适应。
 - **「仅看核心链路」**：工具栏开关，默认关闭。开启后系统基于完整潜在拓扑自动穿透展示根节点到所有"核心任务"的关键路径，隐藏非路径节点，此时冻结 +/- 折叠/展开操作。快照模式下该开关同样保留可用。
@@ -378,11 +378,11 @@ G6.registerNode('impact-task-node', {
 {
   alertSource: 'quality',         // 'dev' | 'integration' | 'quality'
   affectedTaskInstances: [],      // 所有告警类型统一返回下游任务实例列表（供 Tab 2 使用）
-  totalAffectedNodes: 56,         // 受影响逻辑节点总数（基于全量下游数据）
-  coreTaskCount: 3,               // 核心任务数（有 SLA 配置的任务）
+  totalAffectedInstances: 56,     // 受影响实例总数（基于全量下游数据）
+  coreInstanceCount: 3,           // 核心实例数（有 SLA 配置的任务实例）
   ownerMatrix: [                  // 受影响负责人矩阵
-    { name: '张三(zhangsan)', taskCount: 5 },
-    { name: '李四(lisi)', taskCount: 2 },
+    { name: '张三(zhangsan)', instanceCount: 5 },
+    { name: '李四(lisi)', instanceCount: 2 },
   ],
   slaBreaches: [                  // SLA 破线判定（仅包含已破线的任务，无破线的不在列表中）
     {
@@ -397,7 +397,7 @@ G6.registerNode('impact-task-node', {
   ],
   aiAnalysis: {                   // AI 智能分析总结（独立加载，可为 null 表示加载中/不可用）
     status: 'ready',              // 'loading' | 'ready' | 'failed'
-    impactJudgment: '受影响下游节点 56 个，其中核心任务 3 个，波及 5 位负责人。',
+    impactJudgment: '受影响下游实例 56 个，其中核心实例 3 个，波及 5 位负责人。',
     impactConclusion: '财务日报当前处于依赖等待状态，尚未产出。',  // 基于实际状态描述，不做时间预测
     suggestion: '建议立即联系相关负责人协同处理，优先关注财务日报产出链路。',
     generatedAt: '2026-04-02T08:30:00Z',
@@ -508,7 +508,7 @@ POST /api/monitoring/impact/create-group
 ```js
 {
   eventId: 'E-10000641',
-  groupName: '【故障应急】dwd_fund_df_repayment 运行失败',
+  groupName: '【故障应急】ERROR dwd_fund_df_repayment 运行失败',
   members: ['zhangsan', 'lisi', 'madianlin'],  // 从 ownerMatrix 提取
   reportSnapshot: { /* ImpactSummary 快照 */ },
 }
@@ -535,7 +535,7 @@ POST /api/monitoring/alert/resolve
 
 > 此接口为现有「解决告警」操作的后端处理，V1.0 在其中追加一步：检查该 `eventId` 是否曾创建过应急群，若有则自动向群内推送恢复通知消息卡片。**前端无需额外调用**。
 
-**两种恢复方式的消息模板**（详见 PRD 3.8 节）：
+**两种恢复方式的消息模板**（详见 PRD 3.7 节）：
 - **人工确认恢复**：操作人手动点击「已解决」触发，消息包含操作人信息，提示相关方确认下游任务运行状态。
 - **系统自动恢复**：系统检测到任务实例已完成时自动标记为已解决，消息仅包含恢复时间。
 
@@ -563,7 +563,7 @@ GET /api/monitoring/impact/snapshot?eventId={eventId}
 
 ```js
 {
-  exists: true,                    // 是否存在快照（告警从未打开过影响评估则为 false）
+  exists: true,                    // 是否存在快照（由于预计算机制，恒为 true）
   snapshotTime: '2026-04-02T10:00:00Z',  // 快照生成时间
   topology: {                      // 全量下游依赖图数据
     nodes: [ /* TaskNode[] */ ],
@@ -573,7 +573,7 @@ GET /api/monitoring/impact/snapshot?eventId={eventId}
 }
 ```
 
-> **快照机制**：告警状态变更为 `resolved` 或 `falsePositive` 时，后端自动保存当前影响评估数据为历史快照。快照内容包含全量下游依赖图、各节点当时的实际运行状态、统计面板数据、SLA 破线数据、AI 分析结果。若告警从未被打开过影响评估，`exists` 为 `false`，前端提示「该告警未进行过影响评估」。
+> **快照机制**：告警产生时即由后端异步预计算全量下游拓扑与统计数据。告警状态变更为 `resolved` 或 `falsePositive` 时，基于预计算数据自动保存历史快照。快照内容包含全量下游依赖图、各节点当时的实际运行状态、统计面板数据、SLA 破线数据、AI 分析结果。由于预计算机制，快照始终存在，`exists` 恒为 `true`。
 
 ### 5.3 服务层封装 (`impactService.js`)
 
@@ -658,7 +658,7 @@ export async function getSnapshot(eventId) {
 
 | 状态 | 是否展示 |
 |------|---------|
-| `firing` / `acked` / `silenced` / `transferred` | **展示** |
+| `firing` / `acked` / `silenced` | **展示** |
 | `resolved` / `falsePositive` | **不展示** |
 
 ```vue
@@ -678,7 +678,7 @@ export async function getSnapshot(eventId) {
 
 | 状态 | 是否展示 | 入口文案 | 模式 |
 |------|---------|---------|------|
-| `firing` / `acked` / `silenced` / `transferred` | **展示** | `[影响评估]` | 活跃战情室（实时数据） |
+| `firing` / `acked` / `silenced` | **展示** | `[影响评估]` | 活跃战情室（实时数据） |
 | `resolved`（已解决） | **展示** | `[查看影响评估记录]` | 历史快照模式（只读） |
 | `falsePositive`（误报） | **展示** | `[查看影响评估记录]` | 历史快照模式（只读） |
 
@@ -724,7 +724,7 @@ export async function getSnapshot(eventId) {
 
 ```
 ═══════════════════════════════════════════════════════
-  活跃模式（firing / acked / silenced / transferred）
+  活跃模式（firing / acked / silenced）
 ═══════════════════════════════════════════════════════
 
 用户点击 [影响评估]
@@ -788,8 +788,7 @@ AlertDetailDrawer.vue
 ImpactAssessmentDrawer (L3, mode='snapshot')
     │ (调用 getSnapshot(eventId))
     ▼
-    ├── exists === false → 提示「该告警未进行过影响评估」
-    └── exists === true →
+    └── 展示快照数据 →
         ├── 顶部 Banner：「您正在查看历史影响评估快照，数据截止于 {snapshotTime}」
         ├── TopologyCanvas：逐层展开浏览（+/−），数据来自快照
         │   ├── [刷新] 按钮隐藏

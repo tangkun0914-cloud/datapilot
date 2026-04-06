@@ -306,6 +306,8 @@ export function createImpactTaskNodeById(nodeId, alert) {
       const warnStatuses = ['success', 'running', 'failed', 'waiting']
       const impactStatus = isError ? 'waiting' : warnStatuses[idx % warnStatuses.length]
       const isPolluted = !isError
+      /** DQC + ERROR 强阻断：下游依赖节点展示「阻断」标识（根节点 impact_dqc_root 不在此分支） */
+      const isDqcErrorBlocked = isError
       return taskNode({
         id: nodeId,
         taskName,
@@ -313,6 +315,7 @@ export function createImpactTaskNodeById(nodeId, alert) {
         owner: owners[idx % owners.length],
         impactStatus,
         isPolluted,
+        isDqcErrorBlocked,
         startTime: planBase,
         endTime: (impactStatus === 'running' || impactStatus === 'waiting') ? '-' : planBase,
         depth,
@@ -753,6 +756,7 @@ export function mockSummary(eventId, alertSnapshot) {
                 scheduleBatch: alert.scheduleBatch || alert.triggerTime || '2026-04-02',
                 status,
                 isPolluted: qualityThreshold && !isError,
+                isDqcErrorBlocked: isError,
                 owner: i % 2 === 0 ? '张三(zhangsan)' : '赵六(zhaoliu)',
                 isCore: qualityTaskIsCore(taskId),
               }
@@ -851,7 +855,10 @@ export function mockSummary(eventId, alertSnapshot) {
           isFinishBreached,
         }
       })
-      return [...l2Rows, ...dashRows]
+      /** 列表不展示「可控」：仅保留启动或完成任一破线的 SLA 预估 */
+      return [...l2Rows, ...dashRows].filter(
+        (r) => r.isStartBreached === true || r.isFinishBreached === true
+      )
     })(),
     deductionResult: isQuality
       ? qualityRunFailed
@@ -891,5 +898,64 @@ export function mockExpand(_collapseNodeId, _depth, _alertSnapshot) {
     replaceCollapseId: null,
     nodes: [],
     edges: [],
+  }
+}
+
+/**
+ * 核心链路穿透 Mock：返回根节点到所有核心任务的关键路径 nodes + edges
+ */
+export function mockCorePath(eventId) {
+  const alert = alertList.find((a) => a.id === eventId) || alertList[0]
+  const top = mockTopology(eventId, {}, alert)
+  if (!top?.nodes?.length) return { nodes: [], edges: [] }
+  const coreIds = new Set(top.nodes.filter((n) => n.isCore).map((n) => n.id))
+  if (!coreIds.size) return { nodes: [top.nodes[0]], edges: [] }
+  const parentMap = new Map()
+  for (const e of top.edges || []) {
+    if (!parentMap.has(e.target)) parentMap.set(e.target, [])
+    parentMap.get(e.target).push(e.source)
+  }
+  const pathNodeIds = new Set()
+  function traceBack(nid) {
+    if (pathNodeIds.has(nid)) return
+    pathNodeIds.add(nid)
+    for (const pid of parentMap.get(nid) || []) traceBack(pid)
+  }
+  for (const cid of coreIds) traceBack(cid)
+  const rootId = top.nodes[0]?.id
+  if (rootId) pathNodeIds.add(rootId)
+  const nodes = top.nodes.filter((n) => pathNodeIds.has(n.id))
+  const edges = (top.edges || []).filter((e) => pathNodeIds.has(e.source) && pathNodeIds.has(e.target))
+  return { nodes, edges }
+}
+
+/**
+ * AI 分析结果 Mock：直接返回 ready
+ */
+export function mockAiAnalysis(eventId) {
+  const alert = alertList.find((a) => a.id === eventId) || alertList[0]
+  const sum = mockSummary(eventId, alert)
+  return {
+    status: 'ready',
+    impactJudgment: sum.aiAnalysis?.impactJudgment || `受影响下游节点 ${sum.totalAffectedNodes || 0} 个，其中核心任务 ${sum.highRiskNodes || 0} 个。`,
+    impactConclusion: sum.aiAnalysis?.impactConclusion || '当前告警可能导致下游数据产出延迟，请关注核心链路。',
+    suggestion: sum.aiAnalysis?.suggestion || '建议立即联系相关负责人协同处理。',
+    generatedAt: new Date().toISOString(),
+  }
+}
+
+/**
+ * 历史快照 Mock：返回模拟快照数据
+ */
+export function mockSnapshot(eventId) {
+  const alert = alertList.find((a) => a.id === eventId) || alertList[0]
+  if (!alert) return { exists: false }
+  const top = mockTopology(eventId, {}, alert)
+  const sum = mockSummary(eventId, alert)
+  return {
+    exists: true,
+    snapshotTime: new Date(Date.now() - 3600_000).toISOString(),
+    topology: top,
+    summary: sum,
   }
 }

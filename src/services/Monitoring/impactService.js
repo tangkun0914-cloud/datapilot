@@ -39,18 +39,55 @@ export async function getImpactSummary(eventId, alertSnapshot = null) {
 }
 
 /**
- * @param {string} collapseNodeId
- * @param {number} [depth]
+ * 获取节点子节点（逐层展开，点击 + 时调用）
+ * @param {string} nodeId 当前展开的父节点 ID
+ * @param {string} eventId 告警事件 ID
  * @param {object|null} [alertSnapshot] Mock 整包展开时重建根节点与告警行一致
  */
-export async function expandCollapseNode(collapseNodeId, depth = 3, alertSnapshot = null) {
+export async function getNodeChildren(nodeId, eventId, alertSnapshot = null) {
   if (useMock()) {
     const { mockExpand } = await import('@/mock/Monitoring/impactAssessment.js')
-    return mockExpand(collapseNodeId, depth, alertSnapshot)
+    return mockExpand(nodeId, 3, alertSnapshot)
   }
-  return request.get('/api/monitoring/impact/expand', {
-    params: { collapseNodeId, depth },
+  return request.get('/api/monitoring/impact/children', {
+    params: { nodeId, eventId },
   })
+}
+
+/**
+ * 获取核心链路拓扑（仅看核心链路开关开启时调用）
+ * @param {string} eventId
+ */
+export async function getCorePath(eventId) {
+  if (useMock()) {
+    const { mockCorePath } = await import('@/mock/Monitoring/impactAssessment.js')
+    return mockCorePath(eventId)
+  }
+  return request.get('/api/monitoring/impact/core-path', { params: { eventId } })
+}
+
+/**
+ * 轮询 AI 分析结果
+ * @param {string} eventId
+ */
+export async function getAiAnalysis(eventId) {
+  if (useMock()) {
+    const { mockAiAnalysis } = await import('@/mock/Monitoring/impactAssessment.js')
+    return mockAiAnalysis(eventId)
+  }
+  return request.get('/api/monitoring/impact/ai-analysis', { params: { eventId } })
+}
+
+/**
+ * 获取历史快照数据（resolved/falsePositive 状态下使用）
+ * @param {string} eventId
+ */
+export async function getSnapshot(eventId) {
+  if (useMock()) {
+    const { mockSnapshot } = await import('@/mock/Monitoring/impactAssessment.js')
+    return mockSnapshot(eventId)
+  }
+  return request.get('/api/monitoring/impact/snapshot', { params: { eventId } })
 }
 
 /**
@@ -63,7 +100,10 @@ export async function expandCollapseNode(collapseNodeId, depth = 3, alertSnapsho
  */
 export async function createWarRoom(payload) {
   if (useMock()) {
-    return { success: true, groupId: 'mock_group_' + Date.now() }
+    if (payload.checkOnly) {
+      return { alreadyExists: false }
+    }
+    return { success: true, alreadyExists: false, groupId: 'mock_group_' + Date.now(), groupLink: 'https://work.weixin.qq.com/mock' }
   }
   return request.post('/api/monitoring/impact/create-group', payload)
 }

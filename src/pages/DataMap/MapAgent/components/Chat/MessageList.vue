@@ -5,18 +5,28 @@
          isShareMode ? 'pb-6' : 'pb-36'
        ]" 
        ref="listRef">
-    <div 
-      v-for="group in messageGroups" 
-      :key="group.id"
-      class="relative transition-colors duration-300 rounded-2xl"
-      :class="isShareMode ? (isDarkMode ? 'bg-slate-800/50 p-4' : 'bg-gray-100/70 p-4') : ''"
-    >
+    <template v-for="(wrap, gi) in messageGroupsWithDividers" :key="wrap.group.id + '-' + gi">
+      <div
+        v-if="wrap.showTime"
+        class="flex items-center gap-3 my-2 shrink-0"
+        :class="isShareMode ? 'px-2' : ''"
+      >
+        <div class="flex-1 h-px transition-colors" :class="isDarkMode ? 'bg-slate-700' : 'bg-slate-200'" />
+        <span class="text-xs tabular-nums whitespace-nowrap transition-colors" :class="isDarkMode ? 'text-slate-500' : 'text-slate-400'">
+          {{ wrap.timeLabel }}
+        </span>
+        <div class="flex-1 h-px transition-colors" :class="isDarkMode ? 'bg-slate-700' : 'bg-slate-200'" />
+      </div>
+      <div
+        class="relative transition-colors duration-300 rounded-2xl"
+        :class="isShareMode ? (isDarkMode ? 'bg-slate-800/50 p-4' : 'bg-gray-100/70 p-4') : ''"
+      >
       <!-- 分享模式勾选框 -->
       <transition name="fade">
         <div v-if="isShareMode" class="absolute left-4 top-4 z-10 flex items-center justify-center">
           <a-checkbox 
-            :checked="selectedShareGroups.includes(group.id)"
-            @change="toggleShareGroup(group.id)"
+            :checked="selectedShareGroups.includes(wrap.group.id)"
+            @change="toggleShareGroup(wrap.group.id)"
             class="custom-checkbox scale-110"
           />
         </div>
@@ -24,7 +34,7 @@
 
       <div class="flex flex-col gap-6" :class="isShareMode ? 'pl-8' : ''">
         <div 
-          v-for="msg in group.messages" 
+          v-for="msg in wrap.group.messages" 
           :key="msg.id" 
           class="message flex gap-3 w-full group relative transition-all duration-300"
           :class="msg.role === 'user' ? 'flex-row-reverse' : ''"
@@ -41,7 +51,8 @@
             <ThinkingSteps 
               v-if="msg.role === 'ai'" 
               :steps="msg.steps" 
-              :is-dark-mode="isDarkMode" 
+              :is-dark-mode="isDarkMode"
+              :msg-status="msg.status"
             />
 
             <!-- 表名/负责人/描述由 Markdown 正文呈现，不再单独展示 TableDetailHeader 卡片，避免与下方引用块重复 -->
@@ -73,8 +84,9 @@
             
             <!-- L3-7 消息反馈与分享 -->
             <MessageActions 
-              v-if="msg.role === 'ai' && msg.status !== 'loading' && !isShareMode"
+              v-if="msg.role === 'ai' && !['loading', 'streaming'].includes(msg.status) && !isShareMode"
               :msg-id="msg.id"
+              :msg-status="msg.status"
               :is-dark-mode="isDarkMode"
               :action-state="actionStates[msg.id]"
               :show-table-favorite="showMessageActionsTableFavorite(msg)"
@@ -84,11 +96,13 @@
               @like="handleAction('like', $event)"
               @dislike="handleAction('dislike', $event)"
               @share="handleAction('share', $event)"
+              @regenerate="emit('regenerate', $event)"
             />
           </div>
         </div>
       </div>
     </div>
+    </template>
 
     <!-- 分享操作栏 -->
     <ShareActionBar 
@@ -138,6 +152,7 @@ import MarkdownRenderer from './MarkdownRenderer.vue'
 import SuggestionChips from './SuggestionChips.vue'
 import MessageActions from './MessageActions.vue'
 import { rawMarkdownHasTableActionsMarker } from '../../constants/markdownSlots.js'
+import dayjs from 'dayjs'
 
 const props = defineProps({
   messages: { type: Array, default: () => [] },
@@ -147,7 +162,7 @@ const props = defineProps({
   favoriteFqns: { type: Array, default: () => [] }
 })
 
-const emit = defineEmits(['send', 'update:isShareMode', 'toggleTableFavorite'])
+const emit = defineEmits(['send', 'update:isShareMode', 'toggleTableFavorite', 'regenerate'])
 
 const isTableFavorited = (fqn) => props.favoriteFqns.includes(fqn)
 
@@ -198,6 +213,34 @@ const messageGroups = computed(() => {
   return groups
 })
 
+const FIVE_MIN_MS = 5 * 60 * 1000
+
+function formatDividerLabel(ts) {
+  const t = dayjs(ts)
+  const now = dayjs()
+  if (t.isSame(now, 'day')) return t.format('HH:mm')
+  return t.format('MM-DD HH:mm')
+}
+
+/** 相邻对话组间隔 ≥5min 时插入时间分隔线 */
+const messageGroupsWithDividers = computed(() => {
+  const groups = messageGroups.value
+  return groups.map((g, i) => {
+    let showTime = false
+    let timeLabel = ''
+    if (i > 0) {
+      const prev = groups[i - 1]
+      const prevTs = Math.max(...prev.messages.map((m) => m.id))
+      const firstTs = Math.min(...g.messages.map((m) => m.id))
+      if (firstTs - prevTs >= FIVE_MIN_MS) {
+        showTime = true
+        timeLabel = formatDividerLabel(firstTs)
+      }
+    }
+    return { group: g, showTime, timeLabel }
+  })
+})
+
 const isAllSelected = computed(() => messageGroups.value.length > 0 && selectedShareGroups.value.length === messageGroups.value.length)
 const isIndeterminate = computed(() => selectedShareGroups.value.length > 0 && selectedShareGroups.value.length < messageGroups.value.length)
 
@@ -227,18 +270,21 @@ const handleAction = (action, msgId) => {
       })
     }
   } else if (action === 'like') {
-    if (actionStates.value[msgId].like) return
-    actionStates.value[msgId].like = true
+    const next = !actionStates.value[msgId].like
+    actionStates.value[msgId].like = next
     actionStates.value[msgId].dislike = false
-    antMessage.open({
-      content: () => h('div', { class: 'flex items-center gap-2 px-1' }, [
-        h(CheckCircleOutlined, { style: { color: '#14b8a6', fontSize: '16px' } }),
-        h('span', { style: { fontWeight: '500', color: '#1e293b' } }, '感谢您的支持')
-      ]),
-      duration: 2, class: 'custom-like-message'
-    })
+    if (next) {
+      antMessage.open({
+        content: () => h('div', { class: 'flex items-center gap-2 px-1' }, [
+          h(CheckCircleOutlined, { style: { color: '#14b8a6', fontSize: '16px' } }),
+          h('span', { style: { fontWeight: '500', color: '#1e293b' } }, '感谢您的支持')
+        ]),
+        duration: 2,
+        class: 'custom-like-message'
+      })
+    }
   } else if (action === 'dislike') {
-    if (actionStates.value[msgId].dislike) return
+    actionStates.value[msgId].like = false
     currentFeedbackMsgId.value = msgId
     feedbackModalVisible.value = true
   } else if (action === 'share') {
@@ -274,6 +320,14 @@ watch(() => props.messages, () => {
     if (listRef.value) listRef.value.scrollTop = listRef.value.scrollHeight
   })
 }, { deep: true })
+
+function clearMessageActionState(msgId) {
+  if (actionStates.value[msgId]) {
+    delete actionStates.value[msgId]
+  }
+}
+
+defineExpose({ clearMessageActionState })
 </script>
 
 <style>

@@ -48,15 +48,66 @@ function buildKeywordSearchTableMarkdownBody() {
 /**
  * 地图 Agent v2 (千问风格) - 流式 Mock
  * 6 种场景全部通过 onMessage 输出 Markdown 文本，不再输出 cardData
+ *
+ * @param {object} opts
+ * @param {AbortSignal} [opts.abortSignal]
+ * @returns {Promise<{ aborted?: boolean }>}
  */
 export function mockSendMessageStream({
   content,
+  abortSignal,
   onStep,
   onMessage,
   onSuggestions,
   onTableDetail,
   onDone
 }) {
+  return new Promise((resolve) => {
+    const timers = []
+    let streamIntervalId = null
+    let settled = false
+
+    const settle = (aborted) => {
+      if (settled) return
+      settled = true
+      clearAllTimers()
+      resolve({ aborted: !!aborted })
+    }
+
+    const isAborted = () => Boolean(abortSignal?.aborted)
+
+    const clearAllTimers = () => {
+      timers.forEach((id) => clearTimeout(id))
+      timers.length = 0
+      if (streamIntervalId != null) {
+        clearInterval(streamIntervalId)
+        streamIntervalId = null
+      }
+    }
+
+    const safeSetTimeout = (fn, delay) => {
+      const id = setTimeout(() => {
+        const idx = timers.indexOf(id)
+        if (idx !== -1) timers.splice(idx, 1)
+        if (isAborted()) {
+          settle(true)
+          return
+        }
+        fn()
+      }, delay)
+      timers.push(id)
+      return id
+    }
+
+    abortSignal?.addEventListener(
+      'abort',
+      () => {
+        clearAllTimers()
+        settle(true)
+      },
+      { once: true }
+    )
+
   const isFieldsIntent = content.includes('字段') || content.includes('schema') || content.includes('Schema')
   const isPreviewIntent = content.includes('预览') || content.includes('抽样')
   const isProductionIntent = content.includes('生产') || content.includes('调度') || content.includes('执行')
@@ -77,41 +128,65 @@ export function mockSendMessageStream({
 
   let currentStepIndex = 0
 
-  const runStep = () => {
-    if (currentStepIndex < scenario.steps.length) {
-      const step = scenario.steps[currentStepIndex]
-      if (onStep) onStep({ id: step.id, status: 'running', text: step.text })
-      setTimeout(() => {
-        if (onStep) onStep({ id: step.id, status: 'success', text: step.text })
-        currentStepIndex++
-        runStep()
-      }, step.duration)
-    } else {
-      streamMarkdown()
-    }
-  }
-
-  const streamMarkdown = () => {
-    if (scenario.tableDetail && onTableDetail) {
-      onTableDetail(scenario.tableDetail)
-    }
-    const text = scenario.markdown
-    let i = 0
-    const interval = setInterval(() => {
-      if (i < text.length) {
-        if (onMessage) onMessage(text[i])
-        i++
-      } else {
-        clearInterval(interval)
-        setTimeout(() => {
-          if (onSuggestions) onSuggestions(scenario.suggestions)
-          if (onDone) onDone()
-        }, 200)
+    const runStep = () => {
+      if (isAborted()) {
+        settle(true)
+        return
       }
-    }, 15)
-  }
+      if (currentStepIndex < scenario.steps.length) {
+        const step = scenario.steps[currentStepIndex]
+        if (onStep) onStep({ id: step.id, status: 'running', text: step.text })
+        safeSetTimeout(() => {
+          if (isAborted()) {
+            settle(true)
+            return
+          }
+          if (onStep) onStep({ id: step.id, status: 'success', text: step.text })
+          currentStepIndex++
+          runStep()
+        }, step.duration)
+      } else {
+        streamMarkdown()
+      }
+    }
 
-  setTimeout(() => { runStep() }, 300)
+    const streamMarkdown = () => {
+      if (isAborted()) {
+        settle(true)
+        return
+      }
+      if (scenario.tableDetail && onTableDetail) {
+        onTableDetail(scenario.tableDetail)
+      }
+      const text = scenario.markdown
+      let i = 0
+      streamIntervalId = setInterval(() => {
+        if (isAborted()) {
+          settle(true)
+          return
+        }
+        if (i < text.length) {
+          if (onMessage) onMessage(text[i])
+          i++
+        } else {
+          clearAllTimers()
+          safeSetTimeout(() => {
+            if (isAborted()) {
+              settle(true)
+              return
+            }
+            if (onSuggestions) onSuggestions(scenario.suggestions)
+            if (onDone) onDone()
+            settle(false)
+          }, 200)
+        }
+      }, 15)
+    }
+
+    safeSetTimeout(() => {
+      runStep()
+    }, 300)
+  })
 }
 
 function buildListScenario() {

@@ -1,6 +1,9 @@
 /** 与 MapAgent 页、工作台 Mock 共用，保证对话收藏与侧边栏「我的工作台」一致 */
 export const MAP_AGENT_FAVORITE_TABLES_KEY = 'datamap_mapAgent_favorite_tables'
 
+/** PRD 3.4.2：单用户收藏表数量上限 */
+export const MAP_AGENT_FAVORITE_MAX = 50
+
 /** 收藏变更后通知 Agent 侧栏刷新工作台（同页内 storage 事件不触发，需自定义事件） */
 export const MAP_AGENT_FAVORITES_CHANGED_EVENT = 'datamap-mapagent-favorites-changed'
 

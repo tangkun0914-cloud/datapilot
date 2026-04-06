@@ -56,6 +56,7 @@
     <ImpactAssessmentDrawer
       :open="impactDrawerOpen"
       :alert="impactAlert"
+      :mode="impactMode"
       @close="impactDrawerOpen = false"
     />
   </div>
@@ -126,6 +127,7 @@ const historyItems = ref([])
 
 const impactDrawerOpen = ref(false)
 const impactAlert = ref(null)
+const impactMode = ref('active')
 
 onMounted(async () => {
   loading.value = true
@@ -214,6 +216,12 @@ function handleAction(action, alert) {
       break
     case 'impact':
       impactAlert.value = alert
+      impactMode.value = 'active'
+      impactDrawerOpen.value = true
+      break
+    case 'impact-snapshot':
+      impactAlert.value = alert
+      impactMode.value = 'snapshot'
       impactDrawerOpen.value = true
       break
   }

@@ -60,21 +60,14 @@
 
     <!-- SLA 破线预估 -->
     <div class="flex flex-col flex-1 min-h-[300px]">
-      <div class="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2 shrink-0">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 shrink-0">
         <div class="flex items-center gap-2">
           <ClockCircleOutlined class="text-slate-400" />
           <span class="text-sm font-bold text-slate-800">SLA 破线风险</span>
         </div>
-        <div class="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-x-3 gap-y-2">
-          <div class="flex items-center gap-2">
-            <span class="text-xs text-slate-600">仅看有破线风险</span>
-            <a-switch v-model:checked="filterSlaBreachOnly" size="small" />
-          </div>
-          <span v-if="slaTotalCount > 0" class="text-xs text-slate-500 whitespace-nowrap">
-            共 {{ slaTotalCount }} 项
-            <template v-if="filterSlaBreachOnly"> · 显示 {{ displayedSlaCount }} 项</template>
-          </span>
-        </div>
+        <span v-if="slaTotalCount > 0" class="text-xs text-slate-500 whitespace-nowrap">
+          共 {{ slaTotalCount }} 项
+        </span>
       </div>
       
       <!-- 卡片式列表展示 SLA (带滚动条) -->
@@ -83,13 +76,7 @@
           暂无 SLA 预估
         </div>
         <div
-          v-else-if="filterSlaBreachOnly && !displayedSlaCount"
-          class="text-center text-sm text-slate-400 py-4 border border-slate-200 rounded-lg border-dashed"
-        >
-          暂无符合「有破线风险」筛选的项
-        </div>
-        <div
-          v-for="(item, idx) in displayedSlaList"
+          v-for="(item, idx) in slaList"
           :key="`${item.taskName}-${idx}`"
           class="rounded-lg border border-slate-200 bg-white p-3 shadow-sm hover:shadow-md transition-all"
         >
@@ -147,7 +134,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { computed } from 'vue'
 import {
   ClusterOutlined,
   ExclamationCircleOutlined,
@@ -164,33 +151,11 @@ const props = defineProps({
   summary: { type: Object, default: null },
 })
 
-/** 启动或完成 SLA 任一破线即视为「有破线风险」 */
-function slaItemHasBreach(item) {
-  return !!(item?.isStartBreached || item?.isFinishBreached)
-}
-
-const filterSlaBreachOnly = ref(true)
-
-const slaPredictionsRaw = computed(() =>
+const slaList = computed(() =>
   Array.isArray(props.summary?.slaPredictions) ? props.summary.slaPredictions : []
 )
 
-const slaTotalCount = computed(() => slaPredictionsRaw.value.length)
-
-const displayedSlaList = computed(() => {
-  const list = slaPredictionsRaw.value
-  if (!filterSlaBreachOnly.value) return list
-  return list.filter(slaItemHasBreach)
-})
-
-const displayedSlaCount = computed(() => displayedSlaList.value.length)
-
-watch(
-  () => props.summary,
-  () => {
-    filterSlaBreachOnly.value = true
-  }
-)
+const slaTotalCount = computed(() => slaList.value.length)
 
 const ownerCols = [
   { title: '负责人', dataIndex: 'name', ellipsis: true },

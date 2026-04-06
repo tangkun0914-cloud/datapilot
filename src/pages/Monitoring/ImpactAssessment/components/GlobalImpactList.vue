@@ -35,6 +35,12 @@
                 <span class="flex items-center gap-1">
                   <UserOutlined class="text-[10px]" /> {{ record.owner }}
                 </span>
+                <span
+                  v-if="record.isDqcErrorBlocked"
+                  class="rounded bg-[#fff1f0] px-1.5 py-0.5 text-[10px] font-medium text-[#cf1322] ring-1 ring-inset ring-[#ffa39e]"
+                >
+                  阻断
+                </span>
                 <span v-if="record.isCore" class="rounded bg-[#e6f4ff] px-1.5 py-0.5 text-[10px] font-medium text-[#1677ff] ring-1 ring-inset ring-[#91caff]">
                   核心任务
                 </span>
@@ -73,6 +79,12 @@
                 </span>
                 <span class="flex items-center gap-1">
                   <UserOutlined class="text-[10px]" /> {{ record.owner }}
+                </span>
+                <span
+                  v-if="record.isDqcErrorBlocked"
+                  class="rounded bg-[#fff1f0] px-1.5 py-0.5 text-[10px] font-medium text-[#cf1322] ring-1 ring-inset ring-[#ffa39e]"
+                >
+                  阻断
                 </span>
                 <span v-if="record.isCore" class="rounded bg-[#e6f4ff] px-1.5 py-0.5 text-[10px] font-medium text-[#1677ff] ring-1 ring-inset ring-[#91caff]">
                   核心任务

@@ -38,13 +38,23 @@
         </div>
         <div class="header-close">
           <a-button
-            v-if="alert.status !== 'resolved'"
+            v-if="!['resolved', 'falsePositive'].includes(alert.status)"
             type="primary"
             size="small"
             class="impact-entry-btn"
             @click="$emit('action', 'impact', alert)"
           >
+            <template #icon><NodeIndexOutlined /></template>
             影响评估
+          </a-button>
+          <a-button
+            v-if="['resolved', 'falsePositive'].includes(alert.status)"
+            size="small"
+            class="impact-entry-btn"
+            @click="$emit('action', 'impact-snapshot', alert)"
+          >
+            <template #icon><HistoryOutlined /></template>
+            查看影响评估记录
           </a-button>
           <a-button type="text" size="small" @click="$emit('close')">
             <CloseOutlined />
@@ -163,7 +173,7 @@
  * @emits action (type: String, alert: Object)    - 操作按钮点击，type: claim/silence/resolve/transfer/falsePositive/impact
  */
 import { computed, ref, watch } from 'vue'
-import { CloseOutlined, CopyOutlined } from '@ant-design/icons-vue'
+import { CloseOutlined, CopyOutlined, NodeIndexOutlined, HistoryOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import ProgressTimeline from './ProgressTimeline.vue'
 import AlertLogSection from './AlertLogSection.vue'

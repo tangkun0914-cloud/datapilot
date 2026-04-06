@@ -15,8 +15,18 @@
               <span class="text-sm font-bold text-indigo-900">AI 智能分析</span>
               <span class="rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600">Beta</span>
             </div>
-            <div class="text-[13px] leading-relaxed text-slate-700">
-              {{ summary?.aiAnalysis || `当前任务 ${alert?.title || '-'} 运行失败，导致下游 ${summary?.totalAffectedNodes || 0} 个任务因依赖缺失无法触发，处于"依赖等待"状态。其中 ${summary?.highRiskNodes || 0} 个核心任务受影响，存在 SLA 破线风险。建议立即联系相关负责人协同处理。` }}
+            <!-- 加载中：骨架屏 -->
+            <div v-if="aiStatus === 'loading'" class="space-y-2">
+              <a-skeleton :paragraph="{ rows: 2 }" :title="false" active />
+              <span class="text-xs text-slate-400">AI 分析生成中...</span>
+            </div>
+            <!-- 超时不可用 -->
+            <div v-else-if="aiStatus === 'failed'" class="text-[13px] text-slate-400">
+              AI 分析暂时不可用
+            </div>
+            <!-- 正常展示 -->
+            <div v-else class="text-[13px] leading-relaxed text-slate-700">
+              {{ aiDisplayText }}
             </div>
           </div>
         </div>
@@ -57,11 +67,12 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed, onUnmounted } from 'vue'
 import { RobotOutlined } from '@ant-design/icons-vue'
 import GlobalImpactList from './components/GlobalImpactList.vue'
 import StatsAndSLA from './components/StatsAndSLA.vue'
 import ErrorLogViewer from './components/ErrorLogViewer.vue'
+import { getAiAnalysis } from '@/services/Monitoring/impactService.js'
 
 const props = defineProps({
   summary: { type: Object, default: null },
@@ -69,7 +80,6 @@ const props = defineProps({
   alert: { type: Object, default: null },
   selectedNodeId: { type: String, default: null },
   selectedNode: { type: Object, default: null },
-  /** 递增时切换到「日志详情」Tab（拓扑节点点击） */
   logFocusNonce: { type: Number, default: 0 },
 })
 
@@ -83,4 +93,81 @@ watch(
     if (n > 0) activeKey.value = 'log'
   }
 )
+
+const AI_POLL_INTERVAL = 3000
+const AI_POLL_MAX = 10
+
+const aiStatus = ref('loading')
+const aiData = ref(null)
+let pollTimer = null
+let pollCount = 0
+
+const aiDisplayText = computed(() => {
+  if (aiData.value) {
+    const d = aiData.value
+    return [d.impactJudgment, d.impactConclusion, d.suggestion].filter(Boolean).join('\n')
+  }
+  const s = props.summary
+  if (s?.aiAnalysis && typeof s.aiAnalysis === 'string') return s.aiAnalysis
+  if (s?.aiAnalysis?.impactJudgment) {
+    const d = s.aiAnalysis
+    return [d.impactJudgment, d.impactConclusion, d.suggestion].filter(Boolean).join('\n')
+  }
+  return `当前任务 ${props.alert?.title || '-'} 异常，导致下游 ${s?.totalAffectedNodes || 0} 个任务受影响。其中 ${s?.highRiskNodes || 0} 个核心任务存在风险。建议立即联系相关负责人协同处理。`
+})
+
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
+}
+
+async function fetchAi() {
+  const eventId = props.alert?.id
+  if (!eventId) return
+  try {
+    const res = await getAiAnalysis(eventId)
+    if (res?.status === 'ready') {
+      aiStatus.value = 'ready'
+      aiData.value = res
+      stopPolling()
+      return
+    }
+    if (res?.status === 'failed') {
+      aiStatus.value = 'failed'
+      stopPolling()
+      return
+    }
+  } catch {
+    // 网络错误不终止轮询
+  }
+  pollCount++
+  if (pollCount >= AI_POLL_MAX) {
+    aiStatus.value = 'failed'
+    stopPolling()
+  }
+}
+
+function startPolling() {
+  stopPolling()
+  pollCount = 0
+  aiStatus.value = 'loading'
+  aiData.value = null
+  fetchAi()
+  pollTimer = setInterval(fetchAi, AI_POLL_INTERVAL)
+}
+
+watch(
+  () => props.alert?.id,
+  (id) => {
+    if (id) startPolling()
+    else stopPolling()
+  },
+  { immediate: true }
+)
+
+onUnmounted(() => {
+  stopPolling()
+})
 </script>

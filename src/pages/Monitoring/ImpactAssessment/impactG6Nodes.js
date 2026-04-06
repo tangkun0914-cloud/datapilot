@@ -230,13 +230,16 @@ function drawImpactTaskNode(cfg, group) {
 
   const coreTagW = 52
   const pollutedTagW = 62
+  const dqcBlockTagW = 34
   const tagH = 18
   const slaTagUi = resolveSlaBreachTag(cfg)
+  const showDqcBlock = cfg.isDqcErrorBlocked === true
   let tagRowW = 0
+  if (showDqcBlock) tagRowW += dqcBlockTagW
   if (slaTagUi) tagRowW += slaTagUi.w
   if (cfg.isCore) tagRowW += coreTagW
   if (cfg.isPolluted) tagRowW += pollutedTagW
-  const tagCount = [slaTagUi, cfg.isCore, cfg.isPolluted].filter(Boolean).length
+  const tagCount = [showDqcBlock, slaTagUi, cfg.isCore, cfg.isPolluted].filter(Boolean).length
   if (tagCount > 1) tagRowW += (tagCount - 1) * 6
   const ownerMaxW = Math.max(40, bodyTextMaxW - tagRowW - 4)
   const ownerLine = `负责人：${formatOwnerDisplay(cfg.owner)}`
@@ -255,16 +258,48 @@ function drawImpactTaskNode(cfg, group) {
     name: 'owner-line',
   })
 
-  /** 底部右侧：靠外为 SLA 破线类型标签，内侧为核心任务 */
+  /** 底部行：右下角自右向左依次为 阻断 → SLA → 核心任务 → 可能污染（内侧） */
   let tagRightX = cx + w - padX
-  if (slaTagUi) {
-    const tw = slaTagUi.w
-    tagRightX -= tw
-    const slaTagY = line4Y - tagH / 2
+  const tagY = line4Y - tagH / 2
+  if (showDqcBlock) {
+    tagRightX -= dqcBlockTagW
     group.addShape('rect', {
       attrs: {
         x: tagRightX,
-        y: slaTagY,
+        y: tagY,
+        width: dqcBlockTagW,
+        height: tagH,
+        radius: 3,
+        fill: '#fff1f0',
+        stroke: '#ffa39e',
+        lineWidth: 1,
+        cursor: 'pointer',
+      },
+      name: 'dqc-block-tag-bg',
+    })
+    group.addShape('text', {
+      attrs: {
+        x: tagRightX + dqcBlockTagW / 2,
+        y: tagY + tagH / 2,
+        text: '阻断',
+        fill: '#cf1322',
+        fontSize: 10,
+        fontWeight: 500,
+        textAlign: 'center',
+        textBaseline: 'middle',
+        cursor: 'pointer',
+      },
+      name: 'dqc-block-tag-text',
+    })
+    tagRightX -= 6
+  }
+  if (slaTagUi) {
+    const tw = slaTagUi.w
+    tagRightX -= tw
+    group.addShape('rect', {
+      attrs: {
+        x: tagRightX,
+        y: tagY,
         width: tw,
         height: tagH,
         radius: 3,

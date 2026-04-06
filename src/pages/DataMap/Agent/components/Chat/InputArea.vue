@@ -46,7 +46,10 @@
 
       <!-- 输入框 -->
       <div class="w-full rounded-xl border p-2 relative transition-all duration-300"
-           :class="isDarkMode ? 'bg-slate-800 border-slate-700 focus-within:border-[rgba(108,76,155,1)] focus-within:shadow-[0_0_0_2px_rgba(108,76,155,0.15)]' : 'bg-white border-[#d9d9d9] focus-within:border-[rgba(108,76,155,1)] focus-within:shadow-[0_0_0_2px_rgba(108,76,155,0.15)]'">
+           :class="[
+             isDarkMode ? 'bg-slate-800 border-slate-700 focus-within:border-[rgba(108,76,155,1)] focus-within:shadow-[0_0_0_2px_rgba(108,76,155,0.15)]' : 'bg-white border-[#d9d9d9] focus-within:border-[rgba(108,76,155,1)] focus-within:shadow-[0_0_0_2px_rgba(108,76,155,0.15)]',
+             disabled ? 'opacity-90' : ''
+           ]">
         <a-textarea 
           ref="textareaRef"
           v-model:value="inputValue"
@@ -54,9 +57,17 @@
           placeholder="继续追问，或输入 @ 提及表名..."
           class="custom-textarea"
           :class="{ 'dark-textarea': isDarkMode }"
+          :readonly="disabled"
           @keydown="handleKeyDown"
           @input="handleInput"
         />
+        <span
+          v-if="showCharHint && !disabled"
+          class="absolute bottom-[52px] right-3 text-[11px] tabular-nums pointer-events-none transition-colors"
+          :class="isDarkMode ? 'text-slate-500' : 'text-slate-400'"
+        >
+          {{ charHintText }}
+        </span>
         
         <div class="flex justify-between items-center px-2 pb-2 pt-2 mt-1">
           <div class="flex gap-2 items-center">
@@ -98,16 +109,25 @@
               查血缘
             </button>
           </div>
+          <a-tooltip v-if="disabled" placement="top" title="停止生成">
+            <div 
+              class="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300 text-red-500 hover:bg-red-500/15"
+              @click="emit('stop')"
+            >
+              <PauseCircleOutlined class="text-[20px]" />
+            </div>
+          </a-tooltip>
           <div 
-            class="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300"
+            v-else
+            class="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-300"
             :class="[
-              inputValue.trim() 
-                ? 'bg-[rgba(108,76,155,0.1)] text-[rgba(108,76,155,1)] hover:bg-[rgba(108,76,155,1)] hover:text-white' 
-                : (isDarkMode ? 'bg-transparent text-slate-600' : 'bg-transparent text-slate-300')
+              canClickSend
+                ? 'cursor-pointer bg-[rgba(108,76,155,0.1)] text-[rgba(108,76,155,1)] hover:bg-[rgba(108,76,155,1)] hover:text-white' 
+                : (isDarkMode ? 'cursor-not-allowed bg-transparent text-slate-600' : 'cursor-not-allowed bg-transparent text-slate-300')
             ]"
             @click="handleSend"
           >
-            <svg v-if="inputValue.trim()" viewBox="0 0 1024 1024" width="18" height="18" fill="currentColor"><path d="M233.984 489.472l131.072 92.672c13.824 9.728 32.768 8.192 44.544-3.584l188.416-188.416c9.728-9.728 26.112-9.728 35.84 0 9.728 9.728 9.728 26.112 0 35.84L445.44 614.4c-11.776 11.776-13.824 30.72-3.584 44.544l92.672 131.072c32.768 46.592 104.448 35.84 122.368-18.432l158.208-475.136c17.92-54.272-33.792-105.984-88.064-88.064l-474.624 158.72c-54.272 17.92-64.512 89.6-18.432 122.368z"></path></svg>
+            <svg v-if="canClickSend" viewBox="0 0 1024 1024" width="18" height="18" fill="currentColor"><path d="M233.984 489.472l131.072 92.672c13.824 9.728 32.768 8.192 44.544-3.584l188.416-188.416c9.728-9.728 26.112-9.728 35.84 0 9.728 9.728 9.728 26.112 0 35.84L445.44 614.4c-11.776 11.776-13.824 30.72-3.584 44.544l92.672 131.072c32.768 46.592 104.448 35.84 122.368-18.432l158.208-475.136c17.92-54.272-33.792-105.984-88.064-88.064l-474.624 158.72c-54.272 17.92-64.512 89.6-18.432 122.368z"></path></svg>
             <svg v-else viewBox="0 0 1024 1024" width="18" height="18" fill="currentColor"><path d="M233.984 489.472l131.072 92.672c13.824 9.728 32.768 8.192 44.544-3.584l188.416-188.416c9.728-9.728 26.112-9.728 35.84 0 9.728 9.728 9.728 26.112 0 35.84L445.44 614.4c-11.776 11.776-13.824 30.72-3.584 44.544l92.672 131.072c32.768 46.592 104.448 35.84 122.368-18.432l158.208-475.136c17.92-54.272-33.792-105.984-88.064-88.064l-474.624 158.72c-54.272 17.92-64.512 89.6-18.432 122.368z"></path></svg>
           </div>
         </div>
@@ -122,7 +142,8 @@
 
 <script setup>
 import { ref, computed, nextTick } from 'vue'
-import { SearchOutlined, TableOutlined, NodeIndexOutlined } from '@ant-design/icons-vue'
+import { message as antMessage } from 'ant-design-vue'
+import { SearchOutlined, TableOutlined, NodeIndexOutlined, PauseCircleOutlined } from '@ant-design/icons-vue'
 import {
   DEFAULT_FREQUENT_MENTION_TABLES,
   MENTION_FREQUENT_SECTION_CAP
@@ -142,13 +163,29 @@ const props = defineProps({
   frequentTables: {
     type: Array,
     default: () => [...DEFAULT_FREQUENT_MENTION_TABLES]
+  },
+  /** 生成中：只读输入，主按钮变为停止 */
+  disabled: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['send'])
+const emit = defineEmits(['send', 'stop'])
+
+const INPUT_MAX_LEN = 500
+const CHAR_HINT_THRESHOLD = 400
 
 const inputValue = ref('')
 const textareaRef = ref(null)
+
+const inputLen = computed(() => inputValue.value.length)
+const showCharHint = computed(() => inputLen.value > CHAR_HINT_THRESHOLD)
+const charHintText = computed(() => `${Math.max(0, INPUT_MAX_LEN - inputLen.value)}/${INPUT_MAX_LEN}`)
+const isOverMaxLen = computed(() => inputLen.value > INPUT_MAX_LEN)
+const canClickSend = computed(
+  () => Boolean(inputValue.value.trim()) && !isOverMaxLen.value && !props.disabled
+)
 
 // --- @ 提及相关逻辑 ---
 const showMentionList = ref(false)
@@ -272,6 +309,7 @@ const handleKeyDown = (e) => {
 
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault()
+    if (props.disabled) return
     handleSend()
   }
 }
@@ -292,7 +330,12 @@ const fillInput = (text) => {
 }
 
 const handleSend = () => {
+  if (props.disabled) return
   if (!inputValue.value.trim()) return
+  if (isOverMaxLen.value) {
+    antMessage.warning('内容超过 500 字限制，请精简后发送')
+    return
+  }
   emit('send', inputValue.value)
   inputValue.value = ''
   showMentionList.value = false

@@ -21,18 +21,27 @@
           <span class="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-600">
             来源：{{ alert?.source || '-' }}
           </span>
-          <!-- 与告警列表 AlertCard / AlertStatusBadge 同源，避免事件状态文案与样式分叉 -->
           <AlertStatusBadge :status="alertEventStatus" />
           <span class="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-600">
             负责人：{{ alert?.owner || '-' }}
           </span>
+          <a-button v-if="!isSnapshot" type="text" size="small" :loading="refreshing" class="ml-auto" @click="handleRefresh">
+            <template #icon><ReloadOutlined /></template>
+            刷新
+          </a-button>
         </div>
-        <div class="text-xs text-slate-500">
-          事件ID: {{ alert?.id || '-' }}
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+          <span>事件ID: {{ alert?.id || '-' }}</span>
+          <span v-if="alert?.monitorEvent">监控事件: {{ alert.monitorEvent }}</span>
+          <span v-if="alert?.triggeredAt">触发时间: {{ alert.triggeredAt }}</span>
         </div>
       </div>
     </template>
     <div class="war-room-body flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+      <!-- 快照模式 Banner -->
+      <div v-if="isSnapshot" class="shrink-0 border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+        您正在查看历史影响评估快照<template v-if="snapshotTime">，数据截止于 {{ snapshotTime }}</template>
+      </div>
       <div v-if="loadError && !loading" class="load-error-wrap flex min-h-[320px] flex-1 items-center justify-center px-6 py-10">
         <a-result status="error" title="影响评估数据加载失败" sub-title="请检查网络或稍后重试；Mock 模式请确认已开启 VITE_USE_MOCK。">
           <template #extra>
@@ -121,7 +130,8 @@
           :event-id="alert.id || ''"
           :alert-title="alert.title || ''"
           :summary="summary"
-          :status-hint="footerStatusHint"
+          :mode="mode"
+          :alert="alert"
         />
       </div>
     </div>
@@ -131,12 +141,12 @@
 <script setup>
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
 import { message } from 'ant-design-vue'
-import { RightOutlined, LeftOutlined } from '@ant-design/icons-vue'
+import { RightOutlined, LeftOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import AlertStatusBadge from '../components/AlertStatusBadge.vue'
 import TopologyCanvas from './TopologyCanvas.vue'
 import AssessmentPanel from './AssessmentPanel.vue'
 import ActionBar from './components/ActionBar.vue'
-import { getImpactTopology, getImpactSummary } from '@/services/Monitoring/impactService.js'
+import { getImpactTopology, getImpactSummary, getSnapshot, getCorePath } from '@/services/Monitoring/impactService.js'
 import {
   expandImpactDirectChildren,
   getImpactBranchChildrenMap,
@@ -148,27 +158,13 @@ import { collapseDescendantsBranch } from './impactTopologyLazy.js'
 const props = defineProps({
   open: { type: Boolean, default: false },
   alert: { type: Object, default: null },
+  mode: { type: String, default: 'active' },
 })
 
 defineEmits(['close'])
 
 /** 告警事件状态：与列表同源字段，缺省时与列表兜底策略一致 */
 const alertEventStatus = computed(() => props.alert?.status || 'firing')
-
-/** 底栏「当前状态」提示（偏处置引导；措辞与列表徽章语义一致） */
-const footerStatusHint = computed(() => {
-  const a = props.alert
-  if (!a) return ''
-  const st = a.status || 'firing'
-  if (st === 'resolved') return '已解决，可关闭评估'
-  if (st === 'falsePositive') return '误报，可归档'
-  if (st === 'silenced') return '已屏蔽，请关注后续恢复'
-  if (st === 'acked') return '处理中，请跟进处置'
-  if (st === 'transferred') return '已转交，请等待处理'
-  if (st === 'firing' && a.severity === 'ERROR') return '需人工干预'
-  if (st === 'firing') return '触发中，建议人工确认'
-  return '请根据影响面评估处置'
-})
 
 /** 与下方全局样式配合，让 body 在 flex 链里吃满高度，避免拓扑只显示半屏、底部留白 */
 const drawerBodyStyle = {
@@ -179,6 +175,10 @@ const drawerBodyStyle = {
   flexDirection: 'column',
   overflow: 'hidden',
 }
+
+const isSnapshot = computed(() => props.mode === 'snapshot')
+const snapshotTime = ref('')
+const refreshing = ref(false)
 
 const loading = ref(false)
 const loadingSummary = ref(false)
@@ -246,12 +246,27 @@ async function loadData() {
   selectedNodeId.value = null
   selectedNode.value = null
   try {
-    const [top, sum] = await Promise.all([
-      getImpactTopology(props.alert.id, {}, props.alert),
-      getImpactSummary(props.alert.id, props.alert),
-    ])
-    topology.value = top
-    summary.value = sum
+    if (isSnapshot.value) {
+      const snap = await getSnapshot(props.alert.id)
+      if (!snap?.exists) {
+        message.info('该告警未进行过影响评估')
+        topology.value = null
+        summary.value = null
+        loading.value = false
+        loadingSummary.value = false
+        return
+      }
+      snapshotTime.value = snap.snapshotTime || ''
+      topology.value = snap.topology
+      summary.value = snap.summary
+    } else {
+      const [top, sum] = await Promise.all([
+        getImpactTopology(props.alert.id, {}, props.alert),
+        getImpactSummary(props.alert.id, props.alert),
+      ])
+      topology.value = top
+      summary.value = sum
+    }
   } catch {
     loadError.value = true
     message.error('加载影响评估数据失败')
@@ -267,9 +282,41 @@ function retryLoad() {
   loadData()
 }
 
-function onCoreOnly(v) {
+async function handleRefresh() {
+  if (isSnapshot.value || !props.alert?.id) return
+  refreshing.value = true
+  try {
+    const [top, sum] = await Promise.all([
+      getImpactTopology(props.alert.id, {}, props.alert),
+      getImpactSummary(props.alert.id, props.alert),
+    ])
+    topology.value = top
+    summary.value = sum
+    message.success('数据已刷新')
+  } catch {
+    message.error('刷新失败')
+  } finally {
+    refreshing.value = false
+  }
+}
+
+const savedTopologyBeforeCore = ref(null)
+
+async function onCoreOnly(v) {
   coreOnly.value = v
-  // 纯前端视觉切换，不再重新请求接口
+  if (import.meta.env.VITE_USE_MOCK === 'true') return
+  if (v && props.alert?.id) {
+    savedTopologyBeforeCore.value = topology.value
+    try {
+      const res = await getCorePath(props.alert.id)
+      if (res?.nodes?.length) topology.value = res
+    } catch {
+      message.error('获取核心链路失败')
+    }
+  } else if (!v && savedTopologyBeforeCore.value) {
+    topology.value = savedTopologyBeforeCore.value
+    savedTopologyBeforeCore.value = null
+  }
 }
 
 function onNodeClick({ nodeId, node }) {

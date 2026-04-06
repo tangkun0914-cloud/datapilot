@@ -15,6 +15,7 @@
     "ant-design-vue": "^4.2.6",
     "axios": "^1.13.6",
     "dayjs": "^1.11.20",
+    "dompurify": "^3.3.3",
     "marked": "^17.0.4",
     "pinia": "^3.0.4",
     "tailwindcss": "^4.2.1",

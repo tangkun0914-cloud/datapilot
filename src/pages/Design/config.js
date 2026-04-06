@@ -1181,6 +1181,250 @@ export const componentGroups = [
         ]
       },
       {
+        groupName: 'L2 影响评估',
+        groupLevel: 'L2',
+        items: [
+          {
+            id: 'ImpactAssessmentDrawer',
+            name: 'ImpactAssessmentDrawer',
+            label: '影响评估战情室抽屉',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '模块级',
+            domain: '影响评估',
+            type: 'interaction',
+            file: 'src/pages/Monitoring/ImpactAssessment/ImpactAssessmentDrawer.vue',
+            desc: '异常影响评估沉浸式战情室：左侧 G6 DAG（逐层 +/- 展开）、右侧 AI 总结与 Tab（统计/全局清单/日志）、底部操作条；支持 active / snapshot 模式、页面级刷新与快照 Banner。',
+            previewType: 'modal',
+            defaultProps: { alert: alertList[0], mode: 'active' },
+            props: [
+              { prop: 'open', type: 'Boolean', desc: '抽屉是否打开' },
+              { prop: 'alert', type: 'Object', desc: '告警快照（与列表/详情同源），含 id、status、severity、source、monitorEvent、triggeredAt、owner、title 等' },
+              { prop: 'mode', type: 'String', desc: 'active（实时拉数）| snapshot（历史快照，隐藏刷新与 ActionBar）' },
+            ],
+            events: [
+              { event: 'close', params: '-', desc: '关闭战情室' },
+            ],
+            children: [
+              { id: 'IA-L3-1', name: 'TopologyCanvas', data: 'G6 dagre 拓扑与节点交互' },
+              { id: 'IA-L3-2', name: 'AssessmentPanel', data: 'AI 轮询 + Tabs（StatsAndSLA / GlobalImpactList / ErrorLogViewer）' },
+              { id: 'IA-L3-3', name: 'ActionBar', data: '一键拉群与后续运维按钮占位' },
+            ],
+            usages: [
+              { label: '告警事件列表', route: '/monitoring/alerts' },
+              { label: '影响评估 Demo', route: '/monitoring/impact-demo' },
+            ],
+          },
+          {
+            id: 'ImpactAssessmentDemoPage',
+            name: 'ImpactAssessmentDemo',
+            label: '影响评估独立 Demo 页',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '模块级',
+            domain: '影响评估',
+            type: 'interaction',
+            file: 'src/pages/Monitoring/ImpactAssessment/Demo.vue',
+            desc: '影响评估模块独立演示页，用于联调拓扑、面板与 Mock 数据，不等同于列表内嵌战情室入口。',
+            previewMultiple: [{ route: '/monitoring/impact-demo', label: '打开影响评估 Demo 页' }],
+            usages: [
+              { label: '影响评估 Demo', route: '/monitoring/impact-demo' },
+            ],
+          },
+          {
+            id: 'TopologyCanvas_Impact',
+            name: 'TopologyCanvas',
+            label: '影响拓扑画布',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '子模块级',
+            domain: '影响评估',
+            type: 'interaction',
+            file: 'src/pages/Monitoring/ImpactAssessment/TopologyCanvas.vue',
+            desc: 'AntV G6 DAG：dagre LR、自定义 impact-task-node、逐层展开/收起、核心链路模式下冻结 +/-、节点点击联动日志 Tab。',
+            demo: () => import('./demos/ImpactTopologyCanvasDemo.vue'),
+            props: [
+              { prop: 'topology', type: 'Object', desc: '含 nodes、edges；节点含 impactStatus、isPolluted、hasChildren 等' },
+              { prop: 'branchChildrenOf', type: 'Object', desc: '父节点 id → 子 id 列表，用于推导 +/- 控件' },
+              { prop: 'coreOnly', type: 'Boolean', desc: '仅看核心链路时冻结展开锚点' },
+              { prop: 'highlightNodeId', type: 'String', desc: '高亮节点 id（清单联动）' },
+            ],
+            events: [
+              { event: 'update:coreOnly', params: 'val: Boolean', desc: '核心链路开关' },
+              { event: 'node-click', params: '{ nodeId, node }', desc: '点击任务节点' },
+              { event: 'expand-branch', params: 'parentId: String', desc: '展开一层子图' },
+              { event: 'collapse-branch', params: 'parentId: String', desc: '收起子图' },
+            ],
+            usages: [
+              { label: '影响评估战情室', route: '/monitoring/alerts' },
+            ],
+          },
+          {
+            id: 'CanvasToolbar_Impact',
+            name: 'CanvasToolbar',
+            label: '画布工具栏',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '子模块级',
+            domain: '影响评估',
+            type: 'display',
+            file: 'src/pages/Monitoring/ImpactAssessment/components/CanvasToolbar.vue',
+            desc: '画布右上角：五色图例、缩放/适应视图、「仅看核心链路」开关；刷新按钮在战情室标题区由 Drawer 承载。',
+            demo: () => import('./demos/ImpactCanvasToolbarDemo.vue'),
+            props: [
+              { prop: 'coreOnly', type: 'Boolean', desc: '是否仅看核心链路' },
+            ],
+            events: [
+              { event: 'update:coreOnly', params: 'val: Boolean', desc: '核心链路开关变化' },
+              { event: 'zoom-in', params: '-', desc: '放大' },
+              { event: 'zoom-out', params: '-', desc: '缩小' },
+              { event: 'fit-view', params: '-', desc: '适应视图' },
+            ],
+            usages: [
+              { label: '影响评估战情室', route: '/monitoring/alerts' },
+            ],
+          },
+          {
+            id: 'AssessmentPanel',
+            name: 'AssessmentPanel',
+            label: '右侧评估面板',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '子模块级',
+            domain: '影响评估',
+            type: 'interaction',
+            file: 'src/pages/Monitoring/ImpactAssessment/AssessmentPanel.vue',
+            desc: '右侧栏：AI 分析（getAiAnalysis 轮询 + 骨架/超时降级）+ Tabs（统计评估 / 全局影响清单 / 日志详情）。',
+            demo: () => import('./demos/ImpactAssessmentPanelDemo.vue'),
+            props: [
+              { prop: 'summary', type: 'Object', desc: 'ImpactSummary：统计、SLA、清单、aiAnalysis 等' },
+              { prop: 'topology', type: 'Object', desc: '当前拓扑，供清单与节点对齐' },
+              { prop: 'alert', type: 'Object', desc: '当前告警（AI 轮询用 eventId）' },
+              { prop: 'selectedNodeId', type: 'String', desc: '当前选中节点 id' },
+              { prop: 'selectedNode', type: 'Object', desc: '选中节点模型' },
+              { prop: 'logFocusNonce', type: 'Number', desc: '递增时自动切换到日志 Tab' },
+            ],
+            events: [
+              { event: 'select-task', params: '{ taskId, record }', desc: '清单点击联动拓扑' },
+            ],
+            usages: [
+              { label: '影响评估战情室', route: '/monitoring/alerts' },
+            ],
+          },
+          {
+            id: 'StatsAndSLA_Impact',
+            name: 'StatsAndSLA',
+            label: '统计与 SLA 破线',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '子模块级',
+            domain: '影响评估',
+            type: 'display',
+            file: 'src/pages/Monitoring/ImpactAssessment/components/StatsAndSLA.vue',
+            desc: 'Tab1：受影响节点/核心任务指标、负责人矩阵、SLA 破线卡片列表（默认仅展示已破线，可切换查看全部）。',
+            demo: () => import('./demos/ImpactStatsAndSLADemo.vue'),
+            props: [
+              { prop: 'summary', type: 'Object', desc: '含 totalAffectedNodes、highRiskNodes、ownerMatrix、slaPredictions' },
+            ],
+            usages: [
+              { label: '影响评估战情室', route: '/monitoring/alerts' },
+            ],
+          },
+          {
+            id: 'GlobalImpactList',
+            name: 'GlobalImpactList',
+            label: '全局影响清单',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '子模块级',
+            domain: '影响评估',
+            type: 'display',
+            file: 'src/pages/Monitoring/ImpactAssessment/components/GlobalImpactList.vue',
+            desc: 'Tab2：统一下游任务实例列表（实例 ID、批次、负责人、状态）；分页默认 100 条；支持仅看核心任务；isPolluted 紫色标签。',
+            demo: () => import('./demos/ImpactGlobalImpactListDemo.vue'),
+            props: [
+              { prop: 'summary', type: 'Object', desc: 'affectedTaskInstances / listGranularity' },
+              { prop: 'topology', type: 'Object', desc: '用于任务模式与选中高亮' },
+              { prop: 'selectedNodeId', type: 'String', desc: '高亮对应任务' },
+            ],
+            events: [
+              { event: 'select-task', params: '{ taskId, record }', desc: '点击卡片联动拓扑' },
+            ],
+            usages: [
+              { label: '影响评估战情室', route: '/monitoring/alerts' },
+            ],
+          },
+          {
+            id: 'ErrorLogViewer_Impact',
+            name: 'ErrorLogViewer',
+            label: '日志详情',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '子模块级',
+            domain: '影响评估',
+            type: 'display',
+            file: 'src/pages/Monitoring/ImpactAssessment/components/ErrorLogViewer.vue',
+            desc: 'Tab3：展示告警或选中节点的日志摘要；未运行/依赖等待/未生成节点无运行日志时展示空态提示。',
+            demo: () => import('./demos/ImpactErrorLogViewerDemo.vue'),
+            props: [
+              { prop: 'alert', type: 'Object', desc: '告警对象（兜底 fullLog / logSnippet）' },
+              { prop: 'selectedNode', type: 'Object', desc: '拓扑选中节点（errorSummary、impactStatus）' },
+            ],
+            usages: [
+              { label: '影响评估战情室', route: '/monitoring/alerts' },
+            ],
+          },
+          {
+            id: 'ActionBar_Impact',
+            name: 'ActionBar',
+            label: '底部操作条',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '子模块级',
+            domain: '影响评估',
+            type: 'interaction',
+            file: 'src/pages/Monitoring/ImpactAssessment/components/ActionBar.vue',
+            desc: '一键拉群（去重检测 + CreateGroupModal）；挂起/重跑/置成功占位禁用；snapshot 模式下整栏隐藏。',
+            demo: () => import('./demos/ImpactActionBarDemo.vue'),
+            props: [
+              { prop: 'eventId', type: 'String', desc: '告警事件 ID' },
+              { prop: 'alertTitle', type: 'String', desc: '用于群名等展示' },
+              { prop: 'summary', type: 'Object', desc: '含 ownerMatrix' },
+              { prop: 'mode', type: 'String', desc: 'active | snapshot' },
+              { prop: 'alert', type: 'Object', desc: '完整告警对象（拉群弹窗）' },
+            ],
+            usages: [
+              { label: '影响评估战情室', route: '/monitoring/alerts' },
+            ],
+          },
+          {
+            id: 'CreateGroupModal',
+            name: 'CreateGroupModal',
+            label: '一键拉群确认弹窗',
+            catalogTier: 'productModule',
+            productModule: '监控运维',
+            level: '子模块级',
+            domain: '影响评估',
+            type: 'interaction',
+            file: 'src/pages/Monitoring/ImpactAssessment/components/CreateGroupModal.vue',
+            desc: '企业微信应急群：可编辑群名、勾选成员（默认全选）、确认创建；与 ActionBar Step0 去重配合。',
+            demo: () => import('./demos/ImpactCreateGroupModalDemo.vue'),
+            props: [
+              { prop: 'open', type: 'Boolean', desc: '弹窗显隐' },
+              { prop: 'alert', type: 'Object', desc: '告警对象' },
+              { prop: 'ownerMatrix', type: 'Array', desc: '负责人矩阵 { name, taskCount }' },
+            ],
+            events: [
+              { event: 'confirm', params: 'res: Object', desc: '创建成功' },
+              { event: 'cancel', params: '-', desc: '关闭弹窗' },
+            ],
+            usages: [
+              { label: '影响评估战情室', route: '/monitoring/alerts' },
+            ],
+          },
+        ]
+      },
+      {
         groupName: 'L2 通知策略',
         groupLevel: 'L2',
         items: [
@@ -1710,13 +1954,38 @@ export const componentGroups = [
             type: 'page',
             file: 'src/pages/DataMap/MapAgent/index.vue',
             demo: () => import('./demos/MapAgentHomeDemo.vue'),
-            desc: 'Agent v2 主入口，采用"左侧边栏 + 中间对话区"双栏弹性布局（无右侧面板），管理会话生命周期和消息流转。复用老 Agent 的 AgentSidebar、WelcomeScreen、InputArea。',
+            desc: 'Agent v2 主入口，采用"左侧边栏 + 中间对话区"双栏弹性布局（无右侧面板）。侧栏使用 MapAgentSidebar（历史 + 我的收藏单层结构）；对话区复用 WelcomeScreen、InputArea；支持 AbortController 停止流式、重新生成、mentionTables 与异常分类文案。',
             children: [
-              { id: 'L3-1', name: '侧边栏拖拽控制 SidebarResize', data: '拖拽手柄、宽度 200~400px、折叠/展开按钮、新建对话按钮' },
-              { id: 'L3-2', name: '会话流转控制 SessionController', data: 'sendMessageStream 回调链：onStep → onMessage → onSuggestions → onDone' },
+              { id: 'L3-1', name: '侧边栏拖拽控制 SidebarResize', data: '拖拽手柄、宽度 220~480px、折叠/展开按钮、新建对话按钮' },
+              { id: 'L3-2', name: '会话流转控制 SessionController', data: 'sendMessageStream + signal/mentionTables；onStep → onMessage → onSuggestions → onDone；stopped/error 分支' },
             ],
             usages: [{ label: 'Agent v2 路由入口', route: '/datamap/map-agent' }]
           },
+          {
+            id: 'MapAgentSidebar',
+            name: 'MapAgentSidebar',
+            label: 'Agent v2 侧栏（历史+收藏）',
+            catalogTier: 'productModule',
+            productModule: '地图 Agent v2',
+            level: '子模块级',
+            domain: 'Agent v2',
+            type: 'layout',
+            file: 'src/pages/DataMap/MapAgent/components/MapAgentSidebar.vue',
+            demo: () => import('./demos/MapAgentSidebarDemo.vue'),
+            desc: 'PRD 3.1：单层结构，无「历史/工作台」双 Tab。上半区历史会话分组列表；下半区「我的收藏 (N)」默认折叠，展示 FQN/中文名/负责人，支持取消收藏与点击发起来话。',
+            props: [
+              { prop: 'isDarkMode', type: 'Boolean', desc: '暗色模式' },
+              { prop: 'favoriteFqns', type: 'Array', desc: '已收藏表 FQN 列表' }
+            ],
+            events: [
+              { event: 'collapse', desc: '收起侧栏' },
+              { event: 'send', params: 'text: String', desc: '从收藏表发起追问等' },
+              { event: 'newChat', desc: '新建对话' },
+              { event: 'selectHistory', params: 'item', desc: '点击历史会话' },
+              { event: 'toggleTableFavorite', params: 'fqn: String', desc: '取消/切换收藏' }
+            ],
+            usages: [{ label: 'MapAgentHome', route: '/datamap/map-agent' }]
+          }
         ]
       },
       {
@@ -1733,14 +2002,19 @@ export const componentGroups = [
             domain: 'Agent v2',
             type: 'form',
             file: 'src/pages/DataMap/Agent/components/Chat/InputArea.vue',
-            desc: '支持多行输入、@ 唤起表选择下拉框的流式对话输入区域。Agent v2 直接复用 v1 的输入框组件，保持交互一致性。',
+            desc: '支持多行输入、@ 唤起表选择下拉框。PRD：生成中 disabled 时只读 + 主按钮变为红色停止（emit stop）；超过 400 字显示剩余字数，满 500 字发送置灰并 Toast。',
             props: [
               { prop: 'isShareMode', type: 'Boolean', desc: '是否处于分享模式（分享模式下隐藏输入框）' },
-              { prop: 'isDarkMode', type: 'Boolean', desc: '是否处于暗色模式' }
+              { prop: 'isDarkMode', type: 'Boolean', desc: '是否处于暗色模式' },
+              { prop: 'sessionTables', type: 'Array', desc: '本对话提及表列表' },
+              { prop: 'disabled', type: 'Boolean', desc: '生成中禁用输入，主按钮变停止' }
             ],
-            events: [{ event: 'send', params: 'text: String', desc: '发送消息时触发' }],
+            events: [
+              { event: 'send', params: 'text: String', desc: '发送消息时触发' },
+              { event: 'stop', desc: '点击停止按钮时触发' }
+            ],
             children: [
-              { id: 'L3-1', name: '多行输入与发送', data: '文本输入、发送按钮状态（灰/品牌紫）' },
+              { id: 'L3-1', name: '多行输入与发送', data: '文本输入、发送按钮状态（灰/品牌紫）、500 字上限' },
               { id: 'L3-2', name: '@ 表名联想下拉', data: '检索 mock 表列表、键盘上下选择、插入 FQN' },
               { id: 'L3-3', name: '底部快捷动作', data: '找表、看详情、查血缘等与输入区联动' },
             ],
@@ -1772,9 +2046,10 @@ export const componentGroups = [
             events: [
               { event: 'send', params: 'text: String', desc: '追问建议点击时触发' },
               { event: 'update:isShareMode', params: 'visible: Boolean', desc: '切换分享模式状态' },
+              { event: 'regenerate', params: 'aiMsgId', desc: '重新生成该条 AI 回复' },
             ],
             children: [
-              { id: 'L3-1', name: '对话分组引擎 MessageGrouping', data: '用户问+AI答自动聚合、分享 checkbox、全选/反选' },
+              { id: 'L3-1', name: '对话分组引擎 MessageGrouping', data: '用户问+AI答自动聚合、相邻组 ≥5min 时间分隔线、分享 checkbox' },
               { id: 'L3-2', name: '用户消息气泡 UserBubble', data: '品牌紫背景、右对齐、圆角' },
               { id: 'L3-3', name: 'Agent 思考过程 ThinkingSteps', data: '步骤文本、LoadingOutlined/CheckCircleOutlined' },
               { id: 'L3-4', name: '流式文本渲染 MarkdownRenderer', data: 'marked.js、GFM、暗色模式、脉冲光标' },
@@ -1796,10 +2071,11 @@ export const componentGroups = [
             type: 'display',
             file: 'src/pages/DataMap/MapAgent/components/Chat/ThinkingSteps.vue',
             demo: () => import('./demos/ThinkingStepsDemo.vue'),
-            desc: '展示 Agent 内部推理链路步骤，运行中显示品牌紫 Loading 动画，完成显示绿色对勾。',
+            desc: '展示 Agent 思考步骤；success 且全部完成后自动折叠为「已完成 N 个步骤」；stopped 时步骤灰色且摘要为「思考过程已中断」。',
             props: [
-              { prop: 'steps', type: 'Array', desc: '步骤数组，每项含 id、text、status(running/done)' },
+              { prop: 'steps', type: 'Array', desc: '步骤数组，每项含 id、text、status(running/success)' },
               { prop: 'isDarkMode', type: 'Boolean', desc: '暗色模式' },
+              { prop: 'msgStatus', type: 'String', desc: 'AI 消息状态 loading/streaming/success/stopped/error' },
             ],
             usages: [{ label: 'StreamMessageList', route: '/datamap/map-agent' }]
           },
@@ -1831,7 +2107,7 @@ export const componentGroups = [
             type: 'display',
             file: 'src/pages/DataMap/MapAgent/components/Chat/MarkdownRenderer.vue',
             demo: () => import('./demos/MarkdownRendererDemo.vue'),
-            desc: '将 AI 回复以 marked.js 渲染为 HTML，支持 GFM 表格/代码/引用块，流式状态显示脉冲光标，内部调用 useTableCopy 为表格注入复制按钮。',
+            desc: 'marked.js 渲染为 HTML 后经 DOMPurify.sanitize 白名单过滤（SDD 6.4 XSS 防护），支持 GFM 表格/代码/引用块，流式状态显示脉冲光标，内部 useTableCopy 注入表格复制按钮。',
             props: [
               { prop: 'content', type: 'String', desc: 'Markdown 文本' },
               { prop: 'status', type: 'String', desc: '消息状态 (loading/streaming/success)' },
@@ -1889,16 +2165,18 @@ export const componentGroups = [
             type: 'interaction',
             file: 'src/pages/DataMap/MapAgent/components/Chat/MessageActions.vue',
             demo: () => import('./demos/MessageActionsDemo.vue'),
-            desc: 'AI 消息底部的操作栏：点赞、踩（触发反馈表单）、分享（进入多选模式）。',
+            desc: 'AI 消息底部操作栏：复制、表收藏、重新生成（success/stopped/error）、点赞（可取消）、踩、分享。',
             props: [
               { prop: 'msgId', type: 'Number|String', desc: '消息 ID' },
+              { prop: 'msgStatus', type: 'String', desc: 'AI 消息状态，用于控制重新生成按钮' },
               { prop: 'isDarkMode', type: 'Boolean', desc: '暗色模式' },
               { prop: 'actionState', type: 'Object', desc: '当前消息的操作状态 { like, dislike }' },
             ],
             events: [
-              { event: 'like', params: 'msgId', desc: '点赞' },
+              { event: 'like', params: 'msgId', desc: '点赞/取消赞' },
               { event: 'dislike', params: 'msgId', desc: '点踩' },
               { event: 'share', params: 'msgId', desc: '触发分享模式' },
+              { event: 'regenerate', params: 'msgId', desc: '重新生成' },
             ],
             usages: [{ label: 'StreamMessageList', route: '/datamap/map-agent' }]
           },

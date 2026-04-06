@@ -6,10 +6,15 @@ export { getHistorySessions, getWorkspaceData, deleteAgentSession }
 
 /**
  * 发送消息并获取流式响应（千问风格：纯 Markdown 文本流）
+ * @param {object} params
+ * @param {AbortSignal} [params.signal]
+ * @param {string[]} [params.mentionTables]
  */
 export async function sendMessageStream({
   sessionId,
   content,
+  mentionTables = [],
+  signal,
   onStep,
   onMessage,
   onSuggestions,
@@ -20,14 +25,21 @@ export async function sendMessageStream({
 }) {
   if (IS_MOCK) {
     const { mockSendMessageStream } = await import('@/mock/DataMap/MapAgent/chat.js')
-    return mockSendMessageStream({
-      content,
-      onStep,
-      onMessage,
-      onSuggestions,
-      onTableDetail,
-      onDone
-    })
+    try {
+      await mockSendMessageStream({
+        content,
+        abortSignal: signal,
+        onStep,
+        onMessage,
+        onSuggestions,
+        onTableDetail,
+        onDone
+      })
+    } catch (e) {
+      if (e?.name === 'AbortError' || signal?.aborted) return
+      onError && onError(e)
+    }
+    return
   }
 
   try {
@@ -35,31 +47,43 @@ export async function sendMessageStream({
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       },
-      body: JSON.stringify({ sessionId, content })
+      body: JSON.stringify({ sessionId, content, mentionTables }),
+      signal
     })
 
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+    if (response.status === 401) {
+      const err = new Error('Unauthorized')
+      err.status = 401
+      throw err
+    }
+
+    if (!response.ok) {
+      const err = new Error(`HTTP error! status: ${response.status}`)
+      err.status = response.status
+      throw err
+    }
 
     const reader = response.body.getReader()
     const decoder = new TextDecoder('utf-8')
 
     while (true) {
+      if (signal?.aborted) return
       const { done, value } = await reader.read()
       if (done) {
         onDone && onDone()
         break
       }
-      
+
       const chunk = decoder.decode(value, { stream: true })
       const lines = chunk.split('\n')
-      
+
       for (const line of lines) {
         if (line.startsWith('data: ')) {
           const dataStr = line.slice(6)
           if (dataStr === '[DONE]') continue
-          
+
           try {
             const data = JSON.parse(dataStr)
             if (data.type === 'text') {
@@ -80,6 +104,7 @@ export async function sendMessageStream({
       }
     }
   } catch (err) {
+    if (err?.name === 'AbortError' || signal?.aborted) return
     onError && onError(err)
   }
 }

@@ -200,7 +200,12 @@ function renderGraph() {
         div.textContent = `折叠：${model.collapsedCount ?? 0} 个任务 / ${model.collapsedDepth ?? 0} 层`
         return div
       }
-      div.textContent = model.taskName || model.label || '-'
+      const lines = [model.taskName || model.label || '-']
+      if (model.owner) lines.push(`负责人：${model.owner}`)
+      if (model.taskType) lines.push(`任务类型：${model.taskType}`)
+      if (model.lastRunDuration) lines.push(`运行时长：${model.lastRunDuration}`)
+      if (model.errorSummary) lines.push(`报错：${model.errorSummary.slice(0, 80)}`)
+      div.innerHTML = lines.join('<br/>')
       return div
     },
   })

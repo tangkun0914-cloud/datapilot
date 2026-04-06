@@ -1,8 +1,8 @@
 /**
- * 将 expandCollapseNode 返回的增量合并进当前拓扑（移除折叠桩并重连入边）
+ * 将 getNodeChildren 返回的增量合并进当前拓扑（移除折叠桩并重连入边）
  * 按需 DAG 模式下一般由前端本地 merge；本函数保留给真实接口返回 replaceCollapseId 时使用。
  * @param {object} topology - getImpactTopology 结构
- * @param {object} expandResult - expandCollapseNode 响应
+ * @param {object} expandResult - getNodeChildren 响应
  */
 export function mergeExpandTopology(topology, expandResult) {
   if (!topology || !expandResult?.replaceCollapseId) return topology

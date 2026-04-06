@@ -23,6 +23,17 @@
         <StarOutlined v-else class="text-[14px]" />
       </div>
     </a-tooltip>
+    <a-tooltip v-if="showRegenerate" title="重新生成">
+      <div 
+        class="w-6 h-6 rounded flex items-center justify-center cursor-pointer transition-colors duration-300"
+        :class="isDarkMode
+          ? 'text-slate-500 hover:bg-slate-800 hover:text-slate-300'
+          : 'text-[#999] hover:bg-[#f0f0f0] hover:text-[#666]'"
+        @click="$emit('regenerate', msgId)"
+      >
+        <ReloadOutlined class="text-[14px]" />
+      </div>
+    </a-tooltip>
     <a-tooltip title="有帮助">
       <div 
         class="w-6 h-6 rounded flex items-center justify-center cursor-pointer transition-colors duration-300"
@@ -66,16 +77,32 @@
 </template>
 
 <script setup>
-import { CopyOutlined, LikeOutlined, LikeFilled, DislikeOutlined, DislikeFilled, ShareAltOutlined, StarOutlined, StarFilled } from '@ant-design/icons-vue'
+import { computed } from 'vue'
+import {
+  CopyOutlined,
+  LikeOutlined,
+  LikeFilled,
+  DislikeOutlined,
+  DislikeFilled,
+  ShareAltOutlined,
+  StarOutlined,
+  StarFilled,
+  ReloadOutlined
+} from '@ant-design/icons-vue'
 
-defineProps({
+const props = defineProps({
   msgId: { type: [Number, String], required: true },
+  /** AI 消息状态：用于控制「重新生成」展示 */
+  msgStatus: { type: String, default: '' },
   isDarkMode: { type: Boolean, default: false },
   actionState: { type: Object, default: () => ({}) },
-  /** 表详情消息：展示「收藏此表」 */
   showTableFavorite: { type: Boolean, default: false },
   tableFavorited: { type: Boolean, default: false }
 })
 
-defineEmits(['copy', 'like', 'dislike', 'share', 'toggleTableFavorite'])
+const showRegenerate = computed(() =>
+  ['success', 'stopped', 'error'].includes(props.msgStatus)
+)
+
+defineEmits(['copy', 'like', 'dislike', 'share', 'toggleTableFavorite', 'regenerate'])
 </script>

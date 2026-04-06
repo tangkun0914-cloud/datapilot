@@ -21,6 +21,7 @@
 <script setup>
 import { computed, ref, watch, nextTick } from 'vue'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import { message as antMessage } from 'ant-design-vue'
 import { stripAtBeforeFqnInPlainText, stripNoiseBeforeFqnInPlainText } from '@/utils/fqnDisplay.js'
 import { replaceMapagentTableActionsMarker } from '../../constants/markdownSlots.js'
@@ -28,6 +29,43 @@ import { injectTableCopyButtons } from './useTableCopy.js'
 import { injectTableFavoriteSlot } from './injectTableFavoriteSlot.js'
 
 marked.setOptions({ breaks: true, gfm: true })
+
+/** SDD 6.4：Markdown 输出 XSS 过滤（保留表格/代码/链接等常用标签） */
+const PURIFY_CONFIG = {
+  ALLOWED_TAGS: [
+    'p',
+    'br',
+    'strong',
+    'em',
+    'b',
+    'i',
+    'u',
+    'ul',
+    'ol',
+    'li',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'blockquote',
+    'code',
+    'pre',
+    'a',
+    'img',
+    'table',
+    'thead',
+    'tbody',
+    'tr',
+    'th',
+    'td',
+    'hr',
+    'span',
+    'div'
+  ],
+  ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'colspan', 'rowspan', 'target', 'rel']
+}
 
 const props = defineProps({
   content: { type: String, default: '' },
@@ -53,7 +91,8 @@ const renderedHtml = computed(() => {
   if (props.tableFavoriteSlot?.enabled) {
     plain = replaceMapagentTableActionsMarker(plain)
   }
-  return marked.parse(plain)
+  const html = marked.parse(plain)
+  return DOMPurify.sanitize(html, PURIFY_CONFIG)
 })
 
 watch(
