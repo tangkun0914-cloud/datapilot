@@ -100,7 +100,7 @@
         :total="totalCount"
         size="small"
         show-size-changer
-        :page-size-options="['10', '20', '50']"
+        :page-size-options="['50', '100', '200']"
       />
     </div>
   </div>
@@ -121,7 +121,7 @@ const emit = defineEmits(['select-task'])
 const isInstanceMode = computed(() => props.summary?.listGranularity === 'instance')
 
 const currentPage = ref(1)
-const pageSize = ref(10)
+const pageSize = ref(100)
 const filterCoreOnly = ref(false)
 
 watch(

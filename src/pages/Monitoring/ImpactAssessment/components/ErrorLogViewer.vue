@@ -12,7 +12,11 @@
     </div>
 
     <div class="max-h-[min(420px,50vh)] overflow-y-auto rounded-xl border border-slate-200 bg-[#0d1117] p-4 shadow-inner">
-      <pre class="log-pre m-0 text-[13px] leading-relaxed text-slate-300">{{ displayText }}</pre>
+      <div v-if="isNodeNoLog" class="flex flex-col items-center justify-center py-12 text-slate-500">
+        <InboxOutlined class="text-3xl mb-2 text-slate-600" />
+        <span class="text-sm">该节点尚未运行，无日志信息</span>
+      </div>
+      <pre v-else class="log-pre m-0 text-[13px] leading-relaxed text-slate-300">{{ displayText }}</pre>
     </div>
   </div>
 </template>
@@ -20,7 +24,7 @@
 <script setup>
 import { computed } from 'vue'
 import { message } from 'ant-design-vue'
-import { CodeOutlined, CopyOutlined } from '@ant-design/icons-vue'
+import { CodeOutlined, CopyOutlined, InboxOutlined } from '@ant-design/icons-vue'
 
 const props = defineProps({
   alert: { type: Object, default: null },
@@ -29,8 +33,16 @@ const props = defineProps({
 
 const title = computed(() => props.selectedNode?.taskName || props.alert?.title || '')
 
+const NO_LOG_STATUSES = ['not_generated', 'pending', 'waiting']
+
+const isNodeNoLog = computed(() => {
+  const st = props.selectedNode?.impactStatus
+  return st && NO_LOG_STATUSES.includes(st)
+})
+
 const displayText = computed(() => {
   const n = props.selectedNode
+  if (n && isNodeNoLog.value) return ''
   if (n?.errorSummary) {
     const extra = n.taskName ? `任务：${n.taskName}\n` : ''
     return `${extra}${n.errorSummary}\n\n（完整日志由后端日志系统拉取，此处为摘要 Demo）`

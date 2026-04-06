@@ -169,7 +169,7 @@ function slaItemHasBreach(item) {
   return !!(item?.isStartBreached || item?.isFinishBreached)
 }
 
-const filterSlaBreachOnly = ref(false)
+const filterSlaBreachOnly = ref(true)
 
 const slaPredictionsRaw = computed(() =>
   Array.isArray(props.summary?.slaPredictions) ? props.summary.slaPredictions : []
@@ -188,7 +188,7 @@ const displayedSlaCount = computed(() => displayedSlaList.value.length)
 watch(
   () => props.summary,
   () => {
-    filterSlaBreachOnly.value = false
+    filterSlaBreachOnly.value = true
   }
 )
 
