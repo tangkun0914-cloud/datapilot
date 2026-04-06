@@ -29,7 +29,7 @@ import ProgressTimeline from '@/pages/Monitoring/AlertDetail/ProgressTimeline.vu
 const steps = [
   { icon: 'alert-circle', title: '触发告警', time: '2025-03-18 10:00', status: 'completed' },
   { icon: 'send', title: '通知发送', multiTime: ['通知1次', '通知2次'], status: 'completed' },
-  { icon: 'user-check', title: '已认领', person: '张三', status: 'current' },
+  { icon: 'user-check', title: '已认领', person: '张三(zhangsan)', status: 'current' },
   { icon: 'check-circle', title: '已解决', status: 'pending' },
 ]
 </script>

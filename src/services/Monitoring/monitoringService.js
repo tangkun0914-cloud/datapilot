@@ -68,6 +68,13 @@ export async function getAlertDetail(eventId) {
 
 export async function getQualityRuleDetails(eventId) {
   await delay()
+  
+  // 优先从 mock 文件的 qualityRuleDetails 字典中按 eventId 匹配
+  const { qualityRuleDetails } = await import('@/mock/Monitoring/monitoring.js')
+  if (qualityRuleDetails && qualityRuleDetails[eventId]) {
+    return qualityRuleDetails[eventId]
+  }
+
   const alert = alertList.find(a => a.id === eventId)
   
   if (eventId === 'Q-2003') {

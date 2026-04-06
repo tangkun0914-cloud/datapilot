@@ -15,12 +15,12 @@
         </a-select>
       </div>
 
-      <div class="filter-item" v-if="form.source !== '质量监控'">
+      <div class="filter-item" v-if="form.source !== '数据质量'">
         <label class="filter-label">任务名</label>
         <a-input v-model:value="form.taskName" placeholder="支持搜索任务名" allowClear class="filter-control" />
       </div>
 
-      <div class="filter-item" v-if="form.source === '质量监控'">
+      <div class="filter-item" v-if="form.source === '数据质量'">
         <label class="filter-label">数据表名</label>
         <a-input v-model:value="form.tableName" placeholder="支持搜索数据表名" allowClear class="filter-control" />
       </div>
@@ -68,7 +68,7 @@
         </a-select>
       </div>
 
-      <div class="filter-item col-span-2 advanced-item" v-if="form.source !== '质量监控'">
+      <div class="filter-item col-span-2 advanced-item" v-if="form.source !== '数据质量'">
         <label class="filter-label">调度批次</label>
         <a-range-picker
           v-model:value="scheduleDateRange"
@@ -170,7 +170,7 @@ const scheduleDateRange = computed({
 const availableEvents = computed(() => {
   if (form.source === '数据开发' || form.source === '数据集成') {
     return ['离线任务失败', '离线任务超时', '离线SLA完成超时', '离线SLA启动超时']
-  } else if (form.source === '质量监控') {
+  } else if (form.source === '数据质量') {
     return ['质量监控-运行失败', '质量监控-触发异常阈值']
   }
   return [

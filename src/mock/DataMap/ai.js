@@ -60,7 +60,7 @@ export const DISLIKE_REASON_OPTIONS = [
  * 模拟当前登录用户身份 — 供 greeting 推荐使用
  */
 export const MOCK_USER_PROFILE = {
-  name: '张三',
+  name: '张三(zhangsan)',
   role: '数据开发工程师',
   department: '交易数据组',
   ownedTables: ['ods_order_detail', 'dwd_trade_order_detail'],

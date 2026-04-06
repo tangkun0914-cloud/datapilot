@@ -81,6 +81,7 @@ src/
   - `MessageList`: 渲染 `MessageBubble` 列表。
   - `Cards`: 针对不同意图渲染的具体业务卡片 (`TableCard`, `LineageCard`)。
     - **TableCard**: 展示表基础信息、质量评分。**底部提供“生成 DDL”和“生成 SELECT”快捷按钮，点击后在卡片下方展开代码块面板，并提供一键复制功能。**
+    - **LineageCard**: 展示血缘分析结果。包含 AI 洞察总结、核心上下游链路（列表形式，基于后端图数据库剪枝 Top N + LLM 总结的混合模式），并提供“查看完整血缘图”按钮联动右侧详情面板。
   - `InputArea`: 底部固定输入区，支持意图选择按钮和 `@` 提及表名的快捷交互。
 
 ## 4. 数据流与 API 映射 (Data Flow & API Mapping)

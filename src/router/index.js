@@ -2,6 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 export const dataMapMenuItems = [
   { key: '/', icon: 'AppstoreOutlined', label: '工作台' },
+  { key: '/datamap/agent', icon: 'RobotOutlined', label: '地图 Agent' },
+  { key: '/datamap/map-agent', icon: 'RobotOutlined', label: '地图 Agent v2' },
   { key: '/home', icon: 'HomeOutlined', label: '数据地图首页' },
   { key: '/search', icon: 'SearchOutlined', label: '资产检索' },
   { key: '/topics', icon: 'FolderOutlined', label: '数据专题' },
@@ -30,10 +32,20 @@ const routes = [
         meta: { title: '工作台', module: 'datamap' },
       },
       {
+        path: 'agent',
+        redirect: '/datamap/agent',
+      },
+      {
         path: 'datamap/agent',
         name: 'DataMapAgent',
         component: () => import('@/pages/DataMap/Agent/index.vue'),
         meta: { title: '数据地图 Agent', module: 'datamap' },
+      },
+      {
+        path: 'datamap/map-agent',
+        name: 'MapAgent',
+        component: () => import('@/pages/DataMap/MapAgent/index.vue'),
+        meta: { title: '地图 Agent v2', module: 'datamap' },
       },
       {
         path: 'home',

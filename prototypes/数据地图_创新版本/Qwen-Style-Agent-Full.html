@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataMap Agent - 千问风格完整版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f9fafb;
+            margin: 0;
+            overflow: hidden;
+        }
+        
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+
+        /* 闪烁的光标效果 */
+        .cursor-blink {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background-color: #3b82f6;
+            vertical-align: middle;
+            margin-left: 2px;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Markdown 样式 */
+        .markdown-body {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #1f2937;
+        }
+        .markdown-body p {
+            margin-bottom: 1em;
+        }
+        .markdown-body p:last-child {
+            margin-bottom: 0;
+        }
+        .markdown-body strong {
+            font-weight: 600;
+            color: #111827;
+        }
+        .markdown-body ul, .markdown-body ol {
+            padding-left: 1.5em;
+            margin-bottom: 1em;
+        }
+        .markdown-body li {
+            margin-bottom: 0.25em;
+        }
+        .markdown-body table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.2em 0;
+            font-size: 14px;
+            background-color: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .markdown-body th, .markdown-body td {
+            border: 1px solid #e5e7eb;
+            padding: 10px 14px;
+            text-align: left;
+        }
+        .markdown-body th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+            color: #374151;
+        }
+        .markdown-body tr:hover td {
+            background-color: #f9fafb;
+        }
+        .markdown-body code {
+            background-color: #f3f4f6;
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.9em;
+            color: #db2777;
+        }
+        .markdown-body pre code {
+            background-color: transparent;
+            padding: 0;
+            color: inherit;
+        }
+        .markdown-body blockquote {
+            border-left: 4px solid #e5e7eb;
+            padding-left: 1em;
+            color: #6b7280;
+            margin: 1em 0;
+        }
+
+        /* 侧边栏过渡 */
+        .sidebar-transition {
+            transition: width 0.3s ease, opacity 0.3s ease;
+        }
+        /* 分享模式样式 */
+        .share-mode-checkbox {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid #d1d5db;
+            appearance: none;
+            outline: none;
+            cursor: pointer;
+            position: relative;
+            background-color: white;
+            transition: all 0.2s;
+        }
+        .share-mode-checkbox:checked {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        .share-mode-checkbox:checked::after {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 1px;
+            width: 6px;
+            height: 12px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+        .message-group {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            border-radius: 16px;
+        }
+        .message-group.is-share-mode {
+            padding: 16px;
+            background-color: #f8fafc;
+            border-color: #e2e8f0;
+            margin-bottom: 8px;
+        }
+        .message-group.is-share-mode.is-selected {
+            background-color: #eff6ff;
+            border-color: #bfdbfe;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="flex h-screen w-screen overflow-hidden bg-white">
+        
+        <!-- 左侧边栏 -->
+        <aside 
+            class="sidebar-transition bg-[#f9fafb] border-r border-gray-200 flex flex-col shrink-0 relative"
+            :class="isSidebarOpen ? 'w-64' : 'w-0 opacity-0 overflow-hidden'"
+        >
+            <div class="p-4 flex items-center justify-between border-b border-gray-200 h-14 shrink-0">
+                <span class="font-medium text-gray-700">DataMap Agent</span>
+                <button @click="startNewChat" class="text-gray-500 hover:text-blue-600 transition-colors" title="新建对话">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-3 space-y-6">
+                <!-- 历史对话 -->
+                <div>
+                    <div class="text-xs font-semibold text-gray-400 mb-2 px-2 uppercase tracking-wider">历史对话</div>
+                    <ul class="space-y-1">
+                        <li class="px-2 py-2 rounded-lg hover:bg-gray-200 cursor-pointer text-sm text-gray-700 truncate">
+                            <i class="fa-regular fa-message mr-2 text-gray-400"></i> 订单相关表检索
+                        </li>
+                        <li class="px-2 py-2 rounded-lg hover:bg-gray-200 cursor-pointer text-sm text-gray-700 truncate">
+                            <i class="fa-regular fa-message mr-2 text-gray-400"></i> 用户行为日志血缘分析
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 工作台推荐 -->
+                <div>
+                    <div class="text-xs font-semibold text-gray-400 mb-2 px-2 uppercase tracking-wider">推荐表</div>
+                    <ul class="space-y-1">
+                        <li @click="sendDirectMessage('查看 default.dwd_user_log 的详情')" class="px-2 py-2 rounded-lg hover:bg-gray-200 cursor-pointer text-sm text-gray-700 group">
+                            <div class="truncate"><i class="fa-solid fa-table mr-2 text-blue-400"></i> dwd_user_log</div>
+                            <div class="text-xs text-gray-400 ml-6 truncate group-hover:text-gray-500">最近 7 天高频访问</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="flex-1 flex flex-col min-w-0 relative bg-white">
+            
+            <!-- 头部 -->
+            <header class="h-14 border-b border-gray-100 flex items-center px-4 shrink-0 z-10 bg-white/80 backdrop-blur-md sticky top-0">
+                <button @click="isSidebarOpen = !isSidebarOpen" class="w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-100 text-gray-500 mr-2 transition-colors">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div class="font-medium text-gray-800">
+                    智能数据助手
+                </div>
+                <div class="ml-auto text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-md">
+                    千问风格流式交互 Demo
+                </div>
+            </header>
+
+            <!-- 聊天区域 -->
+            <div class="flex-1 overflow-y-auto p-4 md:p-6 scroll-smooth relative" ref="chatContainer">
+                <div class="max-w-4xl mx-auto flex flex-col gap-6 pb-32">
+                    
+                    <!-- 欢迎页 (无消息时显示) -->
+                    <div v-if="messages.length === 0" class="flex flex-col items-center justify-center mt-20 mb-10 animate-fade-in">
+                        <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+                            <i class="fa-solid fa-robot text-3xl text-blue-600"></i>
+                        </div>
+                        <h1 class="text-2xl font-semibold text-gray-800 mb-2">我是 DataMap Agent</h1>
+                        <p class="text-gray-500 mb-8 text-center max-w-md">
+                            我可以帮你快速检索数据资产、分析血缘关系、探查数据质量。你可以试着这样问我：
+                        </p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">
+                            <div @click="sendDirectMessage('帮我找一下订单相关的表')" class="p-4 border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-md cursor-pointer transition-all bg-white group">
+                                <div class="font-medium text-gray-700 group-hover:text-blue-600 mb-1"><i class="fa-solid fa-magnifying-glass mr-2"></i>找表</div>
+                                <div class="text-sm text-gray-500">帮我找一下订单相关的表</div>
+                            </div>
+                            <div @click="sendDirectMessage('查看 dm_trade.dws_order_summary_nd 的详情')" class="p-4 border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-md cursor-pointer transition-all bg-white group">
+                                <div class="font-medium text-gray-700 group-hover:text-blue-600 mb-1"><i class="fa-solid fa-circle-info mr-2"></i>看详情</div>
+                                <div class="text-sm text-gray-500">查看 dm_trade.dws_order_summary_nd 的详情</div>
+                            </div>
+                            <div @click="sendDirectMessage('查看 dws_order_summary_nd 的血缘关系')" class="p-4 border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-md cursor-pointer transition-all bg-white group">
+                                <div class="font-medium text-gray-700 group-hover:text-blue-600 mb-1"><i class="fa-solid fa-diagram-project mr-2"></i>查血缘</div>
+                                <div class="text-sm text-gray-500">分析 dws_order_summary_nd 的血缘链路</div>
+                            </div>
+                            <div @click="sendDirectMessage('预览下 default.user_behavior_log 的数据')" class="p-4 border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-md cursor-pointer transition-all bg-white group">
+                                <div class="font-medium text-gray-700 group-hover:text-blue-600 mb-1"><i class="fa-solid fa-table-cells mr-2"></i>看数据</div>
+                                <div class="text-sm text-gray-500">预览下 default.user_behavior_log 的数据</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 消息列表 (按问答分组) -->
+                    <div v-for="group in messageGroups" :key="group.id" 
+                         class="message-group relative"
+                         :class="{ 'is-share-mode': isShareMode, 'is-selected': selectedShareGroups.includes(group.id) }">
+                        
+                        <!-- 分享模式勾选框 -->
+                        <div v-if="isShareMode" class="absolute left-4 top-4 z-10">
+                            <input type="checkbox" class="share-mode-checkbox" 
+                                   :checked="selectedShareGroups.includes(group.id)"
+                                   @change="toggleShareGroup(group.id)">
+                        </div>
+
+                        <div class="flex flex-col gap-6" :class="{ 'pl-10': isShareMode }">
+                            <div v-for="(msg, index) in group.messages" :key="index" class="flex gap-4 group/msg" :class="{'flex-row-reverse': msg.role === 'user'}">
+                                
+                                <!-- 头像 -->
+                                <div v-if="msg.role === 'assistant'" class="w-8 h-8 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 mt-1">
+                                    <i class="fa-solid fa-robot text-blue-600 text-sm"></i>
+                                </div>
+                                <div v-else class="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0 mt-1">
+                                    <i class="fa-solid fa-user text-gray-500 text-sm"></i>
+                                </div>
+
+                                <!-- 消息内容 -->
+                                <div class="flex-1 min-w-0" :class="{'flex flex-col items-end': msg.role === 'user'}">
+                                    
+                                    <!-- 用户消息气泡 -->
+                                    <div v-if="msg.role === 'user'" class="bg-blue-600 text-white px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-[85%] text-[15px] leading-relaxed break-words shadow-sm">
+                                        {{ msg.content }}
+                                    </div>
+                                    
+                                    <!-- AI 消息区 -->
+                                    <div v-else class="w-full">
+                                        <!-- 思考过程 / 工具调用标签 -->
+                                        <div v-if="msg.steps && msg.steps.length > 0" class="mb-3 flex flex-wrap gap-2">
+                                            <div v-for="(step, sIdx) in msg.steps" :key="sIdx" 
+                                                 class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-500 transition-all">
+                                                <i v-if="step.status === 'running'" class="fa-solid fa-circle-notch fa-spin text-blue-500"></i>
+                                                <i v-else class="fa-solid fa-check text-green-500"></i>
+                                                <span>{{ step.text }}</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Markdown 渲染内容 -->
+                                        <div class="text-gray-800 markdown-body w-full">
+                                            <div v-html="renderMarkdown(msg.displayContent)" class="inline"></div>
+                                            <span v-if="msg.isStreaming" class="cursor-blink"></span>
+                                        </div>
+
+                                        <!-- 追问建议 Chips (流式结束后显示) -->
+                                        <div v-if="!msg.isStreaming && msg.suggestions && msg.suggestions.length > 0 && !isShareMode" class="mt-4 flex flex-wrap gap-2">
+                                            <button v-for="(sug, sIdx) in msg.suggestions" :key="sIdx"
+                                                    @click="sendDirectMessage(sug)"
+                                                    class="px-3 py-1.5 bg-white border border-blue-200 text-blue-600 text-sm rounded-full hover:bg-blue-50 hover:border-blue-300 transition-colors shadow-sm">
+                                                {{ sug }}
+                                            </button>
+                                        </div>
+
+                                        <!-- 消息操作栏 (Hover 出现) -->
+                                        <div v-if="!msg.isStreaming && !isShareMode" class="flex items-center gap-2 mt-2 opacity-0 group-hover/msg:opacity-100 transition-opacity">
+                                            <button class="w-7 h-7 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 flex items-center justify-center transition-colors" title="复制">
+                                                <i class="fa-regular fa-copy text-xs"></i>
+                                            </button>
+                                            <button class="w-7 h-7 rounded hover:bg-gray-100 text-gray-400 hover:text-green-600 flex items-center justify-center transition-colors" title="有帮助">
+                                                <i class="fa-regular fa-thumbs-up text-xs"></i>
+                                            </button>
+                                            <button class="w-7 h-7 rounded hover:bg-gray-100 text-gray-400 hover:text-red-500 flex items-center justify-center transition-colors" title="没帮助">
+                                                <i class="fa-regular fa-thumbs-down text-xs"></i>
+                                            </button>
+                                            <button @click="enterShareMode(group.id)" class="w-7 h-7 rounded hover:bg-gray-100 text-gray-400 hover:text-blue-600 flex items-center justify-center transition-colors" title="分享此对话">
+                                                <i class="fa-solid fa-share-nodes text-xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 底部输入区域 / 分享操作栏 -->
+            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent pt-10 pb-6 px-4 md:px-6 z-20">
+                <div class="max-w-4xl mx-auto relative">
+                    
+                    <!-- 分享模式底部操作栏 -->
+                    <div v-if="isShareMode" class="bg-white border border-gray-200 rounded-2xl shadow-lg p-4 flex items-center justify-between animate-fade-in">
+                        <div class="flex items-center gap-4">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" class="share-mode-checkbox" 
+                                       :checked="isAllSelected"
+                                       @change="toggleSelectAll">
+                                <span class="text-sm text-gray-700 font-medium">全选</span>
+                            </label>
+                            <span class="text-sm text-gray-500">已选择 <span class="text-blue-600 font-semibold">{{ selectedShareGroups.length }}</span> 组对话</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button @click="cancelShareMode" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
+                                取消
+                            </button>
+                            <button @click="openShareModal" 
+                                    :disabled="selectedShareGroups.length === 0"
+                                    class="px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50"
+                                    :class="selectedShareGroups.length > 0 ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300'">
+                                <i class="fa-solid fa-link mr-1.5"></i> 生成分享链接
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 正常输入区 -->
+                    <div v-else>
+                        <!-- 快捷指令提示 (输入 / 时显示) -->
+                        <div v-if="showCommands" class="absolute bottom-full mb-2 left-0 w-64 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden py-1 z-30">
+                            <div class="px-3 py-1.5 text-xs font-semibold text-gray-400 uppercase">快捷指令</div>
+                            <div @click="insertCommand('/找表 ')" class="px-3 py-2 hover:bg-gray-50 cursor-pointer flex items-center gap-2 text-sm">
+                                <div class="w-6 h-6 rounded bg-blue-50 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-magnifying-glass text-xs"></i></div>
+                                <div>
+                                    <div class="text-gray-700">/找表</div>
+                                    <div class="text-xs text-gray-400">检索数据表资产</div>
+                                </div>
+                            </div>
+                            <div @click="insertCommand('/查血缘 ')" class="px-3 py-2 hover:bg-gray-50 cursor-pointer flex items-center gap-2 text-sm">
+                                <div class="w-6 h-6 rounded bg-purple-50 text-purple-600 flex items-center justify-center"><i class="fa-solid fa-diagram-project text-xs"></i></div>
+                                <div>
+                                    <div class="text-gray-700">/查血缘</div>
+                                    <div class="text-xs text-gray-400">分析表的上下游</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="relative flex flex-col border border-gray-300 rounded-2xl bg-white shadow-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
+                            <textarea 
+                                v-model="inputText"
+                                @keydown.enter.prevent="sendMessage"
+                                @input="handleInput"
+                                placeholder="给 DataMap Agent 发送消息... (输入 / 唤起快捷指令)" 
+                                class="w-full max-h-32 min-h-[52px] py-3.5 pl-4 pr-12 bg-transparent border-none focus:ring-0 resize-none text-[15px] leading-relaxed rounded-2xl"
+                                rows="1"
+                                :disabled="isGenerating"
+                            ></textarea>
+                            
+                            <div class="flex items-center justify-between px-3 pb-2">
+                                <div class="flex items-center gap-1">
+                                    <button class="w-8 h-8 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 flex items-center justify-center transition-colors" title="提及表名">
+                                        <i class="fa-solid fa-at"></i>
+                                    </button>
+                                    <button class="w-8 h-8 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 flex items-center justify-center transition-colors" title="上传附件">
+                                        <i class="fa-solid fa-paperclip"></i>
+                                    </button>
+                                </div>
+                                <button 
+                                    @click="sendMessage"
+                                    :disabled="!inputText.trim() || isGenerating"
+                                    class="w-8 h-8 flex items-center justify-center rounded-lg text-white transition-colors disabled:opacity-50"
+                                    :class="inputText.trim() && !isGenerating ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300'"
+                                >
+                                    <i class="fa-solid fa-arrow-up"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="text-center mt-2 text-xs text-gray-400">
+                            内容由 AI 生成，请仔细甄别
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 分享配置弹窗 -->
+        <div v-if="showShareModal" class="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center animate-fade-in">
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-800">分享对话</h3>
+                    <button @click="showShareModal = false" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="p-6">
+                    <div class="mb-4 text-sm text-gray-600">
+                        即将分享 <span class="font-semibold text-blue-600">{{ selectedShareGroups.length }}</span> 组对话内容。请选择链接有效期：
+                    </div>
+                    <div class="space-y-3 mb-6">
+                        <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50">
+                            <input type="radio" name="expire" value="7days" checked class="text-blue-600 focus:ring-blue-500">
+                            <span class="text-sm font-medium text-gray-700">7 天有效</span>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50">
+                            <input type="radio" name="expire" value="30days" class="text-blue-600 focus:ring-blue-500">
+                            <span class="text-sm font-medium text-gray-700">30 天有效</span>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50">
+                            <input type="radio" name="expire" value="permanent" class="text-blue-600 focus:ring-blue-500">
+                            <span class="text-sm font-medium text-gray-700">永久有效</span>
+                        </label>
+                    </div>
+                    <div class="flex items-start gap-2 p-3 bg-blue-50 text-blue-800 rounded-lg text-xs">
+                        <i class="fa-solid fa-circle-info mt-0.5"></i>
+                        <p>分享链接仅限公司内网访问，且接收方需要具备相关数据表的权限才能查看敏感数据。</p>
+                    </div>
+                </div>
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+                    <button @click="showShareModal = false" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-200 transition-colors">取消</button>
+                    <button @click="confirmShare" class="px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors">生成并复制链接</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, nextTick, computed } = Vue;
+
+        // 配置 marked 选项
+        marked.setOptions({
+            breaks: true,
+            gfm: true
+        });
+
+        createApp({
+            setup() {
+                const isSidebarOpen = ref(true);
+                const inputText = ref('');
+                const messages = ref([]);
+                const isGenerating = ref(false);
+                const chatContainer = ref(null);
+                const showCommands = ref(false);
+
+                // 分享模式相关状态
+                const isShareMode = ref(false);
+                const selectedShareGroups = ref([]);
+                const showShareModal = ref(false);
+                let msgIdCounter = 0;
+
+                // 将消息分组 (User + AI 为一组)
+                const messageGroups = computed(() => {
+                    const groups = [];
+                    let currentGroup = [];
+                    for (const msg of messages.value) {
+                        if (msg.role === 'user') {
+                            if (currentGroup.length > 0) {
+                                groups.push({
+                                    id: currentGroup.find(m => m.role === 'assistant')?.id || currentGroup[0].id,
+                                    messages: currentGroup
+                                });
+                            }
+                            currentGroup = [msg];
+                        } else {
+                            currentGroup.push(msg);
+                        }
+                    }
+                    if (currentGroup.length > 0) {
+                        groups.push({
+                            id: currentGroup.find(m => m.role === 'assistant')?.id || currentGroup[0].id,
+                            messages: currentGroup
+                        });
+                    }
+                    return groups;
+                });
+
+                const isAllSelected = computed(() => {
+                    return messageGroups.value.length > 0 && selectedShareGroups.value.length === messageGroups.value.length;
+                });
+
+                // --- 模拟 6 种场景的数据库 ---
+                const scenarios = {
+                    // 场景 1：单表详情
+                    detail: {
+                        steps: [
+                            { text: '语义解析与意图识别...', duration: 500 },
+                            { text: '查询 OpenMetadata 元数据...', duration: 800 }
+                        ],
+                        markdown: `这是 **用户行为日志表** (\`default.user_behavior_log\`) 的详细信息：\n\n**基础信息**\n| 属性 | 值 |\n|---|---|\n| 负责人 | 张三(zhangsan) |\n| 数据分层 | ODS / Hive |\n| 最近更新 | 2026-03-30 02:15:30 |\n| 热度 | 1.2w 次访问 |\n\n**表描述**\n记录用户在 App 和 Web 端的所有核心行为事件，包含浏览、点击、加购、收藏等，T+1 更新。`,
+                        suggestions: ['看下这张表的字段', '预览下数据', '看下生产信息', '查看血缘关系']
+                    },
+                    // 场景 2：多表列表
+                    list: {
+                        steps: [
+                            { text: '在向量库中检索相关表资产...', duration: 800 },
+                            { text: '生成总结与推荐理由...', duration: 600 }
+                        ],
+                        markdown: `为您检索到以下相关的数据表资产（共 45 张，展示前 5 张）：\n\n| # | 表名 | 中文名 | 分层 | 负责人 |\n|---|---|---|---|---|\n| 1 | \`dm_trade.dws_order_summary_nd\` | 订单汇总表 | DWS | 张三 |\n| 2 | \`dm_trade.dwd_order_detail_di\` | 订单明细表 | DWD | 李四 |\n| 3 | \`dm_trade.dim_order_status\` | 订单状态维表 | DIM | 王五 |\n| 4 | \`dm_risk.dws_risk_order_intercept_nd\` | 风控拦截订单汇总表 | DWS | 赵六 |\n| 5 | \`dm_trade.ods_order_info\` | 订单原始表 | ODS | 周八 |\n\n**推荐理由**：\n1. **订单汇总表** - 表名及描述高度匹配"订单"，且为核心汇总表。\n2. **订单明细表** - 包含订单最全明细数据，下游使用广泛。`,
+                        suggestions: ['查看 dm_trade.dws_order_summary_nd 的详情', '帮我对比一下汇总表和明细表', '只看 DWS 层的表']
+                    },
+                    // 场景 3：血缘分析
+                    lineage: {
+                        steps: [
+                            { text: '提取数据表血缘链路...', duration: 1000 },
+                            { text: '生成血缘分析报告...', duration: 800 }
+                        ],
+                        markdown: `已经为您分析了该表的血缘关系，核心结论如下：\n\n**💡 AI 洞察**\n> 该表的血缘关系较为复杂，其上游主要依赖 \`dwd_order_info\` 和 \`dim_user\`。\n> 该表是下游 5 张核心报表的数据源，如果该表延迟，将直接影响【每日销售看板】的产出。\n\n**上游依赖（2 张）**\n- \`dm_trade.dwd_order_info\` — 订单明细表\n- \`dm_base.dim_user\` — 用户维度表\n\n&nbsp;&nbsp;&nbsp;&nbsp;⬇️\n\n**当前表**\n- **\`dm_trade.dws_order_summary_nd\` — 订单汇总表**\n\n&nbsp;&nbsp;&nbsp;&nbsp;⬇️\n\n**下游影响（2 张核心）**\n- \`ads_trade.sales_dashboard\` — 每日销售看板\n- \`ads_trade.user_repurchase_rate\` — 用户复购率统计`,
+                        suggestions: ['查看上游 dwd_order_info 的详情', '分析下游销售看板的指标口径']
+                    },
+                    // 场景 4：字段详情
+                    fields: {
+                        steps: [
+                            { text: '获取表 Schema 信息...', duration: 600 }
+                        ],
+                        markdown: `\`default.user_behavior_log\` 共有 100 个字段，以下是核心字段：\n\n| # | 字段名 | 类型 | 描述 | 标记 |\n|---|---|---|---|---|\n| 1 | \`user_id\` | string | 全局唯一用户标识 | 🔑 主键 |\n| 2 | \`event_type\` | string | 事件类型 (click, view, add_cart) | |\n| 3 | \`page_id\` | string | 发生事件的页面ID | |\n| 4 | \`device_os\` | string | 设备操作系统 (iOS, Android) | |\n| 5 | \`device_model\` | string | 设备型号 | |\n| ... | ... | ... | ... | |\n| 100 | \`dt\` | string | 日期分区 (yyyyMMdd) | 📂 分区 |`,
+                        suggestions: ['预览下数据', '看下生产信息', '查看血缘关系']
+                    },
+                    // 场景 5：数据预览
+                    preview: {
+                        steps: [
+                            { text: '执行数据抽样探查任务...', duration: 1200 }
+                        ],
+                        markdown: `以下是 \`default.user_behavior_log\` 的数据预览（随机抽样 5 条）：\n\n| user_id | event_type | page_id | device_os | device_model | ip_address |\n|---|---|---|---|---|---|\n| U28371 | click | page_12 | iOS | iPhone 14 | 192.168.32.105 |\n| U91204 | view | page_3 | Android | Xiaomi 13 | 192.168.128.77 |\n| U45082 | add_cart | page_7 | Web | MacBook | 192.168.201.33 |\n| U67193 | purchase | page_1 | iOS | iPhone 14 | 192.168.45.219 |\n| U33021 | click | page_15 | Android | Huawei P60 | 192.168.99.142 |\n\n**📊 数据概况**\n- 总行数：100,000\n- 主键去重记录数：98,520\n- 重复记录数：1,480`,
+                        suggestions: ['看下这张表的字段', '看下生产信息']
+                    },
+                    // 场景 6：生产信息
+                    production: {
+                        steps: [
+                            { text: '查询调度系统运行日志...', duration: 800 }
+                        ],
+                        markdown: `\`default.user_behavior_log\` 的生产调度信息如下：\n\n**⚙️ 调度配置**\n| 属性 | 值 |\n|---|---|\n| 任务名称 | \`dws_user_behavior_log_di\` |\n| 调度周期 | 每日 02:00 |\n| 所属时区 | 中国时间 |\n| 最近产出 | 2026-03-30 02:15:30 |\n\n**⏱️ 近 5 次执行记录**\n| 实例ID | 状态 | 开始时间 | 结束时间 | 耗时 |\n|---|---|---|---|---|\n| 100456 | ✅ 成功 | 03-30 02:00 | 03-30 02:15 | 15分30秒 |\n| 100455 | ✅ 成功 | 03-29 02:00 | 03-29 02:14 | 14分20秒 |\n| 100454 | ✅ 成功 | 03-28 02:00 | 03-28 02:16 | 16分10秒 |\n| 100453 | ❌ 失败 | 03-27 02:00 | 03-27 02:05 | 5分0秒 |\n| 100452 | ✅ 成功 | 03-26 02:00 | 03-26 02:15 | 15分45秒 |\n\n> **⚠️ 异常提醒**：3月27日执行失败，耗时异常偏短（5分钟），建议排查当日任务日志。`,
+                        suggestions: ['排查 3月27日的失败原因', '查看血缘关系']
+                    }
+                };
+
+                const scrollToBottom = () => {
+                    nextTick(() => {
+                        if (chatContainer.value) {
+                            chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+                        }
+                    });
+                };
+
+                const renderMarkdown = (text) => {
+                    if (!text) return '';
+                    return marked.parse(text);
+                };
+
+                const handleInput = () => {
+                    if (inputText.value === '/') {
+                        showCommands.value = true;
+                    } else {
+                        showCommands.value = false;
+                    }
+                };
+
+                const insertCommand = (cmd) => {
+                    inputText.value = cmd;
+                    showCommands.value = false;
+                    document.querySelector('textarea').focus();
+                };
+
+                const startNewChat = () => {
+                    messages.value = [];
+                    inputText.value = '';
+                };
+
+                // 意图路由
+                const routeIntent = (text) => {
+                    if (text.includes('字段')) return scenarios.fields;
+                    if (text.includes('预览') || text.includes('数据')) return scenarios.preview;
+                    if (text.includes('生产') || text.includes('调度')) return scenarios.production;
+                    if (text.includes('血缘') || text.includes('上下游')) return scenarios.lineage;
+                    if (text.includes('找') || text.includes('订单相关') || text.includes('列表')) return scenarios.list;
+                    return scenarios.detail; // 默认单表详情
+                };
+
+                const simulateStreaming = async (scenario, msgObj) => {
+                    msgObj.isStreaming = true;
+                    msgObj.displayContent = '';
+                    
+                    // 模拟步骤执行
+                    if (scenario.steps) {
+                        for (let i = 0; i < scenario.steps.length; i++) {
+                            msgObj.steps[i].status = 'running';
+                            await new Promise(r => setTimeout(r, scenario.steps[i].duration));
+                            msgObj.steps[i].status = 'done';
+                        }
+                    }
+
+                    // 模拟打字机流式输出
+                    const chars = scenario.markdown.split('');
+                    // 为了演示快一点，每次输出 2-4 个字符
+                    for (let i = 0; i < chars.length; i+=3) {
+                        msgObj.displayContent += chars.slice(i, i+3).join('');
+                        scrollToBottom();
+                        await new Promise(r => setTimeout(r, 20));
+                    }
+                    
+                    // 结束流式，展示 suggestions
+                    msgObj.isStreaming = false;
+                    msgObj.suggestions = scenario.suggestions;
+                    isGenerating.value = false;
+                    scrollToBottom();
+                };
+
+                const sendDirectMessage = (text) => {
+                    inputText.value = text;
+                    sendMessage();
+                };
+
+                const sendMessage = () => {
+                    const text = inputText.value.trim();
+                    if (!text || isGenerating.value) return;
+
+                    showCommands.value = false;
+
+                    // 添加用户消息
+                    messages.value.push({
+                        id: `msg_${msgIdCounter++}`,
+                        role: 'user',
+                        content: text
+                    });
+
+                    inputText.value = '';
+                    isGenerating.value = true;
+                    scrollToBottom();
+
+                    // 匹配意图场景
+                    const scenario = routeIntent(text);
+
+                    // 准备 AI 响应对象
+                    const aiMsg = {
+                        id: `msg_${msgIdCounter++}`,
+                        role: 'assistant',
+                        displayContent: '',
+                        isStreaming: true,
+                        steps: scenario.steps ? scenario.steps.map(s => ({ text: s.text, status: 'pending' })) : [],
+                        suggestions: []
+                    };
+                    
+                    messages.value.push(aiMsg);
+                    
+                    // 开始流式输出
+                    setTimeout(() => {
+                        simulateStreaming(scenario, aiMsg);
+                    }, 300);
+                };
+
+                // --- 分享模式方法 ---
+                const enterShareMode = (groupId) => {
+                    isShareMode.value = true;
+                    selectedShareGroups.value = [groupId];
+                };
+
+                const toggleShareGroup = (groupId) => {
+                    const index = selectedShareGroups.value.indexOf(groupId);
+                    if (index > -1) {
+                        selectedShareGroups.value.splice(index, 1);
+                    } else {
+                        selectedShareGroups.value.push(groupId);
+                    }
+                };
+
+                const toggleSelectAll = (e) => {
+                    if (e.target.checked) {
+                        selectedShareGroups.value = messageGroups.value.map(g => g.id);
+                    } else {
+                        selectedShareGroups.value = [];
+                    }
+                };
+
+                const cancelShareMode = () => {
+                    isShareMode.value = false;
+                    selectedShareGroups.value = [];
+                };
+
+                const openShareModal = () => {
+                    if (selectedShareGroups.value.length > 0) {
+                        showShareModal.value = true;
+                    }
+                };
+
+                const confirmShare = () => {
+                    const mockLink = `https://datapilot.com/share/${Date.now().toString(36)}`;
+                    alert(`分享链接已生成：\n${mockLink}\n\n(在真实环境中会直接复制到剪贴板)`);
+                    showShareModal.value = false;
+                    cancelShareMode();
+                };
+
+                return {
+                    isSidebarOpen,
+                    inputText,
+                    messages,
+                    messageGroups,
+                    isGenerating,
+                    chatContainer,
+                    showCommands,
+                    isShareMode,
+                    selectedShareGroups,
+                    isAllSelected,
+                    showShareModal,
+                    renderMarkdown,
+                    handleInput,
+                    insertCommand,
+                    startNewChat,
+                    sendMessage,
+                    sendDirectMessage,
+                    enterShareMode,
+                    toggleShareGroup,
+                    toggleSelectAll,
+                    cancelShareMode,
+                    openShareModal,
+                    confirmShare
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

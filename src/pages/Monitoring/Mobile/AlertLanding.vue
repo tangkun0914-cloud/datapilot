@@ -44,7 +44,7 @@
           <span class="detail-value mono-val">{{ alertData.title }}</span>
         </div>
         <div class="detail-item" v-if="alertData.qualityMonitorName">
-          <span class="detail-label">质量监控</span>
+          <span class="detail-label">数据质量</span>
           <span class="detail-value link-val">{{ alertData.qualityMonitorName }}</span>
         </div>
         <div class="detail-item">
@@ -116,7 +116,7 @@ const alertData = ref({
   id: '',
   title: '',
   severity: 'ERROR',
-  source: '质量监控',
+  source: '数据质量',
   monitorEvent: '',
   qualityMonitorName: '',
   triggerTime: '',

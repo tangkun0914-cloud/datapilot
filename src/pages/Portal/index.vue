@@ -25,6 +25,7 @@
             v-for="p in prod.entries"
             :key="p.to"
             class="portal-card"
+            :class="{ 'portal-card--map-agent': prod.key === 'mapagent' }"
             :hoverable="true"
             @click="go(p.to)"
           >
@@ -66,6 +67,7 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
+import { useAgentStore } from '@/stores/DataMap/agent.js'
 import {
   HomeOutlined,
   SearchOutlined,
@@ -83,15 +85,36 @@ import {
   FileProtectOutlined,
   NodeIndexOutlined,
   BellOutlined,
+  MessageOutlined,
 } from '@ant-design/icons-vue'
 
 const router = useRouter()
+const agentStore = useAgentStore()
 
 function go(path) {
-  router.push(path)
+  // 与顶部 Logo 进入 Agent 一致：从工作台进入时默认浅色主题
+  if (path === '/datamap/agent' || path === '/agent') {
+    agentStore.isDarkMode = false
+  }
+  router.push(path === '/agent' ? '/datamap/agent' : path)
 }
 
 const products = [
+  {
+    key: 'mapagent',
+    title: '地图 Agent',
+    desc: '对话式数据探索、智能检索与血缘分析',
+    icon: MessageOutlined,
+    color: '#7c3aed',
+    entries: [
+      {
+        title: '地图 Agent 首页',
+        desc: '对话式交互、工作台与资产详情分屏',
+        to: '/datamap/agent',
+        icon: RobotOutlined,
+      }
+    ]
+  },
   {
     key: 'datamap',
     title: '数据地图 (Data Map)',
@@ -152,7 +175,7 @@ const products = [
     entries: [
       {
         title: '告警列表',
-        desc: '质量监控告警事件处理',
+        desc: '数据质量告警事件处理',
         to: '/monitoring/alerts',
         icon: AlertOutlined,
       },
@@ -279,6 +302,15 @@ const products = [
 .portal-card:hover {
   border-color: #93c5fd;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.portal-card--map-agent:hover {
+  border-color: #c4b5fd;
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.12);
+}
+
+.portal-card--map-agent :deep(.card-title-icon) {
+  color: #7c3aed;
 }
 
 .portal-card :deep(.ant-card-head-title) {

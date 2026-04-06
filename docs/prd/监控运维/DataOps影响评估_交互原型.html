@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DataOps 异常影响评估与协同中心</title>
+  <script src="https://gw.alipayobjects.com/os/lib/antv/g6/4.8.24/dist/g6.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* 左侧区域 */
+    .left-panel {
+      width: 70%;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      border-right: 1px solid #e8e8e8;
+    }
+
+    /* 告警信息卡片 */
+    .alert-card {
+      padding: 20px;
+      border-bottom: 1px solid #e8e8e8;
+      background: #fafafa;
+    }
+
+    .alert-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .alert-level {
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .alert-level.error {
+      background: #fff2f0;
+      color: #ff4d4f;
+      border: 1px solid #ffccc7;
+    }
+
+    .alert-level.warn {
+      background: #fffbe6;
+      color: #faad14;
+      border: 1px solid #ffe58f;
+    }
+
+    .alert-status {
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      background: #e6f7ff;
+      color: #1890ff;
+      border: 1px solid #91d5ff;
+    }
+
+    .alert-info {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 8px 16px;
+      font-size: 14px;
+    }
+
+    .alert-label {
+      color: #8c8c8c;
+      font-weight: 500;
+    }
+
+    .alert-value {
+      color: #262626;
+      font-family: 'Monaco', 'Menlo', monospace;
+    }
+
+    /* DAG 画布区域 */
+    .canvas-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .canvas-toolbar {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 10;
+      background: #fff;
+      padding: 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .toolbar-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .toolbar-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .toolbar-item label {
+      color: #595959;
+      font-weight: 500;
+    }
+
+    .toolbar-item select {
+      padding: 4px 8px;
+      border: 1px solid #d9d9d9;
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    #graph-canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* 右侧面板 */
+    .right-panel {
+      width: 30%;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+    }
+
+    /* AI 总结 */
+    .ai-summary {
+      padding: 20px;
+      border-bottom: 1px solid #e8e8e8;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+    }
+
+    .ai-summary-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ai-summary-content {
+      font-size: 13px;
+      line-height: 1.6;
+      opacity: 0.95;
+    }
+
+    /* Tab 区域 */
+    .tab-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .tab-header {
+      display: flex;
+      border-bottom: 1px solid #e8e8e8;
+      background: #fafafa;
+    }
+
+    .tab-button {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: #595959;
+      transition: all 0.3s;
+      border-bottom: 2px solid transparent;
+    }
+
+    .tab-button:hover {
+      color: #1890ff;
+    }
+
+    .tab-button.active {
+      color: #1890ff;
+      border-bottom-color: #1890ff;
+      background: #fff;
+    }
+
+    .tab-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* Tab1 - 统计评估 */
+    .stats-section {
+      margin-bottom: 24px;
+    }
+
+    .stats-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .stats-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #262626;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .stat-card {
+      padding: 12px;
+      background: #fafafa;
+      border-radius: 8px;
+      border-left: 3px solid #1890ff;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #8c8c8c;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 600;
+      color: #262626;
+    }
+
+    .stat-value.danger {
+      color: #ff4d4f;
+    }
+
+    .stat-value.warning {
+      color: #faad14;
+    }
+
+    .sla-alert {
+      padding: 12px;
+      background: #fff7e6;
+      border-left: 3px solid #faad14;
+      border-radius: 4px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .owner-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .owner-table th {
+      background: #fafafa;
+      padding: 8px 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #595959;
+      border-bottom: 2px solid #e8e8e8;
+    }
+
+    .owner-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .owner-table tr:hover {
+      background: #fafafa;
+    }
+
+    /* Tab2 - 全局影响清单 */
+    .impact-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .impact-table th {
+      background: #fafafa;
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #595959;
+      border-bottom: 2px solid #e8e8e8;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .impact-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .impact-table tr:hover {
+      background: #fafafa;
+      cursor: pointer;
+    }
+
+    .task-name {
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 12px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-badge.failed {
+      background: #fff2f0;
+      color: #ff4d4f;
+    }
+
+    .status-badge.delayed {
+      background: #fffbe6;
+      color: #faad14;
+    }
+
+    .status-badge.waiting {
+      background: #f0f0f0;
+      color: #8c8c8c;
+    }
+
+    .status-badge.polluted {
+      background: #fff7e6;
+      color: #fa8c16;
+    }
+
+    /* Tab3 - 报错详情 */
+    .error-log {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .error-log .error-line {
+      color: #f48771;
+    }
+
+    .error-log .warn-line {
+      color: #dcdcaa;
+    }
+
+    .error-log .info-line {
+      color: #608b4e;
+    }
+
+    /* 底部操作按钮 */
+    .action-bar {
+      padding: 16px 20px;
+      border-top: 1px solid #e8e8e8;
+      background: #fafafa;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .action-button {
+      padding: 10px 16px;
+      border: 1px solid #d9d9d9;
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .action-button:hover {
+      border-color: #1890ff;
+      color: #1890ff;
+      box-shadow: 0 2px 4px rgba(24,144,255,0.2);
+    }
+
+    .action-button.primary {
+      background: #1890ff;
+      color: #fff;
+      border-color: #1890ff;
+    }
+
+    .action-button.primary:hover {
+      background: #40a9ff;
+      box-shadow: 0 2px 8px rgba(24,144,255,0.4);
+    }
+
+    .action-button.danger {
+      background: #ff4d4f;
+      color: #fff;
+      border-color: #ff4d4f;
+    }
+
+    .action-button.danger:hover {
+      background: #ff7875;
+      box-shadow: 0 2px 8px rgba(255,77,79,0.4);
+    }
+
+    /* 滚动条样式 */
+    .tab-content::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .tab-content::-webkit-scrollbar-track {
+      background: #f0f0f0;
+    }
+
+    .tab-content::-webkit-scrollbar-thumb {
+      background: #bfbfbf;
+      border-radius: 3px;
+    }
+
+    .tab-content::-webkit-scrollbar-thumb:hover {
+      background: #8c8c8c;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 左侧面板 -->
+    <div class="left-panel">
+      <!-- 告警信息卡片 -->
+      <div class="alert-card">
+        <div class="alert-header">
+          <span class="alert-level error">Error</span>
+          <span class="alert-status">处理中</span>
+        </div>
+        <div class="alert-info">
+          <span class="alert-label">任务名：</span>
+          <span class="alert-value">dwd_fund_df_repayment</span>
+          <span class="alert-label">负责人：</span>
+          <span class="alert-value">马殿林(madianlin)</span>
+        </div>
+      </div>
+
+      <!-- DAG 画布 -->
+      <div class="canvas-container">
+        <div class="canvas-toolbar">
+          <div class="toolbar-item">
+            <label>展开层级：</label>
+            <select id="depth-control">
+              <option value="1">1 层</option>
+              <option value="2">2 层</option>
+              <option value="3" selected>3 层</option>
+              <option value="4">4 层</option>
+              <option value="5">5 层</option>
+            </select>
+          </div>
+        </div>
+        <div id="graph-canvas"></div>
+      </div>
+    </div>
+
+    <!-- 右侧面板 -->
+    <div class="right-panel">
+      <!-- AI 总结 -->
+      <div class="ai-summary">
+        <div class="ai-summary-title">
+          <span>🤖</span>
+          <span>AI 智能分析</span>
+        </div>
+        <div class="ai-summary-content">
+          当前任务 <strong>dwd_fund_df_repayment</strong> 运行失败，导致下游 56 个任务因依赖缺失无法触发，处于"上游失败等待"状态。其中 3 个核心任务受影响，预计财务日报将延迟 45 分钟产出，存在 SLA 破线风险。建议立即联系相关负责人协同处理。
+        </div>
+      </div>
+
+      <!-- Tab 区域 -->
+      <div class="tab-container">
+        <div class="tab-header">
+          <button class="tab-button active" data-tab="stats">统计评估</button>
+          <button class="tab-button" data-tab="impact">影响清单</button>
+          <button class="tab-button" data-tab="error">报错详情</button>
+        </div>
+
+        <div class="tab-content">
+          <!-- Tab1: 统计评估 -->
+          <div class="tab-panel active" id="tab-stats">
+            <div class="stats-section">
+              <div class="stats-title">资产影响面评估</div>
+              <div class="stats-grid">
+                <div class="stat-card">
+                  <div class="stat-label">受影响下游节点</div>
+                  <div class="stat-value">56</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-label">其中：核心任务</div>
+                  <div class="stat-value danger">3</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="stats-section">
+              <div class="stats-title">链路 SLA 破线预估</div>
+              <div class="sla-alert">
+                ⚠️ <strong>ads_finance_daily_report</strong> 预计完成时间 09:45，晚于 SLA 承诺时间 09:00，存在破线风险（延迟 45 分钟）。
+              </div>
+            </div>
+
+            <div class="stats-section">
+              <div class="stats-title">受牵连人员</div>
+              <table class="owner-table">
+                <thead>
+                  <tr>
+                    <th>负责人</th>
+                    <th>受阻任务数</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>张三(zhangsan)</td>
+                    <td>12</td>
+                  </tr>
+                  <tr>
+                    <td>李四(lisi)</td>
+                    <td>8</td>
+                  </tr>
+                  <tr>
+                    <td>王五(wangwu)</td>
+                    <td>15</td>
+                  </tr>
+                  <tr>
+                    <td>赵六(zhaoliu)</td>
+                    <td>21</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Tab2: 全局影响清单 -->
+          <div class="tab-panel" id="tab-impact">
+            <table class="impact-table">
+              <thead>
+                <tr>
+                  <th>任务名</th>
+                  <th>负责人</th>
+                  <th>状态</th>
+                  <th>任务类型</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="task-name">dws_order_summary_di</td>
+                  <td>张三(zhangsan)</td>
+                  <td><span class="status-badge waiting">依赖等待</span></td>
+                  <td>SparkSQL</td>
+                </tr>
+                <tr>
+                  <td class="task-name">dws_payment_flow_analysis</td>
+                  <td>李四(lisi)</td>
+                  <td><span class="status-badge waiting">依赖等待</span></td>
+                  <td>HiveSQL</td>
+                </tr>
+                <tr>
+                  <td class="task-name">ads_finance_daily_report</td>
+                  <td>王五(wangwu)</td>
+                  <td><span class="status-badge delayed">延迟</span></td>
+                  <td>SparkSQL</td>
+                </tr>
+                <tr>
+                  <td class="task-name">dim_customer_profile</td>
+                  <td>赵六(zhaoliu)</td>
+                  <td><span class="status-badge waiting">依赖等待</span></td>
+                  <td>DataSync</td>
+                </tr>
+                <tr>
+                  <td class="task-name">ads_operation_dashboard</td>
+                  <td>张三(zhangsan)</td>
+                  <td><span class="status-badge polluted">污染风险</span></td>
+                  <td>SparkSQL</td>
+                </tr>
+                <tr>
+                  <td class="task-name">dws_user_behavior_analysis</td>
+                  <td>李四(lisi)</td>
+                  <td><span class="status-badge waiting">依赖等待</span></td>
+                  <td>SparkSQL</td>
+                </tr>
+                <tr>
+                  <td class="task-name">ads_marketing_roi</td>
+                  <td>王五(wangwu)</td>
+                  <td><span class="status-badge waiting">依赖等待</span></td>
+                  <td>HiveSQL</td>
+                </tr>
+                <tr>
+                  <td class="task-name">dwd_transaction_detail</td>
+                  <td>赵六(zhaoliu)</td>
+                  <td><span class="status-badge failed">失败</span></td>
+                  <td>SparkSQL</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Tab3: 报错详情 -->
+          <div class="tab-panel" id="tab-error">
+            <div class="error-log">[2026-04-05 08:23:45] <span class="info-line">INFO</span> - Task [dwd_fund_df_repayment] started
+[2026-04-05 08:23:46] <span class="info-line">INFO</span> - Initializing Spark session...
+[2026-04-05 08:23:50] <span class="info-line">INFO</span> - Spark session initialized successfully
+[2026-04-05 08:23:51] <span class="info-line">INFO</span> - Loading source table: ods_fund_repayment_raw
+[2026-04-05 08:24:15] <span class="error-line">ERROR</span> - Table not found: ods_fund_repayment_raw
+[2026-04-05 08:24:15] <span class="error-line">ERROR</span> - Caused by: org.apache.spark.sql.AnalysisException: Table or view not found: ods_fund_repayment_raw
+[2026-04-05 08:24:15] <span class="error-line">ERROR</span> - at org.apache.spark.sql.catalyst.analysis.Analyzer.checkAnalysis(Analyzer.scala:123)
+[2026-04-05 08:24:15] <span class="error-line">ERROR</span> - at org.apache.spark.sql.execution.QueryExecution.assertAnalyzed(QueryExecution.scala:52)
+[2026-04-05 08:24:16] <span class="warn-line">WARN</span> - Retry attempt 1 of 3...
+[2026-04-05 08:24:30] <span class="error-line">ERROR</span> - Table not found: ods_fund_repayment_raw
+[2026-04-05 08:24:31] <span class="warn-line">WARN</span> - Retry attempt 2 of 3...
+[2026-04-05 08:24:45] <span class="error-line">ERROR</span> - Table not found: ods_fund_repayment_raw
+[2026-04-05 08:24:46] <span class="warn-line">WARN</span> - Retry attempt 3 of 3...
+[2026-04-05 08:25:00] <span class="error-line">ERROR</span> - Table not found: ods_fund_repayment_raw
+[2026-04-05 08:25:01] <span class="error-line">ERROR</span> - Task [dwd_fund_df_repayment] failed after 3 retry attempts
+[2026-04-05 08:25:01] <span class="error-line">ERROR</span> - Task execution terminated with exit code: 1</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部操作按钮 -->
+      <div class="action-bar">
+        <button class="action-button primary" onclick="handleAction('createGroup')">
+          <span>👥</span>
+          <span>一键拉群</span>
+        </button>
+        <button class="action-button" onclick="handleAction('suspend')">
+          <span>⏸️</span>
+          <span>一键挂起</span>
+        </button>
+        <button class="action-button" onclick="handleAction('rerun')">
+          <span>🔄</span>
+          <span>级联重跑</span>
+        </button>
+        <button class="action-button danger" onclick="handleAction('forceSuccess')">
+          <span>✅</span>
+          <span>一键置成功</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Mock 数据
+    const mockData = {
+      nodes: [
+        // 当前告警节点（根节点）
+        {
+          id: 'current',
+          taskName: 'dwd_fund_df_repayment',
+          owner: '马殿林(madianlin)',
+          taskType: 'SparkSQL',
+          status: 'failed',
+          isCurrentNode: true,
+          depth: 0
+        },
+        // 第 1 层下游节点
+        {
+          id: 'node_1',
+          taskName: 'dws_order_summary_di',
+          owner: '张三(zhangsan)',
+          taskType: 'SparkSQL',
+          status: 'waiting',
+          depth: 1
+        },
+        {
+          id: 'node_2',
+          taskName: 'dws_payment_flow_analysis',
+          owner: '李四(lisi)',
+          taskType: 'HiveSQL',
+          status: 'waiting',
+          depth: 1
+        },
+        {
+          id: 'node_3',
+          taskName: 'dim_customer_profile',
+          owner: '赵六(zhaoliu)',
+          taskType: 'DataSync',
+          status: 'waiting',
+          depth: 1
+        },
+        // 第 2 层下游节点
+        {
+          id: 'node_4',
+          taskName: 'ads_finance_daily_report',
+          owner: '王五(wangwu)',
+          taskType: 'SparkSQL',
+          status: 'delayed',
+          depth: 2
+        },
+        {
+          id: 'node_5',
+          taskName: 'ads_operation_dashboard',
+          owner: '张三(zhangsan)',
+          taskType: 'SparkSQL',
+          status: 'polluted',
+          depth: 2
+        },
+        {
+          id: 'node_6',
+          taskName: 'dws_user_behavior_analysis',
+          owner: '李四(lisi)',
+          taskType: 'SparkSQL',
+          status: 'waiting',
+          depth: 2
+        },
+        // 第 3 层下游节点
+        {
+          id: 'node_7',
+          taskName: 'ads_marketing_roi',
+          owner: '王五(wangwu)',
+          taskType: 'HiveSQL',
+          status: 'waiting',
+          depth: 3
+        },
+        {
+          id: 'node_8',
+          taskName: 'dwd_transaction_detail',
+          owner: '赵六(zhaoliu)',
+          taskType: 'SparkSQL',
+          status: 'failed',
+          depth: 3
+        },
+        {
+          id: 'node_9',
+          taskName: 'ads_ceo_dashboard',
+          owner: '张三(zhangsan)',
+          taskType: 'SparkSQL',
+          status: 'waiting',
+          depth: 3
+        }
+      ],
+      edges: [
+        { source: 'current', target: 'node_1' },
+        { source: 'current', target: 'node_2' },
+        { source: 'current', target: 'node_3' },
+        { source: 'node_1', target: 'node_4' },
+        { source: 'node_1', target: 'node_5' },
+        { source: 'node_2', target: 'node_6' },
+        { source: 'node_4', target: 'node_7' },
+        { source: 'node_5', target: 'node_8' },
+        { source: 'node_6', target: 'node_9' }
+      ]
+    };
+
+    // 状态颜色映射
+    const statusColorMap = {
+      failed: { border: '#FF4D4F', bg: '#FFF2F0' },
+      delayed: { border: '#FAAD14', bg: '#FFFBE6' },
+      waiting: { border: '#D9D9D9', bg: '#FAFAFA' },
+      polluted: { border: '#FA8C16', bg: '#FFF7E6' },
+      pending: { border: '#F0F0F0', bg: '#FFFFFF' }
+    };
+
+    // 注册自定义节点
+    G6.registerNode('impact-task-node', {
+      draw(cfg, group) {
+        const { taskName, owner, taskType, status, isCurrentNode } = cfg;
+        const colors = statusColorMap[status] || statusColorMap.pending;
+
+        const width = 240;
+        const height = 80;
+
+        // 主容器
+        const container = group.addShape('rect', {
+          attrs: {
+            x: -width / 2,
+            y: -height / 2,
+            width,
+            height,
+            radius: 8,
+            fill: colors.bg,
+            stroke: isCurrentNode ? '#1890ff' : '#e8e8e8',
+            lineWidth: isCurrentNode ? 3 : 1,
+            shadowColor: isCurrentNode ? 'rgba(24, 144, 255, 0.3)' : 'rgba(0, 0, 0, 0.05)',
+            shadowBlur: isCurrentNode ? 10 : 5,
+            shadowOffsetX: 0,
+            shadowOffsetY: 2,
+          },
+          name: 'container-shape',
+        });
+
+        // 左侧状态条
+        group.addShape('rect', {
+          attrs: {
+            x: -width / 2,
+            y: -height / 2,
+            width: 4,
+            height,
+            radius: [8, 0, 0, 8],
+            fill: colors.border,
+          },
+          name: 'status-bar',
+        });
+
+        // 当前节点标识
+        if (isCurrentNode) {
+          group.addShape('text', {
+            attrs: {
+              x: -width / 2 + 12,
+              y: -height / 2 + 20,
+              text: '🎯 当前告警',
+              fontSize: 11,
+              fill: '#1890ff',
+              fontWeight: 600,
+            },
+            name: 'current-badge',
+          });
+        }
+
+        // 任务名
+        group.addShape('text', {
+          attrs: {
+            x: -width / 2 + 12,
+            y: isCurrentNode ? -height / 2 + 40 : -height / 2 + 25,
+            text: taskName.length > 28 ? taskName.substring(0, 28) + '...' : taskName,
+            fontSize: 13,
+            fill: '#262626',
+            fontWeight: 600,
+            fontFamily: 'Monaco, Menlo, monospace',
+          },
+          name: 'task-name',
+        });
+
+        // 负责人
+        group.addShape('text', {
+          attrs: {
+            x: -width / 2 + 12,
+            y: isCurrentNode ? -height / 2 + 58 : -height / 2 + 48,
+            text: `👤 ${owner}`,
+            fontSize: 11,
+            fill: '#595959',
+          },
+          name: 'owner',
+        });
+
+        // 任务类型
+        group.addShape('text', {
+          attrs: {
+            x: width / 2 - 12,
+            y: height / 2 - 12,
+            text: taskType,
+            fontSize: 10,
+            fill: '#8c8c8c',
+            textAlign: 'right',
+          },
+          name: 'task-type',
+        });
+
+        return container;
+      },
+      getAnchorPoints() {
+        return [
+          [0.5, 0],    // 上
+          [0.5, 1],    // 下
+          [0, 0.5],    // 左
+          [1, 0.5],    // 右
+        ];
+      },
+    });
+
+    // 初始化图实例
+    const container = document.getElementById('graph-canvas');
+    const width = container.scrollWidth;
+    const height = container.scrollHeight || 600;
+
+    let currentDepth = 3;
+    let graph = null;
+
+    function initGraph(maxDepth) {
+      // 如果已有图实例，先销毁
+      if (graph) {
+        graph.destroy();
+      }
+
+      // 过滤节点（根据层级）
+      const filteredNodes = mockData.nodes.filter(node => node.depth <= maxDepth);
+      const filteredNodeIds = new Set(filteredNodes.map(n => n.id));
+      const filteredEdges = mockData.edges.filter(edge =>
+        filteredNodeIds.has(edge.source) && filteredNodeIds.has(edge.target)
+      );
+
+      graph = new G6.Graph({
+        container: 'graph-canvas',
+        width,
+        height,
+        modes: {
+          default: ['drag-canvas', 'zoom-canvas', 'drag-node'],
+        },
+        layout: {
+          type: 'dagre',
+          rankdir: 'LR',
+          nodesep: 60,
+          ranksep: 100,
+        },
+        defaultNode: {
+          type: 'impact-task-node',
+          size: [240, 80],
+        },
+        defaultEdge: {
+          type: 'polyline',
+          style: {
+            radius: 10,
+            offset: 15,
+            stroke: '#bfbfbf',
+            lineWidth: 2,
+            endArrow: {
+              path: G6.Arrow.triangle(8, 10, 0),
+              fill: '#bfbfbf',
+            },
+          },
+        },
+        nodeStateStyles: {
+          hover: {
+            lineWidth: 2,
+            stroke: '#1890ff',
+          },
+        },
+      });
+
+      // 加载数据
+      graph.data({
+        nodes: filteredNodes,
+        edges: filteredEdges,
+      });
+
+      graph.render();
+
+      // 适应画布
+      setTimeout(() => {
+        graph.fitView(40);
+      }, 100);
+
+      // 节点悬浮事件
+      graph.on('node:mouseenter', (evt) => {
+        const { item } = evt;
+        graph.setItemState(item, 'hover', true);
+
+        const model = item.getModel();
+        const { taskName, owner, taskType, status } = model;
+
+        // 这里可以显示 Tooltip（简化实现）
+        console.log('节点详情:', { taskName, owner, taskType, status });
+      });
+
+      graph.on('node:mouseleave', (evt) => {
+        const { item } = evt;
+        graph.setItemState(item, 'hover', false);
+      });
+
+      // 节点点击事件
+      graph.on('node:click', (evt) => {
+        const model = evt.item.getModel();
+        console.log('点击节点:', model.taskName);
+
+        // 切换到报错详情 Tab
+        switchTab('error');
+      });
+    }
+
+    // 初始化图
+    initGraph(currentDepth);
+
+    // 层级控制
+    document.getElementById('depth-control').addEventListener('change', (e) => {
+      currentDepth = parseInt(e.target.value);
+      initGraph(currentDepth);
+    });
+
+    // Tab 切换
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+
+    function switchTab(tabName) {
+      tabButtons.forEach(btn => {
+        if (btn.dataset.tab === tabName) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      tabPanels.forEach(panel => {
+        if (panel.id === `tab-${tabName}`) {
+          panel.classList.add('active');
+        } else {
+          panel.classList.remove('active');
+        }
+      });
+    }
+
+    tabButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        switchTab(button.dataset.tab);
+      });
+    });
+
+    // 操作按钮处理
+    function handleAction(action) {
+      const messages = {
+        createGroup: '正在创建应急协同群，拉取 4 位受影响负责人...',
+        suspend: '正在挂起下游 56 个任务，防止脏数据蔓延...',
+        rerun: '正在级联重跑当前任务及下游依赖任务...',
+        forceSuccess: '警告：强制置成功将跳过数据校验，请谨慎操作！'
+      };
+
+      alert(messages[action] || '操作执行中...');
+    }
+
+    // 响应式调整
+    window.addEventListener('resize', () => {
+      if (graph) {
+        const newWidth = container.scrollWidth;
+        const newHeight = container.scrollHeight;
+        graph.changeSize(newWidth, newHeight);
+        graph.fitView(40);
+      }
+    });
+  </script>
+</body>
+</html>

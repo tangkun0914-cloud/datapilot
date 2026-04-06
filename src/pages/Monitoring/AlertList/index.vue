@@ -52,6 +52,12 @@
     <TransferModal v-model:open="transferModalOpen" :users="filterOpts.owners" @submit="handleTransferSubmit" />
     <FalsePositiveModal v-model:open="fpModalOpen" @submit="handleFPSubmit" />
     <HistoryModal v-model:open="historyModalOpen" :historyItems="historyItems" />
+
+    <ImpactAssessmentDrawer
+      :open="impactDrawerOpen"
+      :alert="impactAlert"
+      @close="impactDrawerOpen = false"
+    />
   </div>
 </template>
 
@@ -75,6 +81,7 @@ import TransferModal from '../modals/TransferModal.vue'
 import FalsePositiveModal from '../modals/FalsePositiveModal.vue'
 import HistoryModal from '../modals/HistoryModal.vue'
 import AlertDetailDrawer from '../AlertDetail/AlertDetailDrawer.vue'
+import ImpactAssessmentDrawer from '../ImpactAssessment/ImpactAssessmentDrawer.vue'
 import {
   getAlertStats,
   getAlertList,
@@ -116,6 +123,9 @@ const transferModalOpen = ref(false)
 const fpModalOpen = ref(false)
 const historyModalOpen = ref(false)
 const historyItems = ref([])
+
+const impactDrawerOpen = ref(false)
+const impactAlert = ref(null)
 
 onMounted(async () => {
   loading.value = true
@@ -201,6 +211,10 @@ function handleAction(action, alert) {
       break
     case 'falsePositive':
       fpModalOpen.value = true
+      break
+    case 'impact':
+      impactAlert.value = alert
+      impactDrawerOpen.value = true
       break
   }
 }

@@ -37,6 +37,15 @@
           </div>
         </div>
         <div class="header-close">
+          <a-button
+            v-if="alert.status !== 'resolved'"
+            type="primary"
+            size="small"
+            class="impact-entry-btn"
+            @click="$emit('action', 'impact', alert)"
+          >
+            影响评估
+          </a-button>
           <a-button type="text" size="small" @click="$emit('close')">
             <CloseOutlined />
           </a-button>
@@ -57,7 +66,7 @@
                 
                 <template v-if="isQualitySource">
                   <div class="info-item">
-                    <div class="info-label">质量监控名称</div>
+                    <div class="info-label">数据质量规则名称</div>
                     <div class="info-value text-blue-600 cursor-pointer hover:underline">{{ alert.qualityMonitorName }}</div>
                   </div>
                   <div class="info-item">
@@ -144,14 +153,14 @@
  * 右侧滑出抽屉，展示完整告警信息：详情头（第一行：ERROR/WARN 等级、标题+常显复制+AlertStatusBadge+
  * 责任人依次排列；第二行：事件ID，无分割线）、
  * 基础属性表格（监控事件、调度周期、触发时间等）、水平进度时间线、
- * 质量规则明细表（仅质量监控来源）、日志片段、以及底部操作栏。
+ * 质量规则明细表（仅数据质量来源）、日志片段、以及底部操作栏。
  * 根据 alert.status 动态渲染时间线步骤和操作按钮组。
  *
  * @prop {Boolean} open  - 控制抽屉显示/隐藏
  * @prop {Object}  alert - 告警对象，null 时不渲染内容
  *
  * @emits close ()                                - 关闭抽屉
- * @emits action (type: String, alert: Object)    - 操作按钮点击，type: claim/silence/resolve/transfer/falsePositive
+ * @emits action (type: String, alert: Object)    - 操作按钮点击，type: claim/silence/resolve/transfer/falsePositive/impact
  */
 import { computed, ref, watch } from 'vue'
 import { CloseOutlined, CopyOutlined } from '@ant-design/icons-vue'
@@ -172,7 +181,7 @@ defineEmits(['close', 'action'])
 
 const qualityRules = ref([])
 
-const isQualitySource = computed(() => props.alert?.source === '质量监控')
+const isQualitySource = computed(() => props.alert?.source === '数据质量')
 
 /** 详情头仅展示 ERROR / WARN 等级标签 */
 const displaySeverity = computed(() => {
@@ -228,6 +237,14 @@ watch(
 .header-close {
   margin-top: -4px;
   margin-right: -8px;
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.impact-entry-btn {
+  margin-top: 2px;
 }
 
 .header-main {

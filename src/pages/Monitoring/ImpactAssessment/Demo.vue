@@ -8,7 +8,7 @@
           dwd_user_trade_di 字段空值率超标
         </h2>
         <p class="meta">
-          告警时间: 2026-03-19 14:30:00 | 负责人: 王小明 | 告警等级: P1
+          告警时间: 2026-03-19 14:30:00 | 负责人: 王小明(wangxiaoming) | 告警等级: P1
         </p>
       </div>
       <div class="action-bar">
@@ -63,7 +63,7 @@
             <div class="node-type">数据集成</div>
             <div class="node-name">mysql_to_ods_user_trade</div>
             <div class="node-status">延迟 45 分钟</div>
-            <div class="node-owner">负责人: 李四</div>
+            <div class="node-owner">负责人: 李四(lisi)</div>
           </div>
         </div>
 
@@ -73,10 +73,10 @@
         <div class="graph-column">
           <div class="column-title">当前告警节点</div>
           <div class="node-card current-alert">
-            <div class="node-type">质量监控</div>
+            <div class="node-type">数据质量</div>
             <div class="node-name">dwd_user_trade_di</div>
             <div class="node-status">字段 amount 空值率 > 5%</div>
-            <div class="node-owner">负责人: 王小明</div>
+            <div class="node-owner">负责人: 王小明(wangxiaoming)</div>
           </div>
         </div>
 
@@ -89,13 +89,13 @@
             <div class="node-type">数据开发</div>
             <div class="node-name">dws_user_trade_summary_di</div>
             <div class="node-status">等待执行</div>
-            <div class="node-owner">负责人: 张三</div>
+            <div class="node-owner">负责人: 张三(zhangsan)</div>
           </div>
           <div class="node-card affected" v-if="!onlyCoreAssets">
             <div class="node-type">临时表</div>
             <div class="node-name">tmp_trade_mid_01</div>
             <div class="node-status">等待执行</div>
-            <div class="node-owner">负责人: 王小明</div>
+            <div class="node-owner">负责人: 王小明(wangxiaoming)</div>
           </div>
         </div>
 
@@ -109,13 +109,13 @@
             <div class="node-type">BI 报表</div>
             <div class="node-name">CEO 核心经营看板</div>
             <div class="node-status">数据可能不准</div>
-            <div class="node-owner">负责人: 赵六</div>
+            <div class="node-owner">负责人: 赵六(zhaoliu)</div>
           </div>
           <div class="node-card affected" v-if="!onlyCoreAssets">
             <div class="node-type">数据接口</div>
             <div class="node-name">API_Get_User_Trade</div>
             <div class="node-status">正常运行中</div>
-            <div class="node-owner">负责人: 钱七</div>
+            <div class="node-owner">负责人: 钱七(qianqi)</div>
           </div>
         </div>
       </div>
@@ -163,9 +163,9 @@ const columns = [
 ]
 
 const mockTasks = ref([
-  { key: '1', name: 'dws_user_trade_summary_di', type: 'Spark SQL', level: 'P1', owner: '张三', status: '等待上游' },
-  { key: '2', name: 'ads_ceo_dashboard_daily', type: '数据同步', level: 'P0', owner: '赵六', status: '等待上游' },
-  { key: '3', name: 'tmp_trade_mid_01', type: 'Hive SQL', level: 'P3', owner: '王小明', status: '等待上游' },
+  { key: '1', name: 'dws_user_trade_summary_di', type: 'Spark SQL', level: 'P1', owner: '张三(zhangsan)', status: '等待上游' },
+  { key: '2', name: 'ads_ceo_dashboard_daily', type: '数据同步', level: 'P0', owner: '赵六(zhaoliu)', status: '等待上游' },
+  { key: '3', name: 'tmp_trade_mid_01', type: 'Hive SQL', level: 'P3', owner: '王小明(wangxiaoming)', status: '等待上游' },
 ])
 
 const handleCreateGroup = () => {

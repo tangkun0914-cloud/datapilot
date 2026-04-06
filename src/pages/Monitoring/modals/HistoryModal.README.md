@@ -14,8 +14,8 @@ import HistoryModal from '@/pages/Monitoring/modals/HistoryModal.vue'
 
 const historyData = [
   { time: '2026-03-19 14:00', action: '触发告警', color: 'red' },
-  { time: '2026-03-19 14:05', action: '王蕊 认领了告警', color: 'blue' },
-  { time: '2026-03-19 15:30', action: '王蕊 标记为已解决', detail: '根因：上游延迟', color: 'green' },
+  { time: '2026-03-19 14:05', action: '王蕊(wangrui) 认领了告警', color: 'blue' },
+  { time: '2026-03-19 15:30', action: '王蕊(wangrui) 标记为已解决', detail: '根因：上游延迟', color: 'green' },
 ]
 </script>
 ```

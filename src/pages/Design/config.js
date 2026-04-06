@@ -943,7 +943,7 @@ export const componentGroups = [
             file: 'src/pages/Monitoring/modals/TransferModal.vue',
             previewType: 'modal',
             desc: '将告警转交给其他用户的表单弹窗，支持多选目标用户和搜索过滤。',
-            defaultProps: { users: ['王蕊', '王博', '李雷'] },
+            defaultProps: { users: ['王蕊(wangrui)', '王博(wangbo)', '李雷(lilei)'] },
             props: [
               { prop: 'open', type: 'Boolean', desc: '弹窗显示状态（v-model:open）' },
               { prop: 'users', type: 'Array', desc: '可选用户列表' },
@@ -1017,8 +1017,8 @@ export const componentGroups = [
             defaultProps: {
               historyItems: [
                 { time: '2026-03-19 14:00', action: '触发告警', color: 'red' },
-                { time: '2026-03-19 14:05', action: '王蕊 认领了告警', color: 'blue' },
-                { time: '2026-03-19 15:30', action: '王蕊 标记为已解决', detail: '根因：上游延迟', color: 'green' },
+                { time: '2026-03-19 14:05', action: '王蕊(wangrui) 认领了告警', color: 'blue' },
+                { time: '2026-03-19 15:30', action: '王蕊(wangrui) 标记为已解决', detail: '根因：上游延迟', color: 'green' },
               ],
             },
             props: [
@@ -1048,7 +1048,7 @@ export const componentGroups = [
             domain: '告警中心',
             type: 'interaction',
             file: 'src/pages/Monitoring/AlertDetail/AlertDetailDrawer.vue',
-            desc: '告警事件的详情侧边抽屉，展示完整告警信息、进度时间线、质量规则明细（仅质量监控）、日志片段和操作按钮。',
+            desc: '告警事件的详情侧边抽屉，展示完整告警信息、进度时间线、质量规则明细（仅数据质量来源）、日志片段和操作按钮。',
             previewType: 'modal',
             defaultProps: { alert: alertList[0] },
             props: [
@@ -1063,7 +1063,7 @@ export const componentGroups = [
               { id: 'L3-1', name: '详情头部', data: '等级标签、标题（可复制）、状态徽章、责任人、事件ID' },
               { id: 'L3-2', name: '基础信息', data: '监控事件、调度周期/批次、任务实例、触发时间、持续时间' },
               { id: 'L3-3', name: '进度时间线', data: 'ProgressTimeline + alertProgressTimelineScenarios.js 生成步骤' },
-              { id: 'L3-4', name: '质量规则明细', data: 'RuleDetailTable 子组件（仅质量监控来源显示）' },
+              { id: 'L3-4', name: '质量规则明细', data: 'RuleDetailTable 子组件（仅数据质量来源显示）' },
               { id: 'L3-5', name: '日志片段', data: 'AlertLogSection 子组件' },
             ],
             usages: [
@@ -1086,7 +1086,7 @@ export const componentGroups = [
               steps: [
                 { icon: 'alert-circle', title: '触发告警', time: '2026-03-19 14:00', status: 'completed' },
                 { icon: 'send', title: '通知发送', status: 'completed' },
-                { icon: 'user-check', title: '已认领', person: '王蕊', status: 'current' },
+                { icon: 'user-check', title: '已认领', person: '王蕊(wangrui)', status: 'current' },
                 { icon: 'check-circle', title: '已解决', status: 'pending' },
               ],
             },
@@ -1164,7 +1164,7 @@ export const componentGroups = [
             domain: '告警中心',
             type: 'display',
             file: 'src/pages/Monitoring/AlertDetail/RuleDetailTable.vue',
-            desc: '质量监控告警的规则检测明细表格，展示规则名、检测列、条件、预期值、实际值和是否通过。仅在 source 为质量监控时使用。',
+            desc: '数据质量类告警的规则检测明细表格，展示规则名、检测列、条件、预期值、实际值和是否通过。仅在 source 为数据质量时使用。',
             defaultProps: {
               rules: [
                 { ruleName: '空值率检查', column: 'order_id', condition: '空值率 ≤', expected: '0.1%', actual: '5.2%', passed: false },
@@ -1175,7 +1175,7 @@ export const componentGroups = [
               { prop: 'rules', type: 'Array', desc: '规则数组，每项含 ruleName, column, condition, expected, actual, passed' },
             ],
             usages: [
-              { label: '告警详情抽屉（质量监控）', route: '/monitoring/alerts' },
+              { label: '告警详情抽屉（数据质量）', route: '/monitoring/alerts' },
             ],
           },
         ]
@@ -1344,7 +1344,7 @@ export const componentGroups = [
             desc: '移动端独立路由页面（无 AppLayout），展示单条告警详情。包含告警头部信息、进度时间线、详细属性列表、底部操作栏，支持入场动画和安全区适配。',
             previewMultiple: [
               { label: '数据开发告警', route: '/monitoring/mobile/alert/1' },
-              { label: '质量监控告警', route: '/monitoring/mobile/alert/2' }
+              { label: '数据质量告警', route: '/monitoring/mobile/alert/2' }
             ],
             props: [
               { prop: '(无外部 props)', type: '-', desc: '通过路由参数 route.params.eventId 获取告警 ID，并调用 API 获取数据' },
@@ -1352,6 +1352,578 @@ export const componentGroups = [
             usages: [
               { label: '独立路由', route: '/monitoring/mobile/alert/1' },
             ],
+          },
+        ]
+      }
+    ]
+  },
+  // ═══════════════════════════════════════════════
+  //  L1 地图 Agent
+  // ═══════════════════════════════════════════════
+  {
+    groupName: 'L1 地图 Agent',
+    groupLevel: 'L1',
+    children: [
+      {
+        groupName: 'L2 首页与布局',
+        groupLevel: 'L2',
+        items: [
+          {
+            id: 'AgentHome',
+            name: 'AgentHome',
+            label: '地图 Agent 首页',
+            catalogTier: 'productModule',
+            productModule: '地图 Agent',
+            level: '页面级',
+            domain: 'Agent',
+            type: 'page',
+            file: 'src/pages/DataMap/Agent/index.vue',
+            desc: '地图 Agent 的主入口，采用左右分屏布局，整合侧边栏、对话区与右侧详情面板。',
+            children: [
+              { id: 'L3-1', name: '左侧边栏区', data: 'AgentSidebar 挂载、可拖拽调宽、收起/展开与悬浮快捷按钮' },
+              { id: 'L3-2', name: '中间对话区', data: '欢迎态 WelcomeScreen；对话态 MessageList + InputArea；深浅色主题' },
+              { id: 'L3-3', name: '右侧详情面板', data: 'TableDetailPanel 滑入、可拖拽调宽、与卡片 viewDetail 联动' },
+            ],
+            usages: [{ label: '地图 Agent 路由入口', route: '/datamap/agent' }]
+          },
+          {
+            id: 'AgentSidebar',
+            name: 'AgentSidebar',
+            label: 'Agent 侧边栏',
+            catalogTier: 'productModule',
+            productModule: '地图 Agent',
+            level: '模块级',
+            domain: 'Agent',
+            type: 'layout',
+            file: 'src/pages/DataMap/Agent/components/Sidebar/index.vue',
+            desc: '包含新建对话按钮、历史对话列表以及工作台（推荐、收藏、分享）。',
+            events: [
+              { name: 'send', desc: '点击工作台推荐/收藏表时触发，发送对话消息' },
+              { name: 'newChat', desc: '点击新建对话时触发' }
+            ],
+            children: [
+              { id: 'L3-1', name: '历史对话 HistoryList', data: '会话列表、重命名、置顶、分享、删除' },
+              { id: 'L3-2', name: '智能工作台 Workspace', data: '推荐表、收藏表、我分享的对话；折叠面板；点击表一键追问' },
+            ]
+          }
+        ]
+      },
+      {
+        groupName: 'L2 对话消息流',
+        groupLevel: 'L2',
+        items: [
+          {
+            id: 'WelcomeScreen',
+            name: 'WelcomeScreen',
+            label: '欢迎屏幕',
+            catalogTier: 'productModule',
+            productModule: '地图 Agent',
+            level: '子模块级',
+            domain: 'Agent',
+            type: 'ui',
+            file: 'src/pages/DataMap/Agent/components/Chat/WelcomeScreen.vue',
+            desc: '新对话初始状态下的欢迎语和快捷指令区。',
+            events: [{ name: 'send', desc: '点击快捷指令时触发' }],
+            children: [
+              { id: 'L3-1', name: '欢迎引导与品牌区', data: '标题、副文案、Pilot 视觉引导' },
+              { id: 'L3-2', name: '场景化快捷问题', data: '找表、查详情、看血缘等一键填入' },
+              { id: 'L3-3', name: '居中大输入与 @ 提及', data: '与对话页一致的输入体验、表名下拉 mock' },
+            ]
+          },
+          {
+            id: 'InputArea',
+            name: 'InputArea',
+            label: '对话输入区',
+            catalogTier: 'productModule',
+            productModule: '地图 Agent',
+            level: '子模块级',
+            domain: 'Agent',
+            type: 'form',
+            file: 'src/pages/DataMap/Agent/components/Chat/InputArea.vue',
+            desc: '支持多行输入、@ 唤起表选择下拉框的输入区域。',
+            props: [
+              { prop: 'isShareMode', type: 'Boolean', desc: '是否处于分享模式（分享模式下隐藏输入框）' }
+            ],
+            events: [{ name: 'send', desc: '发送消息时触发' }],
+            children: [
+              { id: 'L3-1', name: '多行输入与发送', data: '文本输入、发送按钮状态（灰/品牌紫）' },
+              { id: 'L3-2', name: '@ 表名联想下拉', data: '检索 mock 表列表、键盘上下选择、插入 FQN' },
+              { id: 'L3-3', name: '底部快捷动作', data: '找表、看详情、查血缘等与输入区联动' },
+            ]
+          },
+          {
+            id: 'MessageList',
+            name: 'MessageList',
+            label: '消息列表',
+            catalogTier: 'productModule',
+            productModule: '地图 Agent',
+            level: '子模块级',
+            domain: 'Agent',
+            type: 'list',
+            file: 'src/pages/DataMap/Agent/components/Chat/MessageList.vue',
+            desc: '渲染对话流，支持思考过程展示、打字机效果、多选分享模式以及各类卡片渲染。',
+            props: [
+              { prop: 'messages', type: 'Array', desc: '消息流数据' },
+              { prop: 'isShareMode', type: 'Boolean', desc: '是否开启多选分享模式' }
+            ],
+            defaultProps: {
+              messages: [
+                { id: 1, role: 'user', content: '帮我找一下订单相关的表' },
+                { id: 2, role: 'assistant', content: '为您检索到以下相关的数据表资产：', status: 'success' }
+              ],
+              isShareMode: false
+            },
+            events: [
+              { name: 'update:isShareMode', desc: '切换分享模式状态' },
+              { name: 'viewDetail', desc: '点击查看详情时触发' }
+            ],
+            children: [
+              { id: 'L3-1', name: '问答分组与消息体', data: '用户气泡、AI 气泡、PilotLogo 头像区' },
+              { id: 'L3-2', name: '思考与执行步骤 Steps', data: 'SSE 模拟下的步骤 running/success 展示' },
+              { id: 'L3-3', name: '流式文本输出', data: '打字机式增量拼接 content' },
+              { id: 'L3-4', name: '内嵌业务卡片', data: 'TableCard / TableListCard / LineageCard 条件渲染' },
+              { id: 'L3-5', name: '反馈与操作条', data: '点赞、点踩、分享（对话级）' },
+            ]
+          },
+          {
+            id: 'ShareActionBar',
+            name: 'ShareActionBar',
+            label: '分享底部操作栏',
+            catalogTier: 'productModule',
+            productModule: '地图 Agent',
+            level: '子模块级',
+            domain: 'Agent',
+            type: 'ui',
+            file: 'src/pages/DataMap/Agent/components/Chat/ShareActionBar.vue',
+            desc: '在多选分享模式下，固定在底部的操作栏，包含全选、已选计数、取消和分享按钮。',
+            props: [
+              { prop: 'visible', type: 'Boolean', desc: '是否显示操作栏' },
+              { prop: 'isAllSelected', type: 'Boolean', desc: '是否已全选' },
+              { prop: 'isIndeterminate', type: 'Boolean', desc: '是否半选状态' },
+              { prop: 'selectedCount', type: 'Number', desc: '已选中的消息组数量' }
+            ],
+            defaultProps: {
+              visible: true,
+              isAllSelected: false,
+              isIndeterminate: true,
+              selectedCount: 2
+            },
+            events: [
+              { name: 'toggleAll', desc: '点击全选复选框时触发' },
+              { name: 'cancel', desc: '点击取消按钮时触发' },
+              { name: 'openModal', desc: '点击分享按钮时触发' }
+            ]
+          },
+          {
+            id: 'ShareConfigModal',
+            name: 'ShareConfigModal',
+            label: '分享配置弹窗',
+            catalogTier: 'productModule',
+            productModule: '地图 Agent',
+            level: '子模块级',
+            domain: 'Agent',
+            type: 'modal',
+            file: 'src/pages/DataMap/Agent/components/Chat/ShareConfigModal.vue',
+            desc: '点击分享后弹出的配置窗口，用于设置分享链接的有效期。',
+            previewType: 'modal',
+            props: [
+              { prop: 'open', type: 'Boolean', desc: '控制弹窗显示隐藏' },
+              { prop: 'selectedCount', type: 'Number', desc: '已选中的消息组数量' }
+            ],
+            defaultProps: {
+              selectedCount: 3
+            },
+            events: [
+              { name: 'update:open', desc: '弹窗关闭时触发' },
+              { name: 'confirm', desc: '点击生成链接时触发，返回 { expire }' }
+            ]
+          }
+        ]
+      },
+      {
+        groupName: 'L2 业务卡片',
+        groupLevel: 'L2',
+        items: [
+          {
+            id: 'TableCard',
+            name: 'TableCard',
+            label: '单表详情卡片',
+            catalogTier: 'productModule',
+            productModule: '地图 Agent',
+            level: '子模块级',
+            domain: 'Agent',
+            type: 'card',
+            file: 'src/pages/DataMap/Agent/components/Cards/TableCard.vue',
+            desc: '在对话流中展示单个数据表的核心元信息，包含 DDL/SELECT 快捷操作。',
+            props: [{ prop: 'data', type: 'Object', desc: '表元数据信息' }],
+            defaultProps: {
+              data: {
+                type: 'table',
+                fqn: 'default.user_behavior_log',
+                cnName: '用户行为日志表',
+                owner: '张三(zhangsan)',
+                desc: '记录用户在 App 内的所有点击、浏览、曝光等行为日志，用于用户画像和推荐系统。',
+                tags: ['核心资产', '日志', 'DWD'],
+                columns: [
+                  { name: 'user_id', type: 'string', desc: '用户唯一标识', isPrimary: true },
+                  { name: 'event_type', type: 'string', desc: '事件类型 (click/view/expose)' },
+                  { name: 'page_id', type: 'string', desc: '页面 ID' },
+                  { name: 'event_time', type: 'timestamp', desc: '事件发生时间' }
+                ]
+              }
+            },
+            events: [{ name: 'viewDetail', desc: '点击查看完整详情时触发' }],
+            children: [
+              { id: 'L3-1', name: '表身份与 HIVE 标签', data: 'FQN、中文名、分层标签、复制' },
+              { id: 'L3-2', name: '描述与元信息', data: '负责人、更新时间、收藏态' },
+              { id: 'L3-3', name: 'DDL / SELECT 脚本区', data: '展开代码面板、一键复制' },
+              { id: 'L3-4', name: '查看完整详情', data: '触发右侧 TableDetailPanel' },
+            ]
+          },
+          {
+            id: 'TableListCard',
+            name: 'TableListCard',
+            label: '表资产列表卡片',
+            catalogTier: 'productModule',
+            productModule: '地图 Agent',
+            level: '子模块级',
+            domain: 'Agent',
+            type: 'card',
+            file: 'src/pages/DataMap/Agent/components/Cards/TableListCard.vue',
+            desc: '在对话流中展示检索到的多张相关数据表列表。',
+            props: [{ prop: 'data', type: 'Object', desc: '包含 list 数组和 total 等信息的对象' }],
+            defaultProps: {
+              data: {
+                type: 'table_list',
+                total: 45,
+                list: [
+                  { fqn: 'dm_trade.dws_order_summary_nd', cnName: '订单汇总表', desc: '包含每日订单量、GMV、客单价等核心交易指标汇总，T+1 更新。', tags: ['核心资产', 'DWS'], reason: '表名及描述高度匹配“订单”，且为核心汇总表。', owner: '张三(zhangsan)' },
+                  { fqn: 'dm_trade.dwd_order_detail_di', cnName: '订单明细表', desc: '全渠道订单原子粒度明细数据，包含订单状态、支付金额、优惠明细等。', tags: ['DWD'], reason: '包含订单最全明细数据，下游使用广泛。', owner: '李四(lisi)' }
+                ]
+              }
+            },
+            events: [{ name: 'viewDetail', desc: '点击列表中某张表时触发' }],
+            children: [
+              { id: 'L3-1', name: '检索结果列表行', data: 'HIVE 标签、FQN、中文名片、hover 高亮' },
+              { id: 'L3-2', name: '推荐理由与负责人', data: '理由文案、热度/浏览等指标（与 RecentList 对齐）' },
+              { id: 'L3-3', name: '分页与追问', data: '加载更多、查看全部、继续追问建议' },
+            ]
+          },
+          {
+            id: 'LineageCard',
+            name: 'LineageCard',
+            label: '血缘分析卡片',
+            catalogTier: 'productModule',
+            productModule: '地图 Agent',
+            level: '子模块级',
+            domain: 'Agent',
+            type: 'card',
+            file: 'src/pages/DataMap/Agent/components/Cards/LineageCard.vue',
+            desc: '在对话流中展示 AI 总结的血缘洞察及核心上下游节点。',
+            props: [{ prop: 'data', type: 'Object', desc: '包含 insight, upstream, downstream 的血缘数据' }],
+            defaultProps: {
+              data: {
+                type: 'lineage_card',
+                fqn: 'dm_trade.dws_order_summary_nd',
+                cnName: '订单汇总表',
+                owner: '张三(zhangsan)',
+                insight: '该表的血缘关系较为复杂，其上游主要依赖 `dwd_order_info` 和 `dim_user`。该表是下游 5 张核心报表表的数据源，如果该表延迟，将直接影响【每日销售看板】的产出。',
+                upstream: [
+                  { fqn: 'dm_trade.dwd_order_info', cnName: '订单明细表' },
+                  { fqn: 'dm_base.dim_user', cnName: '用户维度表' }
+                ],
+                downstream: [
+                  { fqn: 'ads_trade.sales_dashboard', cnName: '每日销售看板' },
+                  { fqn: 'ads_trade.user_repurchase_rate', cnName: '用户复购率统计' }
+                ]
+              }
+            },
+            events: [{ name: 'viewDetail', desc: '点击查看完整血缘图时触发' }],
+            children: [
+              { id: 'L3-1', name: 'AI 血缘洞察', data: 'insight 富文本、代码片段样式' },
+              { id: 'L3-2', name: '核心上下游列表', data: 'upstream/downstream 简表' },
+              { id: 'L3-3', name: '完整血缘入口', data: '跳转详情面板血缘 Tab' },
+            ]
+          }
+        ]
+      },
+      {
+        groupName: 'L2 详情面板',
+        groupLevel: 'L2',
+        items: [
+          {
+            id: 'TableDetailPanel',
+            name: 'TableDetailPanel',
+            label: '右侧详情面板',
+            catalogTier: 'productModule',
+            productModule: '地图 Agent',
+            level: '模块级',
+            domain: 'Agent',
+            type: 'panel',
+            file: 'src/pages/DataMap/Agent/components/Detail/TableDetailPanel.vue',
+            desc: '分屏模式下的右侧面板，展示字段、预览、生产、血缘等完整 Tab 信息。',
+            props: [
+              { prop: 'data', type: 'Object', desc: '表完整元数据' },
+              { prop: 'defaultTab', type: 'String', desc: '默认激活的 Tab，如 "fields", "lineage"' }
+            ],
+            children: [
+              { id: 'L3-1', name: '字段详情 Tab', data: '字段表、主键标识、描述' },
+              { id: 'L3-2', name: '数据预览 Tab', data: '样本数据、探查指标' },
+              { id: 'L3-3', name: '生产信息 Tab', data: '调度任务、产出时间、执行历史' },
+              { id: 'L3-4', name: '血缘关系 Tab', data: '表级 G6 血缘、缩放与交互' },
+            ],
+            defaultProps: {
+              data: {
+                fqn: 'dm_trade.dws_order_summary_nd',
+                cnName: '订单汇总表',
+                owner: '张三(zhangsan)',
+                desc: '包含每日订单量、GMV、客单价等核心交易指标汇总，T+1 更新。'
+              },
+              defaultTab: 'fields'
+            },
+            events: [{ name: 'close', desc: '点击关闭面板时触发' }]
+          }
+        ]
+      }
+    ]
+  },
+
+  // ═══════════════════════════════════════════════
+  //  L1 地图 Agent v2（千问风格）
+  // ═══════════════════════════════════════════════
+  {
+    groupName: 'L1 地图 Agent v2',
+    groupLevel: 'L1',
+    children: [
+      {
+        groupName: 'L2 首页框架',
+        groupLevel: 'L2',
+        items: [
+          {
+            id: 'MapAgentHome',
+            name: 'MapAgentHome',
+            label: 'Agent v2 首页框架',
+            catalogTier: 'productModule',
+            productModule: '地图 Agent v2',
+            level: '页面级',
+            domain: 'Agent v2',
+            type: 'page',
+            file: 'src/pages/DataMap/MapAgent/index.vue',
+            demo: () => import('./demos/MapAgentHomeDemo.vue'),
+            desc: 'Agent v2 主入口，采用"左侧边栏 + 中间对话区"双栏弹性布局（无右侧面板），管理会话生命周期和消息流转。复用老 Agent 的 AgentSidebar、WelcomeScreen、InputArea。',
+            children: [
+              { id: 'L3-1', name: '侧边栏拖拽控制 SidebarResize', data: '拖拽手柄、宽度 200~400px、折叠/展开按钮、新建对话按钮' },
+              { id: 'L3-2', name: '会话流转控制 SessionController', data: 'sendMessageStream 回调链：onStep → onMessage → onSuggestions → onDone' },
+            ],
+            usages: [{ label: 'Agent v2 路由入口', route: '/datamap/map-agent' }]
+          },
+        ]
+      },
+      {
+        groupName: 'L2 流式对话输入区',
+        groupLevel: 'L2',
+        items: [
+          {
+            id: 'MapAgentInputArea',
+            name: 'InputArea',
+            label: '对话输入区',
+            catalogTier: 'productModule',
+            productModule: '地图 Agent v2',
+            level: '子模块级',
+            domain: 'Agent v2',
+            type: 'form',
+            file: 'src/pages/DataMap/Agent/components/Chat/InputArea.vue',
+            desc: '支持多行输入、@ 唤起表选择下拉框的流式对话输入区域。Agent v2 直接复用 v1 的输入框组件，保持交互一致性。',
+            props: [
+              { prop: 'isShareMode', type: 'Boolean', desc: '是否处于分享模式（分享模式下隐藏输入框）' },
+              { prop: 'isDarkMode', type: 'Boolean', desc: '是否处于暗色模式' }
+            ],
+            events: [{ event: 'send', params: 'text: String', desc: '发送消息时触发' }],
+            children: [
+              { id: 'L3-1', name: '多行输入与发送', data: '文本输入、发送按钮状态（灰/品牌紫）' },
+              { id: 'L3-2', name: '@ 表名联想下拉', data: '检索 mock 表列表、键盘上下选择、插入 FQN' },
+              { id: 'L3-3', name: '底部快捷动作', data: '找表、看详情、查血缘等与输入区联动' },
+            ],
+            usages: [{ label: 'Agent v2 首页', route: '/datamap/map-agent' }]
+          }
+        ]
+      },
+      {
+        groupName: 'L2 流式对话消息区',
+        groupLevel: 'L2',
+        items: [
+          {
+            id: 'StreamMessageList',
+            name: 'StreamMessageList',
+            label: '流式对话消息区',
+            catalogTier: 'productModule',
+            productModule: '地图 Agent v2',
+            level: '模块级',
+            domain: 'Agent v2',
+            type: 'list',
+            file: 'src/pages/DataMap/MapAgent/components/Chat/MessageList.vue',
+            demo: () => import('./demos/StreamMessageListDemo.vue'),
+            desc: '承载用户与 Agent 的核心交互流，按"用户问 + AI 答"自动分组，AI 回复以 Markdown 流式文本渲染，支持多选分享模式。编排层组件，内部调度 8 个 L3 子模块（含 ConversationShareModal 对话分享配置弹窗）。',
+            props: [
+              { prop: 'messages', type: 'Array', desc: '消息流数据' },
+              { prop: 'isDarkMode', type: 'Boolean', desc: '暗色模式' },
+              { prop: 'isShareMode', type: 'Boolean', desc: '是否多选分享模式' },
+            ],
+            events: [
+              { event: 'send', params: 'text: String', desc: '追问建议点击时触发' },
+              { event: 'update:isShareMode', params: 'visible: Boolean', desc: '切换分享模式状态' },
+            ],
+            children: [
+              { id: 'L3-1', name: '对话分组引擎 MessageGrouping', data: '用户问+AI答自动聚合、分享 checkbox、全选/反选' },
+              { id: 'L3-2', name: '用户消息气泡 UserBubble', data: '品牌紫背景、右对齐、圆角' },
+              { id: 'L3-3', name: 'Agent 思考过程 ThinkingSteps', data: '步骤文本、LoadingOutlined/CheckCircleOutlined' },
+              { id: 'L3-4', name: '流式文本渲染 MarkdownRenderer', data: 'marked.js、GFM、暗色模式、脉冲光标' },
+              { id: 'L3-5', name: '数据呈现表格 DataTable', data: '表格样式、hover复制按钮、制表符文本' },
+              { id: 'L3-6', name: '追问建议引导 SuggestionChips', data: '品牌紫chip、点击发送追问' },
+              { id: 'L3-7', name: '消息反馈与分享 MessageActions', data: '点赞/踩/分享按钮' },
+              { id: 'L3-8', name: '对话分享配置弹窗 ConversationShareModal', data: '已选组数、链接有效期、生成链接（封装 ShareConfigModal）' },
+            ],
+            usages: [{ label: 'Agent v2 对话页', route: '/datamap/map-agent' }]
+          },
+          {
+            id: 'ThinkingSteps',
+            name: 'ThinkingSteps',
+            label: 'Agent 思考过程',
+            catalogTier: 'productModule',
+            productModule: '地图 Agent v2',
+            level: '子模块级',
+            domain: 'Agent v2',
+            type: 'display',
+            file: 'src/pages/DataMap/MapAgent/components/Chat/ThinkingSteps.vue',
+            demo: () => import('./demos/ThinkingStepsDemo.vue'),
+            desc: '展示 Agent 内部推理链路步骤，运行中显示品牌紫 Loading 动画，完成显示绿色对勾。',
+            props: [
+              { prop: 'steps', type: 'Array', desc: '步骤数组，每项含 id、text、status(running/done)' },
+              { prop: 'isDarkMode', type: 'Boolean', desc: '暗色模式' },
+            ],
+            usages: [{ label: 'StreamMessageList', route: '/datamap/map-agent' }]
+          },
+          {
+            id: 'UserBubble',
+            name: 'UserBubble',
+            label: '用户消息气泡',
+            catalogTier: 'productModule',
+            productModule: '地图 Agent v2',
+            level: '子模块级',
+            domain: 'Agent v2',
+            type: 'display',
+            file: 'src/pages/DataMap/MapAgent/components/Chat/UserBubble.vue',
+            demo: () => import('./demos/UserBubbleDemo.vue'),
+            desc: '品牌紫背景的用户消息气泡，右对齐，圆角样式。',
+            props: [
+              { prop: 'content', type: 'String', desc: '用户消息文本' },
+            ],
+            usages: [{ label: 'StreamMessageList', route: '/datamap/map-agent' }]
+          },
+          {
+            id: 'MarkdownRenderer',
+            name: 'MarkdownRenderer',
+            label: '流式文本渲染',
+            catalogTier: 'productModule',
+            productModule: '地图 Agent v2',
+            level: '子模块级',
+            domain: 'Agent v2',
+            type: 'display',
+            file: 'src/pages/DataMap/MapAgent/components/Chat/MarkdownRenderer.vue',
+            demo: () => import('./demos/MarkdownRendererDemo.vue'),
+            desc: '将 AI 回复以 marked.js 渲染为 HTML，支持 GFM 表格/代码/引用块，流式状态显示脉冲光标，内部调用 useTableCopy 为表格注入复制按钮。',
+            props: [
+              { prop: 'content', type: 'String', desc: 'Markdown 文本' },
+              { prop: 'status', type: 'String', desc: '消息状态 (loading/streaming/success)' },
+              { prop: 'isDarkMode', type: 'Boolean', desc: '暗色模式' },
+              { prop: 'hasSteps', type: 'Boolean', desc: '是否有思考步骤（影响 loading 态展示）' },
+            ],
+            usages: [{ label: 'StreamMessageList', route: '/datamap/map-agent' }]
+          },
+          {
+            id: 'useTableCopy',
+            name: 'useTableCopy',
+            label: '数据呈现表格（复制逻辑）',
+            catalogTier: 'productModule',
+            productModule: '地图 Agent v2',
+            level: '子模块级',
+            domain: 'Agent v2',
+            type: 'logic',
+            file: 'src/pages/DataMap/MapAgent/components/Chat/useTableCopy.js',
+            demo: () => import('./demos/UseTableCopyDemo.vue'),
+            desc: '扫描 Markdown 渲染产物中的 <table> 元素，为每个表格注入 hover 出现的复制按钮，点击将表格内容转为制表符文本复制到剪贴板。',
+            props: [
+              { prop: 'injectTableCopyButtons(container, antMessage)', type: 'Function', desc: '核心方法，接收 DOM 容器和 message 实例' },
+            ],
+            usages: [{ label: 'MarkdownRenderer', route: '/datamap/map-agent' }]
+          },
+          {
+            id: 'SuggestionChips',
+            name: 'SuggestionChips',
+            label: '追问建议引导',
+            catalogTier: 'productModule',
+            productModule: '地图 Agent v2',
+            level: '子模块级',
+            domain: 'Agent v2',
+            type: 'interaction',
+            file: 'src/pages/DataMap/MapAgent/components/Chat/SuggestionChips.vue',
+            demo: () => import('./demos/SuggestionChipsDemo.vue'),
+            desc: 'AI 回复结束后展示的追问建议 chip 按钮，品牌紫边框，点击直接发送追问。',
+            props: [
+              { prop: 'suggestions', type: 'Array', desc: '建议文本数组' },
+              { prop: 'isDarkMode', type: 'Boolean', desc: '暗色模式' },
+            ],
+            events: [
+              { event: 'send', params: 'text: String', desc: '点击 chip 时触发，传递建议文本' },
+            ],
+            usages: [{ label: 'StreamMessageList', route: '/datamap/map-agent' }]
+          },
+          {
+            id: 'MessageActions',
+            name: 'MessageActions',
+            label: '消息反馈与分享',
+            catalogTier: 'productModule',
+            productModule: '地图 Agent v2',
+            level: '子模块级',
+            domain: 'Agent v2',
+            type: 'interaction',
+            file: 'src/pages/DataMap/MapAgent/components/Chat/MessageActions.vue',
+            demo: () => import('./demos/MessageActionsDemo.vue'),
+            desc: 'AI 消息底部的操作栏：点赞、踩（触发反馈表单）、分享（进入多选模式）。',
+            props: [
+              { prop: 'msgId', type: 'Number|String', desc: '消息 ID' },
+              { prop: 'isDarkMode', type: 'Boolean', desc: '暗色模式' },
+              { prop: 'actionState', type: 'Object', desc: '当前消息的操作状态 { like, dislike }' },
+            ],
+            events: [
+              { event: 'like', params: 'msgId', desc: '点赞' },
+              { event: 'dislike', params: 'msgId', desc: '点踩' },
+              { event: 'share', params: 'msgId', desc: '触发分享模式' },
+            ],
+            usages: [{ label: 'StreamMessageList', route: '/datamap/map-agent' }]
+          },
+          {
+            id: 'ConversationShareModal',
+            name: 'ConversationShareModal',
+            label: '对话分享配置弹窗',
+            catalogTier: 'productModule',
+            productModule: '地图 Agent v2',
+            level: '子模块级',
+            domain: 'Agent v2',
+            type: 'modal',
+            file: 'src/pages/DataMap/MapAgent/components/Chat/ConversationShareModal.vue',
+            demo: () => import('./demos/ConversationShareModalDemo.vue'),
+            desc: '多选对话后配置分享链接有效期并生成链接。地图 Agent v2 业务封装，内部复用老 Agent 的 ShareConfigModal。',
+            props: [
+              { prop: 'open', type: 'Boolean', desc: '弹窗显示状态（v-model:open）' },
+              { prop: 'isDarkMode', type: 'Boolean', desc: '暗色模式' },
+              { prop: 'selectedCount', type: 'Number', desc: '已选中的对话组数量' },
+            ],
+            events: [
+              { event: 'update:open', params: 'visible: Boolean', desc: '弹窗开关' },
+              { event: 'confirm', params: '{ expire }', desc: '确认生成链接，expire 为 7days | 30days | permanent' },
+            ],
+            usages: [{ label: 'StreamMessageList', route: '/datamap/map-agent' }]
           },
         ]
       }

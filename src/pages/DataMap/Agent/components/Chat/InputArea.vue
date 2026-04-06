@@ -1,72 +1,109 @@
 <template>
   <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t pt-12 pb-6 px-6 transition-colors duration-300" :class="isDarkMode ? 'from-[#0f172a] via-[#0f172a]' : 'from-[#fafafa] via-[#fafafa]'">
-    <div class="max-w-4xl mx-auto">
+    <div class="max-w-4xl mx-auto relative">
       
+      <!-- @ 提及下拉列表 (Popover)：本对话优先，下方「常用」；有筛选词时为「最佳匹配」合并列表 -->
+      <transition name="fade-up">
+        <div v-if="showMentionList" 
+             class="absolute left-0 right-0 bottom-[calc(100%+10px)] rounded-[14px] border shadow-[0_12px_48px_rgba(0,0,0,0.1),0_2px_6px_rgba(0,0,0,0.04)] overflow-hidden z-50 transition-colors duration-300"
+             :class="isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-[#f0f0f0]'">
+          <div class="max-h-[280px] overflow-y-auto custom-scrollbar p-1.5 pt-0">
+            <div v-if="flatMentionItems.length === 0" class="py-4 text-center text-sm" :class="isDarkMode ? 'text-slate-500' : 'text-gray-400'">
+              没有找到匹配的表
+            </div>
+            <template v-else>
+              <template v-for="(row, ri) in mentionRows" :key="'r-' + ri + (row.item?.fqn || row.label || '')">
+                <div 
+                  v-if="row.kind === 'header'" 
+                  class="px-3 py-2 text-[11px] font-medium uppercase tracking-wide sticky top-0 z-[1] transition-colors duration-300"
+                  :class="isDarkMode ? 'text-slate-500 bg-slate-800' : 'text-[#94a3b8] bg-white'"
+                >
+                  {{ row.label }}
+                </div>
+                <div 
+                  v-else
+                  class="flex items-center gap-3 px-2.5 py-2 rounded-lg cursor-pointer transition-colors mb-0.5"
+                  :class="[
+                    selectedIndex === row.flatIndex 
+                      ? (isDarkMode ? 'bg-slate-700' : 'bg-[#f5f7fa]') 
+                      : (isDarkMode ? 'hover:bg-slate-700/50' : 'hover:bg-[#f5f7fa]')
+                  ]"
+                  @click="selectMention(row.item)"
+                  @mouseenter="selectedIndex = row.flatIndex"
+                >
+                  <div class="flex flex-col min-w-0 flex-1 gap-0.5">
+                    <span class="font-mono text-[14px] font-semibold truncate" :class="isDarkMode ? 'text-slate-200' : 'text-[#1e293b]'">{{ row.item.fqn }}</span>
+                    <span class="text-[12px] truncate" :class="isDarkMode ? 'text-slate-500' : 'text-[#94a3b8]'">
+                      {{ row.item.cnName || '—' }} <span class="mx-1 opacity-50">|</span> {{ row.item.owner || '—' }}
+                    </span>
+                  </div>
+                </div>
+              </template>
+            </template>
+          </div>
+        </div>
+      </transition>
+
       <!-- 输入框 -->
       <div class="w-full rounded-xl border p-2 relative transition-all duration-300"
            :class="isDarkMode ? 'bg-slate-800 border-slate-700 focus-within:border-[rgba(108,76,155,1)] focus-within:shadow-[0_0_0_2px_rgba(108,76,155,0.15)]' : 'bg-white border-[#d9d9d9] focus-within:border-[rgba(108,76,155,1)] focus-within:shadow-[0_0_0_2px_rgba(108,76,155,0.15)]'">
         <a-textarea 
+          ref="textareaRef"
           v-model:value="inputValue"
           :auto-size="{ minRows: 1, maxRows: 5 }"
           placeholder="继续追问，或输入 @ 提及表名..."
           class="custom-textarea"
           :class="{ 'dark-textarea': isDarkMode }"
-          @pressEnter="handleEnter"
+          @keydown="handleKeyDown"
+          @input="handleInput"
         />
         
         <div class="flex justify-between items-center px-2 pb-2 pt-2 mt-1">
-          <div class="flex gap-1.5 items-center">
+          <div class="flex gap-2 items-center">
             <!-- @ 关联表按钮 -->
-            <a-button 
-              type="text"
-              size="small" 
-              class="text-[12px] font-medium flex items-center justify-center w-7 h-7 rounded-md transition-all duration-300"
-              :class="isDarkMode ? 'text-slate-400 bg-slate-700/50 hover:text-white hover:bg-slate-700' : 'text-[#666] bg-[#f5f5f5] hover:text-[rgba(108,76,155,1)] hover:bg-[rgba(108,76,155,0.08)]'"
+            <button 
+              class="text-[13px] font-medium flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300 border-none cursor-pointer bg-transparent"
+              :class="isDarkMode ? 'text-slate-400 hover:text-[rgba(168,140,210,1)] hover:bg-[rgba(108,76,155,0.2)]' : 'text-slate-500 hover:text-[rgba(108,76,155,1)] hover:bg-[rgba(108,76,155,0.08)]'"
               title="提及表名"
+              @click="triggerMention"
             >
-              <span class="font-bold text-sm leading-none mt-[-2px]">@</span>
-            </a-button>
+              <span class="font-bold text-base leading-none mt-[-2px]">@</span>
+            </button>
             
-            <div class="w-[1px] h-3 mx-1 transition-colors duration-300" :class="isDarkMode ? 'bg-slate-700' : 'bg-[#e0e0e0]'"></div>
+            <div class="w-[1px] h-3.5 mx-0.5 transition-colors duration-300" :class="isDarkMode ? 'bg-slate-700' : 'bg-slate-200'"></div>
             
             <!-- 意图选择器 -->
-            <a-button 
-              type="text"
-              size="small" 
-              class="text-[12px] font-medium flex items-center gap-1.5 px-2.5 h-7 rounded-md transition-all duration-300"
-              :class="isDarkMode ? 'text-slate-400 hover:text-white hover:bg-slate-700/80' : 'text-[#666] hover:text-[rgba(108,76,155,1)] hover:bg-[rgba(108,76,155,0.08)]'"
+            <button 
+              class="text-[13px] font-medium flex items-center gap-1.5 px-3 h-8 rounded-lg transition-all duration-300 border-none cursor-pointer bg-transparent"
+              :class="isDarkMode ? 'text-slate-400 hover:text-[rgba(168,140,210,1)] hover:bg-[rgba(108,76,155,0.2)]' : 'text-slate-500 hover:text-[rgba(108,76,155,1)] hover:bg-[rgba(108,76,155,0.08)]'"
               @click="fillInput('/找表 ')"
             >
-              <SearchOutlined class="text-[11px] opacity-70" />
+              <SearchOutlined class="text-[13px] opacity-80" />
               找表
-            </a-button>
-            <a-button 
-              type="text"
-              size="small" 
-              class="text-[12px] font-medium flex items-center gap-1.5 px-2.5 h-7 rounded-md transition-all duration-300"
-              :class="isDarkMode ? 'text-slate-400 hover:text-white hover:bg-slate-700/80' : 'text-[#666] hover:text-[rgba(108,76,155,1)] hover:bg-[rgba(108,76,155,0.08)]'"
+            </button>
+            <button 
+              class="text-[13px] font-medium flex items-center gap-1.5 px-3 h-8 rounded-lg transition-all duration-300 border-none cursor-pointer bg-transparent"
+              :class="isDarkMode ? 'text-slate-400 hover:text-[rgba(168,140,210,1)] hover:bg-[rgba(108,76,155,0.2)]' : 'text-slate-500 hover:text-[rgba(108,76,155,1)] hover:bg-[rgba(108,76,155,0.08)]'"
               @click="fillInput('/看详情 @')"
             >
-              <TableOutlined class="text-[11px] opacity-70" />
+              <TableOutlined class="text-[13px] opacity-80" />
               看详情
-            </a-button>
-            <a-button 
-              type="text"
-              size="small" 
-              class="text-[12px] font-medium flex items-center gap-1.5 px-2.5 h-7 rounded-md transition-all duration-300"
-              :class="isDarkMode ? 'text-slate-400 hover:text-white hover:bg-slate-700/80' : 'text-[#666] hover:text-[rgba(108,76,155,1)] hover:bg-[rgba(108,76,155,0.08)]'"
+            </button>
+            <button 
+              class="text-[13px] font-medium flex items-center gap-1.5 px-3 h-8 rounded-lg transition-all duration-300 border-none cursor-pointer bg-transparent"
+              :class="isDarkMode ? 'text-slate-400 hover:text-[rgba(168,140,210,1)] hover:bg-[rgba(108,76,155,0.2)]' : 'text-slate-500 hover:text-[rgba(108,76,155,1)] hover:bg-[rgba(108,76,155,0.08)]'"
               @click="fillInput('/查血缘 @')"
             >
-              <NodeIndexOutlined class="text-[11px] opacity-70" />
+              <NodeIndexOutlined class="text-[13px] opacity-80" />
               查血缘
-            </a-button>
+            </button>
           </div>
           <div 
             class="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300"
             :class="[
               inputValue.trim() 
                 ? 'bg-[rgba(108,76,155,0.1)] text-[rgba(108,76,155,1)] hover:bg-[rgba(108,76,155,1)] hover:text-white' 
-                : (isDarkMode ? 'bg-transparent text-slate-500' : 'bg-transparent text-[#ccc]')
+                : (isDarkMode ? 'bg-transparent text-slate-600' : 'bg-transparent text-slate-300')
             ]"
             @click="handleSend"
           >
@@ -84,35 +121,181 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { SearchOutlined, TableOutlined, NodeIndexOutlined } from '@ant-design/icons-vue'
+import {
+  DEFAULT_FREQUENT_MENTION_TABLES,
+  MENTION_FREQUENT_SECTION_CAP
+} from '@/utils/agentMentionTables.js'
 
-defineProps({
+const props = defineProps({
   isDarkMode: {
     type: Boolean,
     default: false
+  },
+  /** 当前会话中出现的表（由父组件从 messages 聚合） */
+  sessionTables: {
+    type: Array,
+    default: () => []
+  },
+  /** 常用表，用于冷启动与补全；默认内置 mock，可换为接口数据 */
+  frequentTables: {
+    type: Array,
+    default: () => [...DEFAULT_FREQUENT_MENTION_TABLES]
   }
 })
 
 const emit = defineEmits(['send'])
 
 const inputValue = ref('')
+const textareaRef = ref(null)
 
-const fillInput = (text) => {
-  inputValue.value = text
+// --- @ 提及相关逻辑 ---
+const showMentionList = ref(false)
+const mentionSearchText = ref('')
+const mentionStartIndex = ref(-1)
+const selectedIndex = ref(0)
+
+const sessionFqnSet = computed(() => new Set((props.sessionTables || []).map((t) => t.fqn)))
+
+const frequentExcludingSession = computed(() =>
+  (props.frequentTables || []).filter((t) => !sessionFqnSet.value.has(t.fqn))
+)
+
+function filterTablesByKeyword(list, kw) {
+  if (!kw) return list
+  const k = kw.toLowerCase()
+  return list.filter(
+    (t) =>
+      t.fqn.toLowerCase().includes(k) ||
+      (t.cnName && String(t.cnName).toLowerCase().includes(k))
+  )
 }
 
-const handleEnter = (e) => {
-  if (!e.shiftKey) {
+/** 无搜索：本对话 + 常用（常用去重且截断）；有搜索：合并列表「最佳匹配」 */
+const mentionSections = computed(() => {
+  const kw = mentionSearchText.value.trim()
+  const session = filterTablesByKeyword([...(props.sessionTables || [])], kw)
+  const frequentAll = filterTablesByKeyword(frequentExcludingSession.value, kw)
+  const frequentCapped = kw ? frequentAll : frequentAll.slice(0, MENTION_FREQUENT_SECTION_CAP)
+
+  if (kw) {
+    const seen = new Set(session.map((t) => t.fqn))
+    const merged = [...session, ...frequentAll.filter((t) => !seen.has(t.fqn))]
+    return merged.length ? [{ label: '最佳匹配', items: merged }] : []
+  }
+
+  const sections = []
+  if (session.length) sections.push({ label: '本对话', items: session })
+  if (frequentCapped.length) sections.push({ label: '常用', items: frequentCapped })
+  return sections
+})
+
+const flatMentionItems = computed(() => mentionSections.value.flatMap((s) => s.items))
+
+const mentionRows = computed(() => {
+  const rows = []
+  let flatIndex = 0
+  for (const sec of mentionSections.value) {
+    rows.push({ kind: 'header', label: sec.label })
+    for (const item of sec.items) {
+      rows.push({ kind: 'item', item, flatIndex: flatIndex++ })
+    }
+  }
+  return rows
+})
+
+const triggerMention = () => {
+  if (!inputValue.value.endsWith(' ')) {
+    inputValue.value += ' '
+  }
+  inputValue.value += '@'
+  mentionStartIndex.value = inputValue.value.length - 1
+  mentionSearchText.value = ''
+  showMentionList.value = true
+  selectedIndex.value = 0
+  textareaRef.value?.focus()
+}
+
+const handleInput = (e) => {
+  const val = e.target.value
+  
+  const cursorPosition = e.target.selectionStart
+  const lastChar = val.slice(cursorPosition - 1, cursorPosition)
+  
+  if (lastChar === '@') {
+    showMentionList.value = true
+    mentionStartIndex.value = cursorPosition - 1
+    mentionSearchText.value = ''
+    selectedIndex.value = 0
+    return
+  }
+
+  if (showMentionList.value) {
+    if (cursorPosition <= mentionStartIndex.value || val[mentionStartIndex.value] !== '@') {
+      showMentionList.value = false
+      return
+    }
+    
+    const textAfterAt = val.slice(mentionStartIndex.value + 1, cursorPosition)
+    if (textAfterAt.includes(' ')) {
+      showMentionList.value = false
+      return
+    }
+    
+    mentionSearchText.value = textAfterAt
+    selectedIndex.value = 0
+  }
+}
+
+const handleKeyDown = (e) => {
+  if (showMentionList.value) {
+    const n = flatMentionItems.value.length
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      if (n === 0) return
+      selectedIndex.value = (selectedIndex.value + 1) % n
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      if (n === 0) return
+      selectedIndex.value = (selectedIndex.value - 1 + n) % n
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      if (n > 0) {
+        selectMention(flatMentionItems.value[selectedIndex.value])
+      }
+    } else if (e.key === 'Escape') {
+      showMentionList.value = false
+    }
+    return
+  }
+
+  if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault()
     handleSend()
   }
+}
+
+const selectMention = (item) => {
+  const beforeAt = inputValue.value.slice(0, mentionStartIndex.value)
+  inputValue.value = beforeAt + `@${item.fqn} `
+  showMentionList.value = false
+  
+  nextTick(() => {
+    textareaRef.value?.focus()
+  })
+}
+
+const fillInput = (text) => {
+  inputValue.value = text
+  textareaRef.value?.focus()
 }
 
 const handleSend = () => {
   if (!inputValue.value.trim()) return
   emit('send', inputValue.value)
   inputValue.value = ''
+  showMentionList.value = false
 }
 </script>
 
@@ -136,5 +319,14 @@ const handleSend = () => {
 }
 .custom-textarea.dark-textarea::placeholder {
   color: #64748b !important;
+}
+.fade-up-enter-active,
+.fade-up-leave-active {
+  transition: all 0.2s ease;
+}
+.fade-up-enter-from,
+.fade-up-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 </style>

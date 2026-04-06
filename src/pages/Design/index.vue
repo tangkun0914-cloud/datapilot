@@ -136,7 +136,7 @@ import DocRenderer from './DocRenderer.vue'
 import { componentGroups } from './config.js'
 
 /** 模块级 Tab 下产品模块展示顺序（未在列表中的模块若有组件会排在后面） */
-const PRODUCT_MODULE_ORDER = ['数据地图', '监控运维', '数据集成']
+const PRODUCT_MODULE_ORDER = ['数据地图', '地图 Agent', '监控运维', '数据集成']
 
 const levelTabs = [
   { key: 'all', label: '全部', hint: '按源码目录分组，列出全部组件' },

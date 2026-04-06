@@ -2,7 +2,7 @@
   <div class="rule-detail-section" v-if="rules && rules.length">
     <div class="section-header">
       <h3 class="section-title">告警明细</h3>
-      <a-button type="link" size="small">查看完整质量报告</a-button>
+      <a-button type="link" size="small">查看运行记录</a-button>
     </div>
     <a-table
       :dataSource="rules"
@@ -33,8 +33,9 @@
 /**
  * RuleDetailTable - 质量规则明细表
  *
- * 展示质量监控告警的规则检测明细，包括规则名称、监控字段、采集值、基准值、
- * 阈值范围和状态（告警/运行失败/正常）。仅在告警来源为「质量监控」时使用。
+ * 展示数据质量（DQC）类告警的规则检测明细，包括规则名称、监控字段、采集值、基准值、
+ * 阈值范围和状态（告警/运行失败/正常）。仅在告警来源为「数据质量」时使用。
+ * 标题栏右侧为「查看运行记录」链接按钮（占位，可对接运行记录页）。
  *
  * @prop {Array} rules - 规则数组，每项含 { ruleName, field, collectedValue, baseValue, threshold, status }
  *                       status: 'alert'|'failed'|'normal'

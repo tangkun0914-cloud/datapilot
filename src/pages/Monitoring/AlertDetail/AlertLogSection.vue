@@ -25,7 +25,7 @@
  * AlertLogSection - 告警日志片段
  *
  * 根据 alert.monitorEvent 类型智能提取并展示关键日志片段：
- *  - 质量监控：直接展示 logSnippet
+ *  - 数据质量：直接展示 logSnippet
  *  - 离线SLA完成/启动超时：生成 SLA 摘要消息
  *  - 离线任务失败：从 fullLog 中反向搜索 ERROR/Exception 等关键词，取前3行+后10行
  *  - 离线任务超时：取 fullLog 末尾 30 行
@@ -48,7 +48,7 @@ const fullLogText = computed(() => {
 
 const snippetText = computed(() => {
   const alert = props.alert
-  if (alert.source === '质量监控') return alert.logSnippet
+  if (alert.source === '数据质量') return alert.logSnippet
 
   if (alert.monitorEvent === '离线SLA完成超时') {
     return `[SLA告警]：任务当前已运行 ${alert.runningHours || 2} 小时，目前处于 [${alert.taskState || '运行中'}]，尚未完成。`

@@ -156,13 +156,13 @@ java.net.ConnectException: Connection refused (Connection refused)
     logSnippet: '',
   },
 
-  // ================= 质量监控 (Quality Monitoring) =================
+  // ================= 数据质量 (DQC / 原质量监控来源) =================
   {
     id: 'Q-2001',
     title: 'hive_dwd.dwd_trade_order_di',
     severity: 'ERROR',
     status: 'firing',
-    source: '质量监控',
+    source: '数据质量',
     monitorEvent: '质量监控-触发异常阈值',
     qualityMonitorName: '核心表日常监控',
     dataRange: 'dt=20260318',
@@ -175,9 +175,9 @@ java.net.ConnectException: Connection refused (Connection refused)
   {
     id: 'Q-2002',
     title: 'hive_ods.ods_log_info_df',
-    severity: 'WARN',
+    severity: 'ERROR',
     status: 'firing',
-    source: '质量监控',
+    source: '数据质量',
     monitorEvent: '质量监控-运行失败',
     qualityMonitorName: 'ODS层常规监控',
     dataRange: 'dt=20260318',
@@ -185,14 +185,15 @@ java.net.ConnectException: Connection refused (Connection refused)
     triggerTime: '2026-03-19 10:05:00',
     notifyCount: 1,
     owner: '张三(zhangsan)',
-    logSnippet: '[弱规则运行失败] 规则名称: ext_json解析校验 | 校验任务执行异常...\n[弱规则异常] 规则名称: device_id空值校验 | 阈值: < 1000 | 采集值: 1500 | 基准值: -',
+    logSnippet:
+      '[规则运行失败] 规则名称: ext_json解析校验 | 校验任务执行异常: UDF 初始化失败，未完成采样与阈值判定。',
   },
   {
     id: 'Q-2003',
     title: 'mysql_dim.dim_user_info',
     severity: 'ERROR',
     status: 'acked',
-    source: '质量监控',
+    source: '数据质量',
     monitorEvent: '质量监控-运行失败',
     qualityMonitorName: '用户维表核心字段监控',
     dataRange: '全表',
@@ -209,7 +210,7 @@ java.net.ConnectException: Connection refused (Connection refused)
     severity: 'WARN',
     status: 'resolved',
     recoveryType: 'manual',
-    source: '质量监控',
+    source: '数据质量',
     monitorEvent: '质量监控-触发异常阈值',
     qualityMonitorName: '用户行为日志监控',
     dataRange: 'dt=20260318',
@@ -228,7 +229,7 @@ java.net.ConnectException: Connection refused (Connection refused)
     title: 'hive_dwd.dwd_user_profile_df',
     severity: 'WARN',
     status: 'silenced',
-    source: '质量监控',
+    source: '数据质量',
     monitorEvent: '质量监控-触发异常阈值',
     qualityMonitorName: '用户画像标签监控',
     dataRange: 'dt=20260318',
@@ -258,27 +259,98 @@ java.net.ConnectException: Connection refused (Connection refused)
     operator: '师建伟(jianweishi)',
     logSnippet: '',
     fullLog: Array.from({length: 50}, (_, i) => `2026-03-16 09:${String(10 + Math.floor(i/2)).padStart(2, '0')}:${String((i*30)%60).padStart(2, '0')} INFO  [TaskRunner] Processing batch ${i}...`).join('\n') + '\n2026-03-16 09:35:00 WARN  [TaskRunner] Task running longer than usual...',
-  }
+  },
+  {
+    id: 'DEV-3002',
+    title: 'dwd_trade_core_di',
+    severity: 'ERROR',
+    status: 'firing',
+    source: '数据开发',
+    monitorEvent: '离线任务失败',
+    scheduleCycle: '日',
+    scheduleBatch: '2026-03-18 00:00:00',
+    triggerTime: '2026-03-18 08:20:00',
+    taskInstanceId: '256801',
+    notifyCount: 2,
+    owner: '张三(zhangsan)',
+    operator: '-',
+    logSnippet: '[ERROR] Shuffle join OOM on stage 3.',
+  },
+  {
+    id: 'DEV-3003',
+    title: 'ads_weekly_summary',
+    severity: 'WARN',
+    status: 'acked',
+    source: '数据开发',
+    monitorEvent: '离线SLA完成超时',
+    scheduleCycle: '周',
+    scheduleBatch: '2026-03-17 00:00:00',
+    triggerTime: '2026-03-17 10:00:00',
+    taskInstanceId: '256802',
+    notifyCount: 1,
+    owner: '李四(lisi)',
+    operator: '李四(lisi)',
+    claimTime: '2026-03-17 10:05:00',
+    logSnippet: '',
+  },
+  {
+    id: 'DEV-3004',
+    title: 'dws_rt_aggregation_1h',
+    severity: 'WARN',
+    status: 'silenced',
+    source: '数据开发',
+    monitorEvent: '离线SLA启动超时',
+    scheduleCycle: '小时',
+    scheduleBatch: '2026-03-19 11:00:00',
+    triggerTime: '2026-03-19 11:05:00',
+    taskInstanceId: '256803',
+    notifyCount: 1,
+    owner: '王蕊(ruiwang1)',
+    operator: '王蕊(ruiwang1)',
+    silenceUntil: '2026-03-19 18:00',
+    silenceReason: '集群扩容窗口期',
+    logSnippet: '',
+  },
 ]
 
-export const qualityRuleDetails = [
-  {
-    ruleName: 'order_amount空值校验',
-    field: 'order_amount',
-    collectedValue: '582',
-    baseValue: '-',
-    threshold: '= 0',
-    status: 'alert',
-  },
-  {
-    ruleName: 'order_id唯一性校验',
-    field: 'order_id',
-    collectedValue: '-',
-    baseValue: '-',
-    threshold: '= 0',
-    status: 'failed',
-  },
-]
+export const qualityRuleDetails = {
+  'Q-2001': [
+    {
+      ruleName: 'order_amount空值校验',
+      field: 'order_amount',
+      collectedValue: '582',
+      baseValue: '-',
+      threshold: '= 0',
+      status: 'alert',
+    },
+    {
+      ruleName: 'order_id唯一性校验',
+      field: 'order_id',
+      collectedValue: '-',
+      baseValue: '-',
+      threshold: '= 0',
+      status: 'failed',
+    },
+  ],
+  'Q-2005': [
+    {
+      ruleName: 'age_group_coverage',
+      field: 'age_group',
+      collectedValue: '0.65',
+      baseValue: '-',
+      threshold: '> 0.8',
+      status: 'alert',
+    },
+    {
+      ruleName: 'gender_coverage',
+      field: 'gender',
+      collectedValue: '0.72',
+      baseValue: '-',
+      threshold: '> 0.8',
+      status: 'alert',
+    },
+  ],
+}
 
 export const notifyStrategyList = [
   {
@@ -347,7 +419,7 @@ export const notifyStrategyList = [
 ]
 
 export const filterOptions = {
-  sources: ['数据集成', '质量监控', '数据开发'],
+  sources: ['数据集成', '数据质量', '数据开发'],
   events: [
     '离线任务失败',
     '离线任务超时',

@@ -11,7 +11,7 @@
           <a class="alert-title" @click="$emit('titleClick', alert)">{{ alert.title }}</a>
           <AlertStatusBadge :status="alert.status" />
 
-          <template v-if="alert.source !== '质量监控'">
+          <template v-if="alert.source !== '数据质量'">
             <span v-if="alert.scheduleCycle" class="count-tag">调度周期：{{ alert.scheduleCycle }}调度</span>
             <span v-if="alert.scheduleBatch" class="count-tag">调度批次：{{ alert.scheduleBatch }}</span>
           </template>
@@ -63,8 +63,8 @@
         <span class="meta-item">来源: {{ alert.source }}</span>
         <span class="meta-item">监控事件: {{ alert.monitorEvent }}</span>
 
-        <template v-if="alert.source === '质量监控'">
-          <span class="meta-item" v-if="alert.qualityMonitorName">质量监控名称: {{ alert.qualityMonitorName }}</span>
+        <template v-if="alert.source === '数据质量'">
+          <span class="meta-item" v-if="alert.qualityMonitorName">数据质量规则名称: {{ alert.qualityMonitorName }}</span>
           <span class="meta-item" v-if="alert.dataRange">数据范围: {{ alert.dataRange }}</span>
           <span v-if="alert.triggerType" class="trigger-tag">{{ alert.triggerType }}</span>
         </template>
@@ -109,17 +109,23 @@
         <div class="footer-info">
           <span class="footer-label">事件ID:</span><span class="footer-val">{{ alert.id }}</span>
           <span class="footer-sep">|</span>
-          <span class="footer-label">负责人:</span><span class="footer-val">{{ alert.owner }}</span>
-          <template v-if="alert.source !== '质量监控'">
-            <span class="footer-sep">|</span>
-            <span class="footer-label">操作人:</span>
-            <span class="footer-val" v-if="alert.status === 'resolved' && alert.recoveryType === 'auto'">
-              系统自动恢复(触发实例用户：{{ alert.owner }})
-            </span>
-            <span class="footer-val" v-else>{{ alert.operator }}</span>
-          </template>
+          <span class="footer-label">负责人:</span><span class="footer-val">{{ alert.owner || '-' }}</span>
+          <span class="footer-sep">|</span>
+          <span class="footer-label">操作人:</span>
+          <span class="footer-val" v-if="alert.status === 'resolved' && alert.recoveryType === 'auto'">
+            系统自动恢复(触发实例用户：{{ alert.owner || '-' }})
+          </span>
+          <span class="footer-val" v-else>{{ footerOperatorText }}</span>
         </div>
-        <a v-if="alert.source === '质量监控'" class="footer-link">查看运行记录</a>
+        <div v-if="showImpactEntry" class="footer-actions">
+          <button
+            type="button"
+            class="btn btn-sub btn-impact-footer"
+            @click.stop="$emit('action', 'impact', alert)"
+          >
+            影响评估
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -130,6 +136,7 @@
  * AlertCard - 单条告警事件卡片
  *
  * 展示告警基础信息（等级、状态、来源、监控事件）、日志摘要和操作按钮。
+ * 页脚统一展示：事件ID、负责人、操作人（各来源一致；操作人随处置操作更新）。
  * 根据 alert.status 动态切换操作按钮组，根据 alert.severity 和状态
  * 自动应用 ERROR(红)、WARN(蓝)、已解决(绿)、误报(橙) 主题边框色。
  *
@@ -138,7 +145,7 @@
  *
  * @emits check      (checked: Boolean)              - 勾选状态变化
  * @emits titleClick  (alert: Object)                 - 点击告警标题，通常用于打开详情抽屉
- * @emits action      (type: String, alert: Object)   - 操作按钮点击，type 为 claim/silence/resolve/transfer/falsePositive
+ * @emits action      (type: String, alert: Object)   - 操作按钮点击，type 含 claim/silence/resolve/transfer/falsePositive；影响评估在页脚触发，type 为 impact
  */
 import { computed } from 'vue'
 import AlertLogSection from '../AlertDetail/AlertLogSection.vue'
@@ -174,6 +181,19 @@ const cardThemeClass = computed(() => {
   if (props.alert.severity === 'ERROR') return 'theme-error'
   if (props.alert.severity === 'WARN') return 'theme-warn'
   return ''
+})
+
+/** 与原先头部操作区一致：这些状态下展示「影响评估」，入口改到页脚右侧 */
+const showImpactEntry = computed(() =>
+  ['firing', 'acked', 'silenced', 'transferred'].includes(props.alert.status)
+)
+
+/** 操作人：由认领/屏蔽/解决/转交/误报等操作写入 alert.operator；未产生操作时展示「-」 */
+const footerOperatorText = computed(() => {
+  const op = props.alert.operator
+  if (op === undefined || op === null) return '-'
+  const s = String(op).trim()
+  return s === '' ? '-' : op
 })
 </script>
 
@@ -439,6 +459,17 @@ const cardThemeClass = computed(() => {
 .footer-label { color: #999; }
 .footer-val { color: #333; font-weight: 500; margin-left: 4px; }
 .footer-sep { margin: 0 8px; color: #e8e8e8; }
-.footer-link { color: #3b73f6; cursor: pointer; }
-.footer-link:hover { text-decoration: underline; }
+.footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.btn-impact-footer {
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
+}
 </style>

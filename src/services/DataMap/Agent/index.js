@@ -17,14 +17,25 @@ export async function getHistorySessions() {
 }
 
 /**
- * 获取工作台推荐表列表
+ * 获取工作台数据（推荐、收藏、分享）
  */
-export async function getWorkspaceRecommendations() {
+export async function getWorkspaceData() {
   if (IS_MOCK) {
-    const { mockWorkspaceRecommendations } = await import('@/mock/DataMap/Agent/workspace.js')
-    return mockWorkspaceRecommendations()
+    const { mockWorkspaceData } = await import('@/mock/DataMap/Agent/workspace.js')
+    return mockWorkspaceData()
   }
-  return request.get('/api/v1/agent/recommendations')
+  return request.get('/api/v1/agent/workspace')
+}
+
+/**
+ * 删除历史会话（Mock 下走 mockDeleteAgentSession）
+ */
+export async function deleteAgentSession(sessionId) {
+  if (IS_MOCK) {
+    const { mockDeleteAgentSession } = await import('@/mock/DataMap/Agent/history.js')
+    return mockDeleteAgentSession(sessionId)
+  }
+  return request.delete(`/api/v1/agent/sessions/${encodeURIComponent(String(sessionId))}`)
 }
 
 /**
@@ -37,10 +48,10 @@ export async function getWorkspaceRecommendations() {
  * @param {function} onDone 结束回调
  * @param {function} onError 错误回调
  */
-export async function sendMessageStream({ sessionId, content, onMessage, onCard, onDone, onError }) {
+export async function sendMessageStream({ sessionId, content, onStep, onMessage, onCard, onDone, onError }) {
   if (IS_MOCK) {
     const { mockSendMessageStream } = await import('@/mock/DataMap/Agent/chat.js')
-    return mockSendMessageStream({ content, onMessage, onCard, onDone })
+    return mockSendMessageStream({ content, onStep, onMessage, onCard, onDone })
   }
 
   // 真实环境的 SSE 实现 (示例)

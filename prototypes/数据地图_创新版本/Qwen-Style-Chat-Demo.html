@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qwen 风格流式对话 Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f9fafb;
+        }
+        
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+
+        /* 闪烁的光标效果 */
+        .cursor-blink {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background-color: #3b82f6;
+            vertical-align: middle;
+            margin-left: 2px;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Markdown 样式模拟 */
+        .markdown-body p {
+            margin-bottom: 0.75em;
+            line-height: 1.6;
+        }
+        .markdown-body p:last-child {
+            margin-bottom: 0;
+        }
+        .markdown-body table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+            font-size: 0.9em;
+        }
+        .markdown-body th, .markdown-body td {
+            border: 1px solid #e5e7eb;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .markdown-body th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+        }
+        .markdown-body code {
+            background-color: #f3f4f6;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="flex flex-col h-screen overflow-hidden bg-white">
+        <!-- 头部 -->
+        <header class="h-14 border-b border-gray-100 flex items-center px-6 bg-white shrink-0 z-10">
+            <div class="flex items-center gap-2 text-gray-800 font-medium">
+                <i class="fa-solid fa-robot text-blue-600"></i>
+                <span>DataMap Agent (Qwen 风格预览)</span>
+            </div>
+            <div class="ml-auto text-sm text-gray-400">
+                纯文本流式交互演示
+            </div>
+        </header>
+
+        <!-- 聊天区域 -->
+        <main class="flex-1 overflow-y-auto p-4 md:p-6 scroll-smooth" ref="chatContainer">
+            <div class="max-w-4xl mx-auto flex flex-col gap-6 pb-20">
+                
+                <!-- 欢迎语 -->
+                <div class="flex gap-4">
+                    <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-1">
+                        <i class="fa-solid fa-robot text-blue-600 text-sm"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-gray-800 text-[15px] leading-relaxed markdown-body mt-1.5">
+                            <p>你好！我是 DataMap Agent。我可以帮你查询数据表、分析数据血缘、或者解答关于数据资产的问题。</p>
+                            <p>你可以这样问我：</p>
+                            <ul class="list-disc pl-5 text-gray-600 space-y-1 mt-2">
+                                <li>帮我找一下用户交易相关的表</li>
+                                <li>这张 `ads_user_trade_di` 表的下游有哪些？</li>
+                                <li>解释一下什么是数据血缘</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 消息列表 -->
+                <div v-for="(msg, index) in messages" :key="index" class="flex gap-4" :class="{'flex-row-reverse': msg.role === 'user'}">
+                    
+                    <!-- 头像 -->
+                    <div v-if="msg.role === 'assistant'" class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-1">
+                        <i class="fa-solid fa-robot text-blue-600 text-sm"></i>
+                    </div>
+                    <div v-else class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0 mt-1">
+                        <i class="fa-solid fa-user text-gray-500 text-sm"></i>
+                    </div>
+
+                    <!-- 消息内容 -->
+                    <div class="flex-1 min-w-0" :class="{'flex flex-col items-end': msg.role === 'user'}">
+                        <!-- 用户消息气泡 -->
+                        <div v-if="msg.role === 'user'" class="bg-blue-50 text-gray-800 px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-[85%] text-[15px] leading-relaxed break-words">
+                            {{ msg.content }}
+                        </div>
+                        
+                        <!-- AI 消息 (流式排版) -->
+                        <div v-else class="text-gray-800 text-[15px] leading-relaxed markdown-body mt-1.5 w-full">
+                            <div v-html="renderMarkdown(msg.displayContent)"></div>
+                            <span v-if="msg.isStreaming" class="cursor-blink"></span>
+                        </div>
+                        
+                        <!-- 工具调用过程展示 (类似千问的思考过程/插件调用) -->
+                        <div v-if="msg.role === 'assistant' && msg.toolCalls && msg.toolCalls.length > 0" class="mt-3 w-full">
+                            <div v-for="(tool, tIdx) in msg.toolCalls" :key="tIdx" class="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-md text-xs text-gray-500 mb-2">
+                                <i v-if="tool.status === 'running'" class="fa-solid fa-circle-notch fa-spin text-blue-500"></i>
+                                <i v-else class="fa-solid fa-check text-green-500"></i>
+                                <span>{{ tool.desc }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- 输入区域 -->
+        <footer class="bg-white border-t border-gray-100 p-4 shrink-0">
+            <div class="max-w-4xl mx-auto relative">
+                <div class="relative flex items-end border border-gray-300 rounded-xl bg-white shadow-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
+                    <textarea 
+                        v-model="inputText"
+                        @keydown.enter.prevent="sendMessage"
+                        placeholder="给 DataMap Agent 发送消息..." 
+                        class="w-full max-h-32 min-h-[44px] py-3 pl-4 pr-12 bg-transparent border-none focus:ring-0 resize-none text-[15px] leading-relaxed"
+                        rows="1"
+                        :disabled="isGenerating"
+                    ></textarea>
+                    <button 
+                        @click="sendMessage"
+                        :disabled="!inputText.trim() || isGenerating"
+                        class="absolute right-2 bottom-2 w-8 h-8 flex items-center justify-center rounded-lg text-white transition-colors disabled:opacity-50"
+                        :class="inputText.trim() && !isGenerating ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300'"
+                    >
+                        <i class="fa-solid fa-arrow-up"></i>
+                    </button>
+                </div>
+                <div class="text-center mt-2 text-xs text-gray-400">
+                    内容由 AI 生成，请仔细甄别
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const { createApp, ref, nextTick, computed } = Vue;
+
+        createApp({
+            setup() {
+                const inputText = ref('');
+                const messages = ref([]);
+                const isGenerating = ref(false);
+                const chatContainer = ref(null);
+
+                // 模拟的回复库
+                const mockResponses = [
+                    {
+                        text: "我帮你查到了 `ads_user_trade_di` 表的信息。这是一张**用户交易日表**。\n\n**基础信息：**\n- 负责人：张三\n- 所属库：`data_warehouse`\n- 更新频率：每天凌晨 2:00\n\n**核心字段：**\n| 字段名 | 类型 | 描述 |\n|---|---|---|\n| user_id | string | 用户唯一ID |\n| trade_amount | decimal | 交易总金额 |\n| trade_count | int | 交易笔数 |\n| dt | string | 分区日期 |\n\n你还需要了解这张表的血缘关系或者数据质量情况吗？",
+                        tools: [{ desc: "查询表元数据: ads_user_trade_di", status: "done" }]
+                    },
+                    {
+                        text: "好的，这张表的下游主要有 3 个应用：\n\n1. **BI 报表**：每日经营分析看板（依赖 `trade_amount` 字段）\n2. **算法模型**：用户高价值预测模型（依赖 `trade_count` 和 `trade_amount`）\n3. **数据服务**：用户画像 API（提供给 CRM 系统使用）\n\n如果这张表延迟，会直接影响早上 9 点的经营分析早报。需要我帮你拉起一个异常影响评估吗？",
+                        tools: [{ desc: "分析下游血缘: ads_user_trade_di", status: "done" }]
+                    }
+                ];
+
+                let responseIndex = 0;
+
+                const scrollToBottom = () => {
+                    nextTick(() => {
+                        if (chatContainer.value) {
+                            chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+                        }
+                    });
+                };
+
+                // 简单的 Markdown 渲染器 (仅用于 Demo)
+                const renderMarkdown = (text) => {
+                    if (!text) return '';
+                    let html = text
+                        // 粗体
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        // 行内代码
+                        .replace(/`(.*?)`/g, '<code>$1</code>')
+                        // 换行
+                        .replace(/\n\n/g, '</p><p>')
+                        .replace(/\n/g, '<br/>');
+                    
+                    // 简单表格处理
+                    if (html.includes('|')) {
+                        const rows = html.split('<br/>').filter(row => row.trim().startsWith('|'));
+                        if (rows.length > 0) {
+                            let tableHtml = '<table>';
+                            let isHeader = true;
+                            
+                            // 提取表格前的内容
+                            const beforeTable = html.substring(0, html.indexOf(rows[0]));
+                            // 提取表格后的内容
+                            const afterTable = html.substring(html.indexOf(rows[rows.length-1]) + rows[rows.length-1].length);
+
+                            rows.forEach(row => {
+                                if (row.includes('---')) {
+                                    isHeader = false;
+                                    return;
+                                }
+                                const cells = row.split('|').filter(c => c.trim() !== '');
+                                tableHtml += '<tr>';
+                                cells.forEach(cell => {
+                                    if (isHeader) {
+                                        tableHtml += `<th>${cell.trim()}</th>`;
+                                    } else {
+                                        tableHtml += `<td>${cell.trim()}</td>`;
+                                    }
+                                });
+                                tableHtml += '</tr>';
+                            });
+                            tableHtml += '</table>';
+                            
+                            html = beforeTable + tableHtml + afterTable;
+                        }
+                    }
+                    
+                    return `<p>${html}</p>`;
+                };
+
+                const simulateStreaming = async (fullText, msgObj) => {
+                    msgObj.isStreaming = true;
+                    msgObj.displayContent = '';
+                    
+                    // 模拟工具调用时间
+                    if (msgObj.toolCalls && msgObj.toolCalls.length > 0) {
+                        msgObj.toolCalls[0].status = 'running';
+                        await new Promise(r => setTimeout(r, 1000));
+                        msgObj.toolCalls[0].status = 'done';
+                    }
+
+                    // 模拟打字效果
+                    const chars = fullText.split('');
+                    for (let i = 0; i < chars.length; i++) {
+                        msgObj.displayContent += chars[i];
+                        scrollToBottom();
+                        // 随机延迟 10-40ms
+                        await new Promise(r => setTimeout(r, Math.random() * 30 + 10));
+                    }
+                    
+                    msgObj.isStreaming = false;
+                    isGenerating.value = false;
+                };
+
+                const sendMessage = () => {
+                    const text = inputText.value.trim();
+                    if (!text || isGenerating.value) return;
+
+                    // 添加用户消息
+                    messages.value.push({
+                        role: 'user',
+                        content: text
+                    });
+
+                    inputText.value = '';
+                    isGenerating.value = true;
+                    scrollToBottom();
+
+                    // 准备 AI 响应
+                    const mockRes = mockResponses[responseIndex % mockResponses.length];
+                    responseIndex++;
+
+                    const aiMsg = {
+                        role: 'assistant',
+                        content: mockRes.text,
+                        displayContent: '',
+                        isStreaming: true,
+                        toolCalls: mockRes.tools ? JSON.parse(JSON.stringify(mockRes.tools)) : []
+                    };
+                    
+                    messages.value.push(aiMsg);
+                    
+                    // 开始流式输出
+                    setTimeout(() => {
+                        simulateStreaming(aiMsg.content, aiMsg);
+                    }, 500);
+                };
+
+                return {
+                    inputText,
+                    messages,
+                    isGenerating,
+                    sendMessage,
+                    chatContainer,
+                    renderMarkdown
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

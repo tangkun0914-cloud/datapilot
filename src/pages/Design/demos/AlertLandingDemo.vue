@@ -1,7 +1,7 @@
 <template>
   <div class="alert-landing-demo">
     <a-button type="primary" @click="openModal('dev')">打开 数据开发告警</a-button>
-    <a-button @click="openModal('quality')" style="margin-left: 16px;">打开 质量监控告警</a-button>
+    <a-button @click="openModal('quality')" style="margin-left: 16px;">打开 数据质量告警</a-button>
 
     <a-modal
       v-model:open="visible"
@@ -35,7 +35,7 @@ function openModal(type) {
   } else {
     const route = router.resolve({ path: '/monitoring/mobile/alert/2' })
     iframeSrc.value = route.href
-    title.value = '手机端预览 - 质量监控告警'
+    title.value = '手机端预览 - 数据质量告警'
   }
   visible.value = true
 }

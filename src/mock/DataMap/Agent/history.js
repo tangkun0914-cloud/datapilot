@@ -1,3 +1,12 @@
+/** Mock：删除会话（模拟服务端成功） */
+export function mockDeleteAgentSession(sessionId) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ success: true, id: sessionId })
+    }, 200)
+  })
+}
+
 export function mockHistorySessions() {
   return new Promise((resolve) => {
     setTimeout(() => {

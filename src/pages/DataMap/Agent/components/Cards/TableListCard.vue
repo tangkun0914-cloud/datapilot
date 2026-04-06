@@ -8,23 +8,27 @@
       <div 
         v-for="item in currentList" 
         :key="item.fqn" 
-        class="flex items-start py-4 border-b border-[#f1f5f9] transition-colors hover:bg-[#f1f5f9] hover:rounded-lg cursor-pointer group px-2"
+        class="flex items-start py-4 border-b border-[#f1f5f9] transition-colors hover:bg-[#f1f5f9] hover:rounded-lg cursor-pointer group px-3"
         @click="$emit('view', item.fqn)"
       >
-        <div class="mr-4 shrink-0 mt-0.5">
-          <DataSourceIcon :type="item.serviceType || 'hive'" :size="28" />
-        </div>
-        
         <div class="flex-1 min-w-0 mr-6 flex flex-col justify-center">
           <div class="flex items-center gap-2 mb-1">
+            <span class="px-2 py-0.5 text-[11px] font-bold rounded border shrink-0"
+                  :class="isDarkMode 
+                    ? 'bg-[rgba(108,76,155,0.2)] text-[rgba(168,140,210,1)] border-[rgba(108,76,155,0.4)]' 
+                    : 'bg-[rgba(108,76,155,0.08)] text-[rgba(108,76,155,1)] border-[rgba(108,76,155,0.2)]'">
+              HIVE
+            </span>
             <span class="text-[15px] font-semibold text-[rgba(108,76,155,1)] whitespace-nowrap overflow-hidden text-ellipsis transition-colors group-hover:text-[rgba(108,76,155,0.8)] font-mono" :title="item.fqn">
               {{ item.fqn }}
+            </span>
+            <span v-if="item.cnName" class="text-[13px] px-2 py-0.5 rounded ml-1 shrink-0" :class="isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-[#f1f5f9] text-[#64748b]'">
+              {{ item.cnName }}
             </span>
           </div>
           
           <div class="text-[13px] color-[#64748b] whitespace-nowrap overflow-hidden text-ellipsis flex items-center mb-1">
-            <span class="text-xs text-gray-500">{{ item.cnName || item.name || '-' }}</span>
-            <span class="ml-4 text-xs flex items-center gap-1 opacity-80 text-gray-500">
+            <span class="text-xs flex items-center gap-1 opacity-80 text-gray-500">
               <UserOutlined class="text-[11px]" /> {{ item.owner || '未知(unknown)' }}
             </span>
           </div>
@@ -105,7 +109,6 @@ import {
   FireFilled, EyeOutlined
 } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
-import DataSourceIcon from '@/pages/DataMap/components/DataSourceIcon.vue'
 
 const props = defineProps({
   data: {
@@ -137,9 +140,9 @@ const handleLoadMore = () => {
   // 模拟网络请求加载下一页数据
   setTimeout(() => {
     const mockNewItems = [
-      { fqn: `dm_trade.dws_new_table_2026_${Math.floor(Math.random()*1000)}_1`, cnName: '新增订单表1', desc: '加载更多模拟数据', owner: '测试(test)' },
-      { fqn: `dm_trade.dws_new_table_2026_${Math.floor(Math.random()*1000)}_2`, cnName: '新增订单表2', desc: '加载更多模拟数据', owner: '测试(test)' },
-      { fqn: `dm_trade.dws_new_table_2026_${Math.floor(Math.random()*1000)}_3`, cnName: '新增订单表3', desc: '加载更多模拟数据', owner: '测试(test)' },
+      { fqn: `dm_trade.dws_new_table_2026_${Math.floor(Math.random()*1000)}_1`, cnName: '新增订单表1', desc: '加载更多模拟数据', owner: '测试(ceshi)' },
+      { fqn: `dm_trade.dws_new_table_2026_${Math.floor(Math.random()*1000)}_2`, cnName: '新增订单表2', desc: '加载更多模拟数据', owner: '测试(ceshi)' },
+      { fqn: `dm_trade.dws_new_table_2026_${Math.floor(Math.random()*1000)}_3`, cnName: '新增订单表3', desc: '加载更多模拟数据', owner: '测试(ceshi)' },
     ]
     currentList.value = [...currentList.value, ...mockNewItems]
     isLoadingMore.value = false

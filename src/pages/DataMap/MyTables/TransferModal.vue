@@ -70,12 +70,12 @@ const loading = ref(false)
 const maxDisplay = 5
 
 const mockUsers = [
-  { name: '李四', email: 'lisi' },
-  { name: '王五', email: 'wangwu' },
-  { name: '赵六', email: 'zhaoliu' },
-  { name: '孙七', email: 'sunqi' },
-  { name: '周八', email: 'zhouba' },
-  { name: '吴九', email: 'wujiu' },
+  { name: '李四(lisi)', email: 'lisi' },
+  { name: '王五(wangwu)', email: 'wangwu' },
+  { name: '赵六(zhaoliu)', email: 'zhaoliu' },
+  { name: '孙七(sunqi)', email: 'sunqi' },
+  { name: '周八(zhouba)', email: 'zhouba' },
+  { name: '吴九(wujiu)', email: 'wujiu' },
 ]
 
 const userOptions = computed(() =>
