@@ -453,7 +453,10 @@ export function materializeFullImpactTopology(topology, alert, branchChildrenOf)
 }
 
 /**
- * 仅保留「根 → 各核心任务」关键路径上的节点与边（反向从 isCore 沿父边回溯到根）
+ * 仅保留「根 → 各核心任务」关键路径上的节点与边（PRD：F ∩ U）
+ * - F：从根节点沿 dependency 边正向可达的子集
+ * - U：各 isCore 及其所有上游（父边反向 BFS）
+ * - 保留 F ∩ U，剔除与根无通路的孤立「核心」及非路径分支
  * @param {object} topology
  */
 export function filterTopologyToCorePaths(topology) {
@@ -469,28 +472,63 @@ export function filterTopologyToCorePaths(topology) {
   const rootId = rootNode ? rootNode.id : rawNodes[0]?.id
 
   const reverseAdj = new Map()
+  const forwardAdj = new Map()
   for (const e of rawEdges) {
     if (e.edgeType === 'penetrate') continue
     if (!reverseAdj.has(e.target)) reverseAdj.set(e.target, [])
     reverseAdj.get(e.target).push(e.source)
+    if (!forwardAdj.has(e.source)) forwardAdj.set(e.source, [])
+    forwardAdj.get(e.source).push(e.target)
   }
 
-  const keepNodeIds = new Set(coreNodeIds)
-  if (rootId) keepNodeIds.add(rootId)
+  /** 无核心任务：仅保留根（与历史行为一致） */
+  if (coreNodeIds.size === 0) {
+    const keep = rootId ? new Set([rootId]) : new Set()
+    rawNodes = rawNodes.filter((n) => keep.has(n.id))
+    rawEdges = rawEdges.filter((e) => keep.has(e.source) && keep.has(e.target))
+    return {
+      ...topology,
+      nodes: rawNodes,
+      edges: rawEdges,
+    }
+  }
 
-  const queue = Array.from(coreNodeIds)
-  const visited = new Set(coreNodeIds)
-
-  while (queue.length) {
-    const currId = queue.shift()
+  /** U：各核心及其所有上游 */
+  const U = new Set(coreNodeIds)
+  const qU = Array.from(coreNodeIds)
+  const visU = new Set(coreNodeIds)
+  while (qU.length) {
+    const currId = qU.shift()
     const parents = reverseAdj.get(currId) || []
     for (const parentId of parents) {
-      keepNodeIds.add(parentId)
-      if (!visited.has(parentId)) {
-        visited.add(parentId)
-        queue.push(parentId)
+      U.add(parentId)
+      if (!visU.has(parentId)) {
+        visU.add(parentId)
+        qU.push(parentId)
       }
     }
+  }
+
+  /** F：从根正向可达 */
+  const F = new Set()
+  if (rootId) {
+    const qF = [rootId]
+    F.add(rootId)
+    while (qF.length) {
+      const currId = qF.shift()
+      for (const t of forwardAdj.get(currId) || []) {
+        if (!F.has(t)) {
+          F.add(t)
+          qF.push(t)
+        }
+      }
+    }
+  }
+
+  /** F ∩ U（严格 PRD：仅根可达且位于某「根→核心」上游闭包内的节点） */
+  const keepNodeIds = new Set()
+  for (const id of F) {
+    if (U.has(id)) keepNodeIds.add(id)
   }
 
   rawNodes = rawNodes.filter((n) => keepNodeIds.has(n.id))

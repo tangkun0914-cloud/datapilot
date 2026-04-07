@@ -1340,7 +1340,7 @@ export const componentGroups = [
             domain: '影响评估',
             type: 'display',
             file: 'src/pages/Monitoring/ImpactAssessment/components/GlobalImpactList.vue',
-            desc: 'Tab2：统一下游任务实例列表（实例 ID、批次、负责人、状态）；分页默认 100 条；支持仅看核心任务；isPolluted 紫色标签。',
+            desc: 'Tab2：统一下游任务实例列表（实例 ID、批次、负责人、状态）；分页默认 100 条；支持任务名搜索（子串、忽略大小写）与仅看核心任务（AND）；isPolluted 紫色标签。',
             demo: () => import('./demos/ImpactGlobalImpactListDemo.vue'),
             props: [
               { prop: 'summary', type: 'Object', desc: 'affectedTaskInstances / listGranularity' },

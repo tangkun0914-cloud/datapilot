@@ -313,7 +313,7 @@ function drawImpactTaskNode(cfg, group) {
     group.addShape('text', {
       attrs: {
         x: tagRightX + tw / 2,
-        y: slaTagY + tagH / 2,
+        y: tagY + tagH / 2,
         text: slaTagUi.label,
         fill: slaTagUi.color,
         fontSize: 10,

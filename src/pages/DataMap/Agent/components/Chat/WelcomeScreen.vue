@@ -66,10 +66,14 @@
             {{ mentionSearchText ? '搜索结果' : '最近访问的表' }}
           </div>
           <div class="max-h-[240px] overflow-y-auto custom-scrollbar p-1">
-            <div v-if="filteredMentionList.length === 0" class="py-4 text-center text-sm" :class="isDarkMode ? 'text-slate-500' : 'text-gray-400'">
+            <div v-if="isSearching" class="py-4 text-center text-sm flex items-center justify-center gap-2" :class="isDarkMode ? 'text-slate-500' : 'text-gray-400'">
+              <LoadingOutlined /> 搜索中...
+            </div>
+            <div v-else-if="filteredMentionList.length === 0" class="py-4 text-center text-sm" :class="isDarkMode ? 'text-slate-500' : 'text-gray-400'">
               没有找到匹配的表
             </div>
             <div
+              v-else
               v-for="(item, index) in filteredMentionList"
               :key="item.fqn"
               class="flex items-start px-3 py-2.5 rounded-lg cursor-pointer transition-colors"
@@ -132,9 +136,10 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from 'vue'
-import { ExperimentFilled, UserOutlined } from '@ant-design/icons-vue'
+import { ref, computed, nextTick, watch } from 'vue'
+import { ExperimentFilled, UserOutlined, LoadingOutlined } from '@ant-design/icons-vue'
 import PilotLogo from '@/components/Copilot/PilotLogo.vue'
+import { searchAssets } from '@/services/DataMap/searchService.js'
 
 defineProps({
   isDarkMode: {
@@ -153,9 +158,11 @@ const showMentionList = ref(false)
 const mentionSearchText = ref('')
 const mentionStartIndex = ref(-1)
 const selectedIndex = ref(0)
+const isSearching = ref(false)
+const searchResults = ref([])
 
-// Mock 数据表列表（均为 Hive 场景，不含其它数据源）
-const mockTables = [
+// 默认常用表（冷启动展示）
+const defaultFrequentTables = [
   { fqn: 'dm_trade.dws_order_summary_nd', cnName: '订单汇总表', owner: '张三(zhangsan)', desc: '包含每日订单量、GMV、客单价等核心交易指标汇总，T+1 更新。' },
   { fqn: 'dm_trade.dwd_order_detail_di', cnName: '订单明细表', owner: '李四(lisi)', desc: '全渠道订单原子粒度明细，含订单状态、支付金额、优惠明细等。' },
   { fqn: 'default.user_behavior_log', cnName: '用户行为日志表', owner: '王五(wangwu)', desc: '用户在 App 内的点击、浏览、曝光等行为日志，用于画像与推荐。' },
@@ -163,14 +170,45 @@ const mockTables = [
   { fqn: 'dm_trade.dim_pay_type', cnName: '支付方式维表', owner: '郑十(zhengshi)', desc: '支付方式枚举与说明，如微信、支付宝、银行卡等，供订单分析关联。' },
 ]
 
+let searchTimeout = null
+watch(mentionSearchText, async (newVal) => {
+  const kw = newVal.trim()
+  if (!kw) {
+    searchResults.value = []
+    isSearching.value = false
+    return
+  }
+  
+  isSearching.value = true
+  if (searchTimeout) clearTimeout(searchTimeout)
+  
+  searchTimeout = setTimeout(async () => {
+    try {
+      const res = await searchAssets({ q: kw, size: 20 })
+      const hits = res?.hits?.hits || []
+      searchResults.value = hits.map(hit => {
+        const source = hit._source || {}
+        return {
+          fqn: source.fullyQualifiedName || source.name || '',
+          cnName: source.displayName || '',
+          owner: source.owners?.[0]?.name || '',
+          desc: source.description || ''
+        }
+      })
+    } catch (e) {
+      console.error('Search failed:', e)
+      searchResults.value = []
+    } finally {
+      isSearching.value = false
+    }
+  }, 300)
+})
+
 const filteredMentionList = computed(() => {
-  if (!mentionSearchText.value) return mockTables
-  const kw = mentionSearchText.value.toLowerCase()
-  return mockTables.filter(t =>
-    t.fqn.toLowerCase().includes(kw) ||
-    t.cnName.toLowerCase().includes(kw) ||
-    (t.desc && t.desc.toLowerCase().includes(kw))
-  )
+  if (!mentionSearchText.value.trim()) {
+    return defaultFrequentTables
+  }
+  return searchResults.value
 })
 
 const triggerMention = () => {

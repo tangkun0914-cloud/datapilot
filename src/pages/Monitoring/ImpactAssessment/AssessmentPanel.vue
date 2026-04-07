@@ -7,8 +7,8 @@
         <div class="absolute -bottom-4 -left-4 h-20 w-20 rounded-full bg-purple-500/10 blur-xl"></div>
         
         <div class="relative flex items-start gap-3">
-          <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
-            <RobotOutlined class="text-lg" />
+          <div class="flex h-8 w-8 shrink-0 items-center justify-center">
+            <CopilotAiAvatar :size="24" />
           </div>
           <div class="flex-1 pt-0.5">
             <div class="mb-1.5 flex items-center gap-2">
@@ -68,10 +68,10 @@
 
 <script setup>
 import { ref, watch, computed, onUnmounted } from 'vue'
-import { RobotOutlined } from '@ant-design/icons-vue'
 import GlobalImpactList from './components/GlobalImpactList.vue'
 import StatsAndSLA from './components/StatsAndSLA.vue'
 import ErrorLogViewer from './components/ErrorLogViewer.vue'
+import CopilotAiAvatar from '@/components/Copilot/CopilotAiAvatar.vue'
 import { getAiAnalysis } from '@/services/Monitoring/impactService.js'
 
 const props = defineProps({

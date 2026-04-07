@@ -3,7 +3,7 @@
     v-model:open="open"
     :is-dark-mode="isDarkMode"
     :selected-count="selectedCount"
-    @confirm="$emit('confirm', $event)"
+    @confirm="onConfirm"
   />
 </template>
 
@@ -21,5 +21,10 @@ defineProps({
   selectedCount: { type: Number, default: 0 },
 })
 
-defineEmits(['confirm'])
+const emit = defineEmits(['confirm'])
+
+/** script setup 模板中不能使用 $emit，须显式 emit，否则父组件收不到 confirm */
+const onConfirm = (payload) => {
+  emit('confirm', payload)
+}
 </script>

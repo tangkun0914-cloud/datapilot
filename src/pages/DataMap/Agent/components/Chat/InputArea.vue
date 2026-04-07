@@ -8,7 +8,10 @@
              class="absolute left-0 right-0 bottom-[calc(100%+10px)] rounded-[14px] border shadow-[0_12px_48px_rgba(0,0,0,0.1),0_2px_6px_rgba(0,0,0,0.04)] overflow-hidden z-50 transition-colors duration-300"
              :class="isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-[#f0f0f0]'">
           <div class="max-h-[280px] overflow-y-auto custom-scrollbar p-1.5 pt-0">
-            <div v-if="flatMentionItems.length === 0" class="py-4 text-center text-sm" :class="isDarkMode ? 'text-slate-500' : 'text-gray-400'">
+            <div v-if="isSearching" class="py-4 text-center text-sm flex items-center justify-center gap-2" :class="isDarkMode ? 'text-slate-500' : 'text-gray-400'">
+              <LoadingOutlined /> 搜索中...
+            </div>
+            <div v-else-if="flatMentionItems.length === 0" class="py-4 text-center text-sm" :class="isDarkMode ? 'text-slate-500' : 'text-gray-400'">
               没有找到匹配的表
             </div>
             <template v-else>
@@ -111,10 +114,13 @@
           </div>
           <a-tooltip v-if="disabled" placement="top" title="停止生成">
             <div 
-              class="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300 text-red-500 hover:bg-red-500/15"
+              class="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300 border border-slate-200"
+              :class="isDarkMode ? 'bg-slate-700 hover:bg-slate-600 border-slate-600 text-slate-300' : 'bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800'"
               @click="emit('stop')"
             >
-              <PauseCircleOutlined class="text-[20px]" />
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                <rect x="6" y="6" width="12" height="12" rx="2" />
+              </svg>
             </div>
           </a-tooltip>
           <div 
@@ -141,13 +147,14 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, watch } from 'vue'
 import { message as antMessage } from 'ant-design-vue'
-import { SearchOutlined, TableOutlined, NodeIndexOutlined, PauseCircleOutlined } from '@ant-design/icons-vue'
+import { SearchOutlined, TableOutlined, NodeIndexOutlined, PauseCircleOutlined, LoadingOutlined } from '@ant-design/icons-vue'
 import {
   DEFAULT_FREQUENT_MENTION_TABLES,
   MENTION_FREQUENT_SECTION_CAP
 } from '@/utils/agentMentionTables.js'
+import { searchAssets } from '@/services/DataMap/searchService.js'
 
 const props = defineProps({
   isDarkMode: {
@@ -192,6 +199,8 @@ const showMentionList = ref(false)
 const mentionSearchText = ref('')
 const mentionStartIndex = ref(-1)
 const selectedIndex = ref(0)
+const isSearching = ref(false)
+const searchResults = ref([])
 
 const sessionFqnSet = computed(() => new Set((props.sessionTables || []).map((t) => t.fqn)))
 
@@ -209,18 +218,52 @@ function filterTablesByKeyword(list, kw) {
   )
 }
 
+let searchTimeout = null
+watch(mentionSearchText, async (newVal) => {
+  const kw = newVal.trim()
+  if (!kw) {
+    searchResults.value = []
+    isSearching.value = false
+    return
+  }
+  
+  isSearching.value = true
+  if (searchTimeout) clearTimeout(searchTimeout)
+  
+  searchTimeout = setTimeout(async () => {
+    try {
+      const res = await searchAssets({ q: kw, size: 20 })
+      const hits = res?.hits?.hits || []
+      searchResults.value = hits.map(hit => {
+        const source = hit._source || {}
+        return {
+          fqn: source.fullyQualifiedName || source.name || '',
+          cnName: source.displayName || '',
+          owner: source.owners?.[0]?.name || ''
+        }
+      })
+    } catch (e) {
+      console.error('Search failed:', e)
+      searchResults.value = []
+    } finally {
+      isSearching.value = false
+    }
+  }, 300)
+})
+
 /** 无搜索：本对话 + 常用（常用去重且截断）；有搜索：合并列表「最佳匹配」 */
 const mentionSections = computed(() => {
   const kw = mentionSearchText.value.trim()
-  const session = filterTablesByKeyword([...(props.sessionTables || [])], kw)
-  const frequentAll = filterTablesByKeyword(frequentExcludingSession.value, kw)
-  const frequentCapped = kw ? frequentAll : frequentAll.slice(0, MENTION_FREQUENT_SECTION_CAP)
-
+  
   if (kw) {
-    const seen = new Set(session.map((t) => t.fqn))
-    const merged = [...session, ...frequentAll.filter((t) => !seen.has(t.fqn))]
-    return merged.length ? [{ label: '最佳匹配', items: merged }] : []
+    // 搜索状态下，直接展示 searchResults
+    return searchResults.value.length ? [{ label: '最佳匹配', items: searchResults.value }] : []
   }
+
+  // 默认状态下，展示本对话和常用表
+  const session = filterTablesByKeyword([...(props.sessionTables || [])], '')
+  const frequentAll = filterTablesByKeyword(frequentExcludingSession.value, '')
+  const frequentCapped = frequentAll.slice(0, MENTION_FREQUENT_SECTION_CAP)
 
   const sections = []
   if (session.length) sections.push({ label: '本对话', items: session })

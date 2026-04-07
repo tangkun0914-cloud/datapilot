@@ -112,7 +112,11 @@ export function mockSendMessageStream({
   const isPreviewIntent = content.includes('预览') || content.includes('抽样')
   const isProductionIntent = content.includes('生产') || content.includes('调度') || content.includes('执行')
   const isLineageIntent = content.includes('血缘') || content.includes('上游') || content.includes('下游')
-  const isDdlIntent = content.includes('DDL') || content.includes('建表语句')
+  const isDdlIntent =
+    content.includes('DDL') ||
+    content.includes('建表语句') ||
+    content.includes('脚本信息') ||
+    content.includes('查看脚本')
   const isSelectIntent = content.includes('SELECT') || content.includes('查询语句')
   const isListIntent = content.includes('订单') || content.includes('列表') || content.includes('相关') || content.includes('风控') || content.includes('找')
 
@@ -269,7 +273,7 @@ function buildDetailScenario(content) {
     suggestions: [
       '字段详情',
       '预览探查',
-      '生成DDL',
+      '查看脚本信息',
       '生成SELECT',
       '生产信息',
       '血缘关系',
@@ -413,20 +417,48 @@ function buildDdlScenario() {
   return {
     steps: [
       { id: 1, text: '语义解析与意图识别...', duration: 500 },
-      { id: 2, text: '获取表 Schema 信息并生成 DDL...', duration: 800 }
+      { id: 2, text: '拉取调度脚本与表结构信息...', duration: 800 }
     ],
-    markdown: `为您生成了该表的 DDL 建表语句：
+    markdown: `以下为 **dm_trade.dws_order_summary_nd** 的任务脚本信息：
 
 \`\`\`sql
-CREATE TABLE IF NOT EXISTS dm_trade.dws_order_summary_nd (
-  order_id STRING COMMENT '订单号',
-  user_id STRING COMMENT '用户ID',
-  total_amount DECIMAL(10,2) COMMENT '订单总金额',
-  order_status STRING COMMENT '订单状态',
-  create_time TIMESTAMP COMMENT '创建时间'
+--set spark.dynamicAllocation.maxExecutors=80;
+--set spark.executor.cores=2;
+--set spark.executor.memory=10G;
+
+--依赖:
+--    ods_trade.ods_order_detail_di
+--create by 张三(zhangsan) on 20260101
+--备注:包含每日订单量、GMV、客单价等核心交易指标汇总，T+1 更新。  运行时长 约 10 分钟
+
+create table if not exists dm_trade.dws_order_summary_nd
+(
+  order_id        string comment '订单号'
+ ,user_id         string comment '用户 ID'
+ ,total_amount    decimal(22,6) comment '订单总金额'
+ ,order_status    string comment '订单状态'
+ ,create_time     bigint comment '创建时间戳'
 )
 COMMENT '订单汇总表'
-PARTITIONED BY (dt STRING COMMENT '按天分区');
+PARTITIONED BY (
+  \`dt\` string
+)
+stored as orc;
+
+insert overwrite table dm_trade.dws_order_summary_nd partition (dt='\${p_date}')
+select
+  order_id
+ ,user_id
+ ,total_amount
+ ,order_status
+ ,unix_timestamp(create_time) as create_time
+from ods_trade.ods_order_detail_di
+where dt = '\${p2_date}'
+;
+
+-- 历史版本已注释
+-- insert overwrite table dm_trade.dws_order_summary_nd partition (dt='\${p_date}')
+-- select * from ods_trade.ods_order_detail_di where dt = '\${p_date}';
 \`\`\`
 `,
     suggestions: [
@@ -459,7 +491,7 @@ LIMIT 100;
 \`\`\`
 `,
     suggestions: [
-      '生成DDL',
+      '查看脚本信息',
       '预览探查',
       '血缘关系'
     ]

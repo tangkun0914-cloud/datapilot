@@ -107,7 +107,7 @@ src/
 | **CanvasToolbar** | `components/CanvasToolbar.vue` | 组合于 TopologyCanvas | 【仅看核心链路】开关、缩放、适应视图、图例（【刷新】按钮位于页面右上角，非画布工具栏） |
 | **AssessmentPanel** | `AssessmentPanel.vue` | 由 Drawer 右侧挂载 | AI 总结 + 3 个 Tab + 底部操作区；支持折叠/收起；`summaryData`、`alert` |
 | **StatsAndSLA** | `components/StatsAndSLA.vue` | 组合于 AssessmentPanel Tab1 | 统计（基于全量下游数据，受影响实例总数/核心实例数）、受影响负责人、SLA 破线判定（仅展示已破线任务） |
-| **GlobalImpactList** | `components/GlobalImpactList.vue` | 组合于 AssessmentPanel Tab2 | 所有告警类型统一展示下游任务实例清单（全量数据，不依赖画布展开状态），每页 100 条分页，支持"仅看核心任务"筛选；点击行联动拓扑高亮 |
+| **GlobalImpactList** | `components/GlobalImpactList.vue` | 组合于 AssessmentPanel Tab2 | 所有告警类型统一展示下游任务实例清单（全量数据，不依赖画布展开状态），每页 100 条分页；支持 **任务名搜索**（`taskName` 子串、忽略大小写）与 **「仅看核心任务」**开关（组合为 AND）；列表卡片展示当前状态 Tag；点击行联动拓扑高亮 |
 | **ErrorLogViewer** | `components/ErrorLogViewer.vue` | 组合于 AssessmentPanel Tab3 | 当前告警节点日志摘要（与详情抽屉复用同一接口）；点击画布节点时联动展示该节点日志；未运行/依赖等待状态节点展示空白 |
 | **ActionBar** | `components/ActionBar.vue` | 组合于 AssessmentPanel 底部 | 一键拉群（本期可用）；挂起/重跑/置成功（后期置灰 + Tooltip） |
 | **CreateGroupModal** | `components/CreateGroupModal.vue` | 由 ActionBar 触发 | 一键拉群成员确认弹窗（群名称、成员勾选、确认/取消） |
@@ -127,7 +127,7 @@ src/
         └── AssessmentPanel (L3，右侧，支持折叠/收起)
             ├── AISummaryCard (AI 智能分析总结)
             ├── StatsAndSLA (L3, Tab1 - 统计评估与 SLA 破线判定)
-            ├── GlobalImpactList (L3, Tab2 - 全局影响清单，每页100条)
+            ├── GlobalImpactList (L3, Tab2 - 全局影响清单，每页100条，任务名搜索 + 仅看核心任务)
             ├── ErrorLogViewer (L3, Tab3 - 日志详情，未运行节点展示空白)
             ├── ActionBar (L3)（snapshot 模式下隐藏所有按钮）
             └── CreateGroupModal (L3, 一键拉群弹窗，含 Step 0 去重检查)
@@ -357,10 +357,20 @@ G6.registerNode('impact-task-node', {
   taskId: 'task_67890',           // 关联逻辑任务 ID（与拓扑节点 id 可对齐）
   taskName: 'dws_order_summary_di',
   scheduleBatch: '2026-04-02',
-  status: 'waiting',              // 实例状态
+  status: 'waiting',              // 实例状态（与 TaskNode.impactStatus 枚举对齐，列表 Tag 展示）
   owner: '张三(zhangsan)',
+  isCore: false,                  // 是否核心任务（与「仅看核心任务」筛选一致）
+  isPolluted: false,              // DQC WARN 下游可能污染
+  isDqcErrorBlocked: false,       // DQC 强阻断
 }
 ```
+
+#### GlobalImpactList 筛选规则（前端）
+
+- **任务名搜索**：`a-input`（`allow-clear`），占位「搜索任务名」。对 `record.taskName` 做 **不区分大小写** 的**子串**匹配；`trim` 后为空则不过滤。实例模式（`affectedTaskInstances`）与任务模式（`affectedTasks`）均使用同一字段名 `taskName`。匹配到的行右侧仍展示 **当前状态 Tag**（实例模式用 `status`，任务模式用 `impactStatus`），文案与色系与拓扑节点一致。
+- **仅看核心任务**：`a-switch`，`isCore === true`。
+- **组合逻辑**：任务名条件与核心开关同时生效时为 **AND**（等价交集）。
+- **分页**：在筛选后的列表上分页；任务名输入或核心开关变化时 `currentPage` 重置为 1；`summary` / `topology` 数据源变更时清空任务名搜索、关闭「仅看核心任务」。
 
 **Edge（连线）**
 
@@ -747,7 +757,7 @@ TopologyCanvas (L3)   AssessmentPanel (L3)   AISummaryCard
     │                      │                  (骨架屏 → 内容/超时提示)
     │                      │
     │                      ├── StatsAndSLA (L3, Tab1)
-    │                      ├── GlobalImpactList (L3, Tab2, 每页100条)
+    │                      ├── GlobalImpactList (L3, Tab2，每页100条，任务名搜索 + 仅看核心任务)
     │                      ├── ErrorLogViewer (L3, Tab3, 未运行节点展示空白)
     │                      └── ActionBar (L3)
     │                           │

@@ -25,12 +25,6 @@
     <div class="flex-1 overflow-y-auto px-3 pb-4 custom-scrollbar min-h-0 flex flex-col gap-3">
       <!-- 历史会话 -->
       <div class="mt-1 flex-shrink-0">
-        <div
-          class="text-xs font-semibold px-2 mb-2 tracking-wider transition-colors duration-300"
-          :class="isDarkMode ? 'text-slate-500' : 'text-slate-400'"
-        >
-          历史对话
-        </div>
         <div v-if="!historyGroups.length" class="px-2 py-4 text-xs text-center transition-colors" :class="isDarkMode ? 'text-slate-500' : 'text-slate-400'">
           暂无历史会话
         </div>

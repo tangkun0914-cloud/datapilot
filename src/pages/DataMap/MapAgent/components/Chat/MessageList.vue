@@ -293,15 +293,51 @@ const handleAction = (action, msgId) => {
   }
 }
 
-const handleShareConfirm = ({ expire }) => {
+/** 非安全上下文（如 http + IP）下 clipboard API 不可用，用隐藏 textarea + execCommand 作为降级（需在用户点击等手势内调用） */
+function copyTextViaExecCommand(text) {
+  try {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    ta.setAttribute('readonly', '')
+    ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0'
+    document.body.appendChild(ta)
+    ta.focus()
+    ta.select()
+    const ok = document.execCommand('copy')
+    document.body.removeChild(ta)
+    return ok
+  } catch {
+    return false
+  }
+}
+
+const handleShareConfirm = async ({ expire }) => {
   const mockLink = `https://datapilot.com/share/${Date.now().toString(36)}?expire=${expire}`
-  navigator.clipboard.writeText(mockLink).then(() => {
-    antMessage.success('分享链接已生成并复制到剪贴板')
-    shareModalVisible.value = false; cancelShareMode()
-  }).catch(() => {
-    antMessage.success(`分享链接：${mockLink}`)
-    shareModalVisible.value = false; cancelShareMode()
-  })
+  shareModalVisible.value = false
+  cancelShareMode()
+
+  let copied = false
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(mockLink)
+      copied = true
+    } catch {
+      copied = false
+    }
+  }
+  if (!copied) {
+    copied = copyTextViaExecCommand(mockLink)
+  }
+
+  if (copied) {
+    antMessage.success('已复制链接')
+  } else {
+    // 只弹一条：避免 warning + info 叠两条
+    antMessage.warning({
+      content: `当前页面无法自动写入剪贴板（常见于非 HTTPS 访问），请手动复制：${mockLink}`,
+      duration: 10,
+    })
+  }
 }
 
 const handleFeedbackSubmit = (feedbackData) => {

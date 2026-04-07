@@ -96,7 +96,7 @@
           查看完整详情
         </div>
         
-        <!-- 生成 DDL -->
+        <!-- 查看脚本信息 -->
         <div 
           class="px-3 py-1 rounded-md text-[12px] cursor-pointer transition-colors flex items-center gap-1"
           :class="[
@@ -107,7 +107,7 @@
           @click="toggleSql('ddl')"
         >
           <CodeOutlined />
-          生成 DDL
+          查看脚本信息
         </div>
         
         <!-- 生成 SELECT -->
@@ -126,10 +126,10 @@
       </div>
     </div>
     
-    <!-- DDL/SELECT 代码面板（保留在卡片内） -->
+    <!-- 脚本信息 / SELECT 代码面板（保留在卡片内） -->
     <div v-if="activeSqlType" class="mt-3 bg-[#1e293b] rounded-lg overflow-hidden relative border" :class="isDarkMode ? 'border-slate-700' : 'border-slate-800'">
       <div class="flex items-center justify-between px-4 py-2 bg-[#0f172a] border-b border-white/10">
-        <span class="text-slate-300 text-[12px] font-medium">{{ activeSqlType === 'ddl' ? '建表语句 (DDL)' : '查询语句 (SELECT)' }}</span>
+        <span class="text-slate-300 text-[12px] font-medium">{{ activeSqlType === 'ddl' ? '脚本信息' : '查询语句 (SELECT)' }}</span>
         <div class="flex items-center gap-2">
           <a-tooltip title="复制">
             <CopyOutlined class="text-slate-400 hover:text-white cursor-pointer transition-colors p-1" @click="copySql" />
@@ -191,17 +191,7 @@ const toggleFavorite = () => {
   }
 }
 
-const sqlData = {
-  ddl: `CREATE TABLE default.user_behavior_log (
-  user_id STRING COMMENT '全局唯一用户标识',
-  event_type STRING COMMENT '事件类型 (click, view, add_cart)',
-  page_id STRING COMMENT '发生事件的页面ID',
-  device_os STRING COMMENT '设备操作系统 (iOS, Android)'
-)
-COMMENT '用户行为日志表'
-PARTITIONED BY (dt STRING COMMENT '日期分区 (yyyyMMdd)')
-STORED AS PARQUET;`,
-  select: `SELECT 
+const selectSqlTemplate = `SELECT 
   user_id,
   event_type,
   page_id,
@@ -210,9 +200,57 @@ STORED AS PARQUET;`,
 FROM default.user_behavior_log
 WHERE dt = '\${bizdate}'
 LIMIT 100;`
+
+/** 对齐数仓任务脚本习惯：Spark 参数、依赖/备注注释、建表 + 加工 SQL（演示节选） */
+function buildJobScriptPreview(data) {
+  const fqn = data?.fqn || 'dm_trade.dws_order_summary_nd'
+  const cn = (data?.cnName || '订单汇总表').replace(/'/g, "''")
+  const ownerLine = data?.owner || '数据平台'
+  const remark = (data?.desc || '按天汇总的订单核心指标表').replace(/\n/g, ' ')
+  return `--set spark.dynamicAllocation.maxExecutors=80;
+--set spark.executor.cores=2;
+--set spark.executor.memory=10G;
+
+--依赖:
+--    ods_trade.ods_order_detail_di
+--create by ${ownerLine} on 20260101
+--备注:${remark}  运行时长 约 10 分钟
+
+create table if not exists ${fqn}
+(
+  order_id        string comment '订单号'
+ ,user_id         string comment '用户 ID'
+ ,total_amount    decimal(22,6) comment '订单总金额'
+ ,order_status    string comment '订单状态'
+ ,create_time     bigint comment '创建时间戳'
+)
+COMMENT '${cn}'
+PARTITIONED BY (
+  \`dt\` string
+)
+stored as orc;
+
+insert overwrite table ${fqn} partition (dt='\${p_date}')
+select
+  order_id
+ ,user_id
+ ,total_amount
+ ,order_status
+ ,unix_timestamp(create_time) as create_time
+from ods_trade.ods_order_detail_di
+where dt = '\${p2_date}'
+;
+
+-- 以下为历史版本节选，完整脚本以调度平台为准
+-- insert overwrite table ${fqn} partition (dt='\${p_date}')
+-- select * from ods_trade.ods_order_detail_di where dt = '\${p_date}';`
 }
 
-const sqlContent = computed(() => activeSqlType.value ? sqlData[activeSqlType.value] : '')
+const sqlContent = computed(() => {
+  if (!activeSqlType.value) return ''
+  if (activeSqlType.value === 'ddl') return buildJobScriptPreview(props.data)
+  return selectSqlTemplate
+})
 
 const toggleSql = (type) => {
   activeSqlType.value = activeSqlType.value === type ? '' : type
@@ -220,7 +258,7 @@ const toggleSql = (type) => {
 
 const copySql = () => {
   navigator.clipboard.writeText(sqlContent.value).then(() => {
-    message.success('SQL 已复制')
+    message.success(activeSqlType.value === 'ddl' ? '脚本已复制' : 'SQL 已复制')
   })
 }
 

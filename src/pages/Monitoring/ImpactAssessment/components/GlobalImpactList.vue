@@ -1,9 +1,19 @@
 <template>
   <div class="global-impact-list flex flex-col h-full p-2">
     <!-- 过滤与统计栏 -->
-    <div class="mb-3 flex shrink-0 items-center justify-between px-1">
-      <span class="text-xs font-medium text-slate-500">共 {{ totalCount }} 项</span>
-      <div class="flex items-center gap-2">
+    <div class="mb-3 flex shrink-0 items-center justify-between gap-3 px-1">
+      <a-input
+        v-model:value="taskNameKeyword"
+        allow-clear
+        size="small"
+        placeholder="搜索任务名"
+        class="flex-1 max-w-[240px]"
+      >
+        <template #prefix>
+          <SearchOutlined class="text-slate-400" />
+        </template>
+      </a-input>
+      <div class="flex items-center gap-1.5 shrink-0">
         <span class="text-xs text-slate-600">仅看核心任务</span>
         <a-switch v-model:checked="filterCoreOnly" size="small" />
       </div>
@@ -12,7 +22,9 @@
     <div class="flex-1 overflow-y-auto min-h-[120px]">
       <!-- 实例模式卡片列表 -->
       <template v-if="isInstanceMode">
-        <div v-if="!paginatedInstanceRows.length" class="py-10 text-center text-sm text-slate-400">暂无下游任务实例</div>
+        <div v-if="!paginatedInstanceRows.length" class="py-10 text-center text-sm text-slate-400">
+          {{ emptyFilterHint ? '暂无符合筛选条件的数据' : '暂无下游任务实例' }}
+        </div>
         <div
           v-for="record in paginatedInstanceRows"
           :key="record.instanceId"
@@ -60,7 +72,9 @@
 
       <!-- 任务模式卡片列表 -->
       <template v-else>
-        <div v-if="!paginatedTaskRows.length" class="py-10 text-center text-sm text-slate-400">暂无拓扑任务节点（请确认已加载拓扑）</div>
+        <div v-if="!paginatedTaskRows.length" class="py-10 text-center text-sm text-slate-400">
+          {{ emptyFilterHint ? '暂无符合筛选条件的数据' : '暂无拓扑任务节点（请确认已加载拓扑）' }}
+        </div>
         <div
           v-for="record in paginatedTaskRows"
           :key="record.id"
@@ -120,7 +134,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { UserOutlined, ClockCircleOutlined } from '@ant-design/icons-vue'
+import { UserOutlined, ClockCircleOutlined, SearchOutlined } from '@ant-design/icons-vue'
 
 const props = defineProps({
   summary: { type: Object, default: null },
@@ -135,12 +149,17 @@ const isInstanceMode = computed(() => props.summary?.listGranularity === 'instan
 const currentPage = ref(1)
 const pageSize = ref(100)
 const filterCoreOnly = ref(false)
+/** 任务名子串搜索，trim 后空则不过滤 */
+const taskNameKeyword = ref('')
+
+const taskNameNeedle = computed(() => taskNameKeyword.value.trim().toLowerCase())
 
 watch(
   () => [props.summary, props.topology],
   () => {
     currentPage.value = 1
     filterCoreOnly.value = false
+    taskNameKeyword.value = ''
   },
   { deep: true }
 )
@@ -149,20 +168,48 @@ watch(filterCoreOnly, () => {
   currentPage.value = 1
 })
 
+watch(taskNameKeyword, () => {
+  currentPage.value = 1
+})
+
+function matchesTaskNameFilter(record) {
+  const needle = taskNameNeedle.value
+  if (!needle) return true
+  const name = (record.taskName || '').toLowerCase()
+  return name.includes(needle)
+}
+
 const taskRows = computed(() => {
   const rows = props.summary?.affectedTasks || []
+  let list = rows
   if (filterCoreOnly.value) {
-    return rows.filter((r) => r.isCore)
+    list = list.filter((r) => r.isCore)
   }
-  return rows
+  if (taskNameNeedle.value) {
+    list = list.filter((r) => matchesTaskNameFilter(r))
+  }
+  return list
 })
 
 const instanceRows = computed(() => {
   const rows = props.summary?.affectedTaskInstances || []
+  let list = rows
   if (filterCoreOnly.value) {
-    return rows.filter((r) => r.isCore)
+    list = list.filter((r) => r.isCore)
   }
-  return rows
+  if (taskNameNeedle.value) {
+    list = list.filter((r) => matchesTaskNameFilter(r))
+  }
+  return list
+})
+
+const emptyFilterHint = computed(() => {
+  if (isInstanceMode.value) {
+    const raw = props.summary?.affectedTaskInstances || []
+    return raw.length > 0 && instanceRows.value.length === 0
+  }
+  const raw = props.summary?.affectedTasks || []
+  return raw.length > 0 && taskRows.value.length === 0
 })
 
 const totalCount = computed(() => {
@@ -206,6 +253,7 @@ function getStatusColor(status) {
     other: 'processing',
     pending: 'default',
     not_generated: 'default',
+    dqc_threshold: 'warning',
   }
   return map[status] || 'default'
 }
@@ -223,6 +271,7 @@ function getStatusText(status) {
     other: '串行等待',
     pending: '未运行',
     not_generated: '未生成',
+    dqc_threshold: '触发异常阈值',
   }
   return map[status] || status || '—'
 }
