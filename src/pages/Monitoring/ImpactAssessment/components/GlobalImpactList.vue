@@ -1,22 +1,38 @@
 <template>
   <div class="global-impact-list flex flex-col h-full p-2">
     <!-- 过滤与统计栏 -->
-    <div class="mb-3 flex shrink-0 items-center justify-between gap-3 px-1">
+    <div class="mb-3 flex shrink-0 items-center gap-2 px-1">
       <a-input
         v-model:value="taskNameKeyword"
         allow-clear
         size="small"
         placeholder="搜索任务名"
-        class="flex-1 max-w-[240px]"
+        class="flex-1"
       >
         <template #prefix>
           <SearchOutlined class="text-slate-400" />
         </template>
       </a-input>
-      <div class="flex items-center gap-1.5 shrink-0">
-        <span class="text-xs text-slate-600">仅看核心任务</span>
-        <a-switch v-model:checked="filterCoreOnly" size="small" />
-      </div>
+      <a-select
+        v-model:value="ownerFilter"
+        mode="multiple"
+        allow-clear
+        size="small"
+        placeholder="负责人"
+        class="w-[120px] shrink-0"
+        :max-tag-count="1"
+        :options="ownerOptions"
+      />
+      <a-select
+        v-model:value="statusFilter"
+        mode="multiple"
+        allow-clear
+        size="small"
+        placeholder="全部状态"
+        class="w-[120px] shrink-0"
+        :max-tag-count="1"
+        :options="STATUS_OPTIONS"
+      />
     </div>
 
     <div class="flex-1 overflow-y-auto min-h-[120px]">
@@ -52,9 +68,6 @@
                   class="rounded bg-[#fff1f0] px-1.5 py-0.5 text-[10px] font-medium text-[#cf1322] ring-1 ring-inset ring-[#ffa39e]"
                 >
                   阻断
-                </span>
-                <span v-if="record.isCore" class="rounded bg-[#e6f4ff] px-1.5 py-0.5 text-[10px] font-medium text-[#1677ff] ring-1 ring-inset ring-[#91caff]">
-                  核心任务
                 </span>
                 <span v-if="record.isPolluted" class="rounded bg-[#F9F0FF] px-1.5 py-0.5 text-[10px] font-medium text-[#722ED1] ring-1 ring-inset ring-[#D3ADF7]">
                   ☣ 可能污染
@@ -99,9 +112,6 @@
                   class="rounded bg-[#fff1f0] px-1.5 py-0.5 text-[10px] font-medium text-[#cf1322] ring-1 ring-inset ring-[#ffa39e]"
                 >
                   阻断
-                </span>
-                <span v-if="record.isCore" class="rounded bg-[#e6f4ff] px-1.5 py-0.5 text-[10px] font-medium text-[#1677ff] ring-1 ring-inset ring-[#91caff]">
-                  核心任务
                 </span>
                 <span v-if="record.isPolluted" class="rounded bg-[#F9F0FF] px-1.5 py-0.5 text-[10px] font-medium text-[#722ED1] ring-1 ring-inset ring-[#D3ADF7]">
                   ☣ 可能污染
@@ -148,9 +158,34 @@ const isInstanceMode = computed(() => props.summary?.listGranularity === 'instan
 
 const currentPage = ref(1)
 const pageSize = ref(100)
-const filterCoreOnly = ref(false)
 /** 任务名子串搜索，trim 后空则不过滤 */
 const taskNameKeyword = ref('')
+const statusFilter = ref([])
+const ownerFilter = ref([])
+
+const STATUS_OPTIONS = [
+  { value: 'SUCCESS', label: '成功' },
+  { value: 'FAILURE', label: '失败' },
+  { value: 'RUNNING_EXECUTION', label: '正在运行' },
+  { value: 'WAITING_DEPEND', label: '等待依赖' },
+  { value: 'WAITING_THREAD', label: '等待线程' },
+  { value: 'DELAY_EXECUTION', label: '延时执行' },
+  { value: 'PAUSE', label: '暂停' },
+  { value: 'STOP', label: '停止' },
+  { value: 'KILL', label: 'Kill' },
+  { value: 'PENDING', label: '未运行' },
+]
+
+const ownerOptions = computed(() => {
+  const rows = isInstanceMode.value 
+    ? (props.summary?.affectedTaskInstances || []) 
+    : (props.summary?.affectedTasks || [])
+  const owners = new Set()
+  rows.forEach(r => {
+    if (r.owner) owners.add(r.owner)
+  })
+  return Array.from(owners).map(o => ({ value: o, label: o }))
+})
 
 const taskNameNeedle = computed(() => taskNameKeyword.value.trim().toLowerCase())
 
@@ -158,17 +193,14 @@ watch(
   () => [props.summary, props.topology],
   () => {
     currentPage.value = 1
-    filterCoreOnly.value = false
     taskNameKeyword.value = ''
+    statusFilter.value = []
+    ownerFilter.value = []
   },
   { deep: true }
 )
 
-watch(filterCoreOnly, () => {
-  currentPage.value = 1
-})
-
-watch(taskNameKeyword, () => {
+watch([taskNameKeyword, statusFilter, ownerFilter], () => {
   currentPage.value = 1
 })
 
@@ -182,8 +214,11 @@ function matchesTaskNameFilter(record) {
 const taskRows = computed(() => {
   const rows = props.summary?.affectedTasks || []
   let list = rows
-  if (filterCoreOnly.value) {
-    list = list.filter((r) => r.isCore)
+  if (statusFilter.value && statusFilter.value.length > 0) {
+    list = list.filter((r) => statusFilter.value.includes(r.impactStatus))
+  }
+  if (ownerFilter.value && ownerFilter.value.length > 0) {
+    list = list.filter((r) => ownerFilter.value.includes(r.owner))
   }
   if (taskNameNeedle.value) {
     list = list.filter((r) => matchesTaskNameFilter(r))
@@ -194,8 +229,11 @@ const taskRows = computed(() => {
 const instanceRows = computed(() => {
   const rows = props.summary?.affectedTaskInstances || []
   let list = rows
-  if (filterCoreOnly.value) {
-    list = list.filter((r) => r.isCore)
+  if (statusFilter.value && statusFilter.value.length > 0) {
+    list = list.filter((r) => statusFilter.value.includes(r.status))
+  }
+  if (ownerFilter.value && ownerFilter.value.length > 0) {
+    list = list.filter((r) => ownerFilter.value.includes(r.owner))
   }
   if (taskNameNeedle.value) {
     list = list.filter((r) => matchesTaskNameFilter(r))
@@ -242,36 +280,44 @@ function handleSelect(record) {
 
 function getStatusColor(status) {
   const map = {
-    success: 'success',
-    failed: 'error',
-    timeout: 'error',
-    stopped: 'error',
-    running: 'warning',
-    waiting: 'warning',
-    delayed: 'warning',
-    blocked: 'error',
-    other: 'processing',
-    pending: 'default',
-    not_generated: 'default',
-    dqc_threshold: 'warning',
+    SUCCESS: 'success',
+    FORCED_SUCCESS: 'success',
+    FAILURE: 'error',
+    NEED_FAULT_TOLERANCE: 'error',
+    KILL: 'error',
+    STOP: 'error',
+    READY_STOP: 'error',
+    RUNNING_EXECUTION: 'warning',
+    DISPATCH: 'warning',
+    SUBMITTED_SUCCESS: 'warning',
+    DELAY_EXECUTION: 'warning',
+    WAITING_DEPEND: 'warning',
+    WAITING_THREAD: 'warning',
+    PAUSE: 'processing',
+    READY_PAUSE: 'processing',
+    PENDING: 'default',
   }
   return map[status] || 'default'
 }
 
 function getStatusText(status) {
   const map = {
-    success: '成功',
-    failed: '已失败',
-    timeout: '已超时',
-    stopped: '已停止',
-    running: '运行中',
-    waiting: '依赖等待',
-    delayed: '排队中',
-    blocked: '强阻断等待',
-    other: '串行等待',
-    pending: '未运行',
-    not_generated: '未生成',
-    dqc_threshold: '触发异常阈值',
+    SUCCESS: '成功',
+    FORCED_SUCCESS: '强制成功',
+    FAILURE: '失败',
+    NEED_FAULT_TOLERANCE: '需要容错',
+    KILL: 'Kill',
+    STOP: '停止',
+    READY_STOP: '准备停止',
+    RUNNING_EXECUTION: '正在运行',
+    DISPATCH: '派发中',
+    WAITING_DEPEND: '等待依赖',
+    WAITING_THREAD: '等待线程',
+    DELAY_EXECUTION: '延时执行',
+    SUBMITTED_SUCCESS: '提交成功',
+    PAUSE: '暂停',
+    READY_PAUSE: '准备暂停',
+    PENDING: '未运行',
   }
   return map[status] || status || '—'
 }

@@ -35,6 +35,7 @@
 | `tableDetail` | 表详情侧栏/结构化数据 | `tableDetail` |
 | `tableListState` | 表格列表状态 | `tableListState` |
 
+- **`tableDetail` 与表描述**：载荷仅需 `fqn`、`cnName`、`owner`（不要带 `description`）。地图 Agent 对话内**不展示**表级描述，单表详情的 Markdown（`text`）中**不要**输出「表描述」引用行；描述查阅走数据地图表资产详情页。
 - 流结束可用 `[DONE]` 或自然结束；前端在 `read()` 完成后调用 `onDone`。
 - **Mock 参考**（事件形态与内容样例）：`src/mock/DataMap/MapAgent/chat.js`（仅当 `VITE_USE_MOCK === 'true'` 时前端走 Mock）
 

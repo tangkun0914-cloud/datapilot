@@ -2,7 +2,11 @@
   <div class="topology-canvas absolute inset-0 bg-slate-50/50 overflow-hidden transition-all duration-300">
     <CanvasToolbar 
       :core-only="coreOnly" 
+      :impact-level="impactLevel"
+      :project-space="projectSpace"
       @update:core-only="$emit('update:coreOnly', $event)"
+      @update:impact-level="$emit('update:impactLevel', $event)"
+      @update:project-space="$emit('update:projectSpace', $event)"
       @zoom-in="() => containerRef?.__handleZoomIn?.()"
       @zoom-out="() => containerRef?.__handleZoomOut?.()"
       @fit-view="() => containerRef?.__handleFitView?.()"
@@ -25,10 +29,12 @@ const props = defineProps({
   /** 父节点 id → 直接子节点 id 列表（Mock 或接口下发），用于推导 +/− */
   branchChildrenOf: { type: Object, default: () => ({}) },
   coreOnly: { type: Boolean, default: false },
+  impactLevel: { type: String, default: '1' },
+  projectSpace: { type: String, default: 'all' },
   highlightNodeId: { type: String, default: null },
 })
 
-const emit = defineEmits(['update:coreOnly', 'node-click', 'expand-branch', 'collapse-branch'])
+const emit = defineEmits(['update:coreOnly', 'update:impactLevel', 'update:projectSpace', 'node-click', 'expand-branch', 'collapse-branch'])
 
 const containerRef = ref(null)
 let graph = null
@@ -52,6 +58,15 @@ function resolveAnchorShapeName(ev) {
     el = el.getParent?.()
   }
   return null
+}
+
+function escapeHtml(text) {
+  return String(text ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 }
 
 function toGraphData(topology, branchChildrenOf) {
@@ -188,24 +203,31 @@ function renderGraph() {
   const h = containerRef.value.clientHeight || 400
 
   const tooltip = new G6.Tooltip({
-    offsetX: 10,
-    offsetY: 10,
+    className: 'impact-g6-tooltip',
+    offsetX: 0,
+    offsetY: 0,
+    enterable: true,
     itemTypes: ['node'],
     getContent(e) {
       const model = e.item.getModel()
       const div = document.createElement('div')
-      div.style.cssText =
-        'padding:8px 12px;font-size:12px;color:#fff;background:rgba(0,0,0,0.78);border-radius:6px;max-width:280px;line-height:1.5;'
+      
       if (model.nodeType === 'collapse') {
-        div.textContent = `折叠：${model.collapsedCount ?? 0} 个任务 / ${model.collapsedDepth ?? 0} 层`
+        div.style.cssText = 'position:relative; padding:8px 12px; font-size:12px; color:#fff; background:#262626; border-radius:6px; max-width:280px; line-height:1.5;'
+        div.innerHTML = `
+          折叠：${model.collapsedCount ?? 0} 个任务 / ${model.collapsedDepth ?? 0} 层
+          <div style="position:absolute; bottom:-4px; left:50%; margin-left:-4px; width:8px; height:8px; background:#262626; transform:rotate(45deg);"></div>
+        `
         return div
       }
-      const lines = [model.taskName || model.label || '-']
-      if (model.owner) lines.push(`负责人：${model.owner}`)
-      if (model.taskType) lines.push(`任务类型：${model.taskType}`)
-      if (model.lastRunDuration) lines.push(`运行时长：${model.lastRunDuration}`)
-      if (model.errorSummary) lines.push(`报错：${model.errorSummary.slice(0, 80)}`)
-      div.innerHTML = lines.join('<br/>')
+      
+      const taskName = model.taskName || model.label || '-'
+      
+      div.style.cssText = 'position:relative; max-width:320px; padding:8px 12px; font-size:13px; color:#ffffff; background:#262626; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,0.15); line-height:1.5; word-break:break-all; user-select:text;'
+      div.innerHTML = `
+        ${escapeHtml(taskName)}
+        <div style="position:absolute; bottom:-4px; left:50%; margin-left:-4px; width:8px; height:8px; background:#262626; transform:rotate(45deg);"></div>
+      `
       return div
     },
   })
@@ -416,3 +438,17 @@ onUnmounted(() => {
   destroyGraph()
 })
 </script>
+
+<style>
+.impact-g6-tooltip,
+.g6-tooltip,
+.g6-component-tooltip {
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  transform: translate(-50%, calc(-100% - 16px)) !important;
+  pointer-events: auto !important;
+}
+</style>

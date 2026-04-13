@@ -2,16 +2,13 @@
   <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t pt-12 pb-6 px-6 transition-colors duration-300" :class="isDarkMode ? 'from-[#0f172a] via-[#0f172a]' : 'from-[#fafafa] via-[#fafafa]'">
     <div class="max-w-4xl mx-auto relative">
       
-      <!-- @ 提及下拉列表 (Popover)：本对话优先，下方「常用」；有筛选词时为「最佳匹配」合并列表 -->
+      <!-- @ 提及下拉列表 (Popover)：仅「最近收藏」，本地过滤，最多 10 条 -->
       <transition name="fade-up">
         <div v-if="showMentionList" 
              class="absolute left-0 right-0 bottom-[calc(100%+10px)] rounded-[14px] border shadow-[0_12px_48px_rgba(0,0,0,0.1),0_2px_6px_rgba(0,0,0,0.04)] overflow-hidden z-50 transition-colors duration-300"
              :class="isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-[#f0f0f0]'">
           <div class="max-h-[280px] overflow-y-auto custom-scrollbar p-1.5 pt-0">
-            <div v-if="isSearching" class="py-4 text-center text-sm flex items-center justify-center gap-2" :class="isDarkMode ? 'text-slate-500' : 'text-gray-400'">
-              <LoadingOutlined /> 搜索中...
-            </div>
-            <div v-else-if="flatMentionItems.length === 0" class="py-4 text-center text-sm" :class="isDarkMode ? 'text-slate-500' : 'text-gray-400'">
+            <div v-if="flatMentionItems.length === 0" class="py-4 text-center text-sm" :class="isDarkMode ? 'text-slate-500' : 'text-gray-400'">
               没有找到匹配的表
             </div>
             <template v-else>
@@ -147,26 +144,19 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, watch } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { message as antMessage } from 'ant-design-vue'
-import { SearchOutlined, TableOutlined, NodeIndexOutlined, PauseCircleOutlined, LoadingOutlined } from '@ant-design/icons-vue'
+import { SearchOutlined, TableOutlined, NodeIndexOutlined } from '@ant-design/icons-vue'
 import {
-  DEFAULT_FREQUENT_MENTION_TABLES,
-  MENTION_FREQUENT_SECTION_CAP
+  DEFAULT_FREQUENT_MENTION_TABLES
 } from '@/utils/agentMentionTables.js'
-import { searchAssets } from '@/services/DataMap/searchService.js'
 
 const props = defineProps({
   isDarkMode: {
     type: Boolean,
     default: false
   },
-  /** 当前会话中出现的表（由父组件从 messages 聚合） */
-  sessionTables: {
-    type: Array,
-    default: () => []
-  },
-  /** 常用表，用于冷启动与补全；默认内置 mock，可换为接口数据 */
+  /** 最近收藏表，用于 @ 候选；默认内置 mock，地图 Agent 可传入本地收藏 */
   frequentTables: {
     type: Array,
     default: () => [...DEFAULT_FREQUENT_MENTION_TABLES]
@@ -199,14 +189,6 @@ const showMentionList = ref(false)
 const mentionSearchText = ref('')
 const mentionStartIndex = ref(-1)
 const selectedIndex = ref(0)
-const isSearching = ref(false)
-const searchResults = ref([])
-
-const sessionFqnSet = computed(() => new Set((props.sessionTables || []).map((t) => t.fqn)))
-
-const frequentExcludingSession = computed(() =>
-  (props.frequentTables || []).filter((t) => !sessionFqnSet.value.has(t.fqn))
-)
 
 function filterTablesByKeyword(list, kw) {
   if (!kw) return list
@@ -218,57 +200,11 @@ function filterTablesByKeyword(list, kw) {
   )
 }
 
-let searchTimeout = null
-watch(mentionSearchText, async (newVal) => {
-  const kw = newVal.trim()
-  if (!kw) {
-    searchResults.value = []
-    isSearching.value = false
-    return
-  }
-  
-  isSearching.value = true
-  if (searchTimeout) clearTimeout(searchTimeout)
-  
-  searchTimeout = setTimeout(async () => {
-    try {
-      const res = await searchAssets({ q: kw, size: 20 })
-      const hits = res?.hits?.hits || []
-      searchResults.value = hits.map(hit => {
-        const source = hit._source || {}
-        return {
-          fqn: source.fullyQualifiedName || source.name || '',
-          cnName: source.displayName || '',
-          owner: source.owners?.[0]?.name || ''
-        }
-      })
-    } catch (e) {
-      console.error('Search failed:', e)
-      searchResults.value = []
-    } finally {
-      isSearching.value = false
-    }
-  }, 300)
-})
-
-/** 无搜索：本对话 + 常用（常用去重且截断）；有搜索：合并列表「最佳匹配」 */
+/** 仅「最近收藏」：本地过滤后最多 10 条 */
 const mentionSections = computed(() => {
   const kw = mentionSearchText.value.trim()
-  
-  if (kw) {
-    // 搜索状态下，直接展示 searchResults
-    return searchResults.value.length ? [{ label: '最佳匹配', items: searchResults.value }] : []
-  }
-
-  // 默认状态下，展示本对话和常用表
-  const session = filterTablesByKeyword([...(props.sessionTables || [])], '')
-  const frequentAll = filterTablesByKeyword(frequentExcludingSession.value, '')
-  const frequentCapped = frequentAll.slice(0, MENTION_FREQUENT_SECTION_CAP)
-
-  const sections = []
-  if (session.length) sections.push({ label: '本对话', items: session })
-  if (frequentCapped.length) sections.push({ label: '常用', items: frequentCapped })
-  return sections
+  const items = filterTablesByKeyword([...(props.frequentTables || [])], kw).slice(0, 10)
+  return items.length ? [{ label: '最近收藏', items }] : []
 })
 
 const flatMentionItems = computed(() => mentionSections.value.flatMap((s) => s.items))

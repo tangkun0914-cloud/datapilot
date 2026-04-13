@@ -230,14 +230,11 @@ function buildDetailScenario(content) {
     extractFirstTableFqnFromText(content) || 'dm_trade.dws_order_summary_nd'
   const cnName = '订单汇总表'
   const owner = '张三(zhangsan)'
-  const description =
-    '包含每日订单量、GMV、客单价等核心交易指标汇总，T+1 更新。该表是下游核心报表的数据源，主要用于管理层经营分析。'
   return {
     tableDetail: {
       fqn: tableName,
       cnName,
-      owner,
-      description
+      owner
     },
     steps: [
       { id: 1, text: '语义解析与意图识别...', duration: 600 },
@@ -250,7 +247,6 @@ function buildDetailScenario(content) {
 > **表英文名：** ${tableName}
 > **表中文名：** ${cnName}
 > **表负责人：** ${owner}
-> **表描述：** ${description}
 
 <!-- MAPAGENT:TABLE_ACTIONS -->
 

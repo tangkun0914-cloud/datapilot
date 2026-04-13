@@ -55,7 +55,6 @@
               v-show="!isShareMode"
               @send="handleSend"
               :is-dark-mode="agentStore.isDarkMode"
-              :session-tables="sessionMentionTables"
             />
           </div>
         </main>
@@ -92,11 +91,6 @@ import AgentSidebar from './components/Sidebar/index.vue'
 import TableDetailPanel from './components/Detail/TableDetailPanel.vue'
 import { sendMessageStream } from '@/services/DataMap/Agent/index.js'
 import { useAgentStore } from '@/stores/DataMap/agent.js'
-import {
-  buildSessionMentionTableList,
-  DEFAULT_FREQUENT_MENTION_TABLES
-} from '@/utils/agentMentionTables.js'
-
 const messages = ref([])
 const hasMessages = ref(false)
 const currentSessionId = ref('session_2026_' + Date.now())
@@ -104,10 +98,6 @@ const agentStore = useAgentStore()
 const isSidebarCollapsed = ref(false)
 const activeDetailData = ref(null)
 const isShareMode = ref(false)
-
-const sessionMentionTables = computed(() =>
-  buildSessionMentionTableList(messages.value, DEFAULT_FREQUENT_MENTION_TABLES)
-)
 
 // 拖拽宽度控制
 const sidebarWidth = ref(280)

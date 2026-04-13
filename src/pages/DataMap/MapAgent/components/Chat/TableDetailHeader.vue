@@ -20,12 +20,6 @@
       <div class="text-xs" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">
         负责人：{{ detail.owner }}
       </div>
-      <div
-        class="text-sm leading-relaxed pt-0.5"
-        :class="isDarkMode ? 'text-slate-300' : 'text-slate-600'"
-      >
-        {{ detail.description }}
-      </div>
     </div>
   </div>
 </template>

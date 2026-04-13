@@ -51,18 +51,18 @@ export function resolveAlertForImpact(eventId, alertSnapshot) {
 /** 根节点 impactStatus：开发/集成用 monitorEvent；质量类须区分「运行失败」与「阈值触发」 */
 function rootImpactStatus(alert) {
   if (resolveAlertSource(alert?.source) === 'quality') {
-    if (isQualityRunFailedEvent(alert)) return 'failed'
+    if (isQualityRunFailedEvent(alert)) return 'FAILURE'
     // 阈值类：拓扑用 dqc_threshold 红顶栏；摘要逻辑仍按「非执行失败」走 qualityThreshold 分支
-    if (isQualityThresholdEvent(alert)) return 'dqc_threshold'
+    if (isQualityThresholdEvent(alert)) return 'SUCCESS'
     const ev = alert.monitorEvent || ''
-    if (ev.includes('失败')) return 'failed'
-    return 'failed'
+    if (ev.includes('失败')) return 'FAILURE'
+    return 'FAILURE'
   }
   const ev = alert.monitorEvent || ''
-  if (ev.includes('失败')) return 'failed'
-  if (ev.includes('超时') || ev.includes('SLA')) return 'timeout'
-  if (alert.severity === 'ERROR') return 'failed'
-  return 'timeout'
+  if (ev.includes('失败')) return 'FAILURE'
+  if (ev.includes('超时') || ev.includes('SLA')) return 'RUNNING_EXECUTION'
+  if (alert.severity === 'ERROR') return 'FAILURE'
+  return 'RUNNING_EXECUTION'
 }
 
 function taskNode(partial) {
@@ -85,18 +85,18 @@ function taskNode(partial) {
 function devIntegrationRootDisplay(alert) {
   const ev = alert.monitorEvent || ''
   if (ev.includes('SLA启动超时')) {
-    return { statusText: 'SLA启动超时', impactStatus: 'timeout' }
+    return { statusText: '等待依赖', impactStatus: 'WAITING_DEPEND' }
   }
   if (ev.includes('SLA完成超时')) {
-    return { statusText: 'SLA完成超时', impactStatus: 'timeout' }
+    return { statusText: '正在运行', impactStatus: 'RUNNING_EXECUTION' }
   }
   if (ev.includes('离线任务超时')) {
-    return { statusText: '运行超时', impactStatus: 'timeout' }
+    return { statusText: '正在运行', impactStatus: 'RUNNING_EXECUTION' }
   }
   if (ev.includes('失败')) {
-    return { statusText: '运行失败', impactStatus: 'failed' }
+    return { statusText: '失败', impactStatus: 'FAILURE' }
   }
-  return { statusText: '运行失败', impactStatus: 'failed' }
+  return { statusText: '失败', impactStatus: 'FAILURE' }
 }
 
 /**
@@ -137,7 +137,7 @@ export const SLA_DASHBOARD_L3_MOCK = {
 }
 
 /**
- * L2 SLA Mock：l2_1/l2_2 为完成侧「SLA完成风险」；l2_4 为「SLA双重破线」
+ * L2 SLA Mock：l2_1/l2_2 为完成侧「SLA完成破线」；l2_4 为「SLA双重破线」
  * @type {Record<number, { slaStartBreached: boolean, slaFinishBreached: boolean, slaFinishRiskLabel?: boolean }>}
  */
 export const SLA_L2_FINISH_RISK_BY_INDEX = {
@@ -245,21 +245,27 @@ export function createImpactTaskNodeById(nodeId, alert) {
       const slaFinishRiskLabel = slaL2?.slaFinishRiskLabel === true
       const hasSlaBreachRisk = slaStartBreached || slaFinishBreached
 
+      // Mock 告警事件：如果该节点有 SLA 破线，则加上对应的告警事件
+      let alertEvent = null
+      if (slaStartBreached && slaFinishBreached) alertEvent = 'SLA双重超时'
+      else if (slaStartBreached) alertEvent = 'SLA启动超时'
+      else if (slaFinishBreached) alertEvent = 'SLA完成超时'
+
       const devStatuses =
         depth === 1
-          ? ['waiting', 'running', 'success']
+          ? ['WAITING_DEPEND', 'RUNNING_EXECUTION', 'SUCCESS']
           : depth === 2
-            ? ['waiting', 'running', 'success', 'failed', 'waiting', 'running', 'success']
-            : ['not_generated', 'success', 'running', 'not_generated', 'success', 'running', 'not_generated', 'success', 'running', 'not_generated', 'success', 'running', 'not_generated']
+            ? ['WAITING_DEPEND', 'RUNNING_EXECUTION', 'SUCCESS', 'FAILURE', 'WAITING_DEPEND', 'RUNNING_EXECUTION', 'SUCCESS']
+            : ['PENDING', 'SUCCESS', 'RUNNING_EXECUTION', 'PENDING', 'SUCCESS', 'RUNNING_EXECUTION', 'PENDING', 'SUCCESS', 'RUNNING_EXECUTION', 'PENDING', 'SUCCESS', 'RUNNING_EXECUTION', 'PENDING']
       const impactStatus = devStatuses[idx % devStatuses.length]
-      const hasEnd = impactStatus === 'success' || impactStatus === 'failed'
+      const hasEnd = impactStatus === 'SUCCESS' || impactStatus === 'FAILURE'
       return taskNode({
         id: nodeId,
         taskName,
         taskType: 'SPARK_SQL',
         owner: owners[idx % owners.length],
         impactStatus,
-        startTime: impactStatus === 'not_generated' ? '-' : planBase,
+        startTime: impactStatus === 'PENDING' ? '-' : planBase,
         endTime: hasEnd ? planBase : '-',
         depth: depth,
         isCore: isCore,
@@ -267,6 +273,7 @@ export function createImpactTaskNodeById(nodeId, alert) {
         slaStartBreached,
         slaFinishBreached,
         ...(slaFinishRiskLabel ? { slaFinishRiskLabel: true } : {}),
+        ...(alertEvent ? { alertEvent } : {}),
       })
     }
   }
@@ -287,7 +294,7 @@ export function createImpactTaskNodeById(nodeId, alert) {
           taskName: `${prefixesEarly[depthEarly]}qc_chain_l${depthEarly}_${idxEarly}`,
           taskType: 'SPARK_SQL',
           owner: '—',
-          impactStatus: 'pending',
+          impactStatus: 'PENDING',
           statusText: '未推演',
           startTime: '-',
           endTime: '-',
@@ -298,16 +305,20 @@ export function createImpactTaskNodeById(nodeId, alert) {
       }
       const depth = parseInt(match[1], 10)
       const idx = parseInt(match[2], 10)
+      
       const isError = alert.severity === 'ERROR'
+      const isThreshold = isQualityThresholdEvent(alert)
+      
       const owners = ['张三(zhangsan)', '李四(lisi)', '王五(wangwu)', '赵六(zhaoliu)', '师建伟(jianweishi)']
       const prefixes = ['', 'dwd_', 'dws_', 'ads_']
       const taskName = `${prefixes[depth]}qc_chain_l${depth}_${idx}`
       const isCore = depth >= 2 && idx % 3 === 1
-      const warnStatuses = ['success', 'running', 'failed', 'waiting']
-      const impactStatus = isError ? 'waiting' : warnStatuses[idx % warnStatuses.length]
-      const isPolluted = !isError
-      /** DQC + ERROR 强阻断：下游依赖节点展示「阻断」标识（根节点 impact_dqc_root 不在此分支） */
-      const isDqcErrorBlocked = isError
+      const warnStatuses = ['SUCCESS', 'RUNNING_EXECUTION', 'FAILURE', 'WAITING_DEPEND']
+      
+      const isDqcErrorBlocked = isError && isThreshold
+      const isPolluted = !isError && isThreshold
+      const impactStatus = isDqcErrorBlocked ? 'WAITING_DEPEND' : warnStatuses[idx % warnStatuses.length]
+      
       return taskNode({
         id: nodeId,
         taskName,
@@ -317,7 +328,7 @@ export function createImpactTaskNodeById(nodeId, alert) {
         isPolluted,
         isDqcErrorBlocked,
         startTime: planBase,
-        endTime: (impactStatus === 'running' || impactStatus === 'waiting') ? '-' : planBase,
+        endTime: (impactStatus === 'RUNNING_EXECUTION' || impactStatus === 'WAITING_DEPEND') ? '-' : planBase,
         depth,
         isCore,
         region: 'CN',
@@ -332,10 +343,11 @@ export function createImpactTaskNodeById(nodeId, alert) {
         taskName: 'dwd_order_detail_di',
         taskType: 'HIVE2STARROCKS',
         owner: '张三(zhangsan)',
-        impactStatus: 'waiting',
+        impactStatus: 'WAITING_DEPEND',
         planTime: planBase,
         depth: 1,
         isCore: true,
+        alertEvent: '数据质量拦截', // 增加 Mock 告警事件
       }),
     impact_dwd_2: () =>
       taskNode({
@@ -343,7 +355,7 @@ export function createImpactTaskNodeById(nodeId, alert) {
         taskName: 'dwd_payment_merge_di',
         taskType: 'SPARK_SQL',
         owner: '李四(lisi)',
-        impactStatus: 'waiting',
+        impactStatus: 'WAITING_DEPEND',
         planTime: planBase,
         depth: 1,
       }),
@@ -353,7 +365,7 @@ export function createImpactTaskNodeById(nodeId, alert) {
         taskName: 'ods_future_partition_di',
         taskType: 'SPARK_SQL',
         owner: alert.owner || '王蕊(ruiwang1)',
-        impactStatus: 'not_generated',
+        impactStatus: 'PENDING',
         statusText: '未生成',
         planTime: '-',
         depth: 1,
@@ -364,7 +376,7 @@ export function createImpactTaskNodeById(nodeId, alert) {
         taskName: 'dwd_trade_union_di',
         taskType: 'HIVE2STARROCKS',
         owner: '李四(lisi)',
-        impactStatus: 'waiting',
+        impactStatus: 'WAITING_DEPEND',
         planTime: '2026-03-19 09:00:00',
         depth: 2,
         isCore: true,
@@ -375,11 +387,12 @@ export function createImpactTaskNodeById(nodeId, alert) {
         taskName: 'dws_trade_agg_1d',
         taskType: 'SPARK_SQL',
         owner: '张三(zhangsan)',
-        impactStatus: 'waiting',
+        impactStatus: 'WAITING_DEPEND',
         planTime: '2026-03-19 09:30:00',
         depth: 3,
         isCore: true,
         aiTag: 'high_priority_business',
+        alertEvent: 'SLA完成超时', // 增加 Mock 告警事件
       }),
     impact_dws_1: () =>
       taskNode({
@@ -387,7 +400,7 @@ export function createImpactTaskNodeById(nodeId, alert) {
         taskName: 'dws_user_order_1d',
         taskType: 'HIVE2STARROCKS',
         owner: '张三(zhangsan)',
-        impactStatus: 'waiting',
+        impactStatus: 'WAITING_DEPEND',
         planTime: '2026-03-19 09:15:00',
         depth: 2,
       }),
@@ -593,6 +606,7 @@ function devIntegrationRootTask(alert) {
     depth: 0,
     isCore: true,
     errorSummary: (alert.logSnippet || '').slice(0, 80),
+    alertEvent: alert.monitorEvent || '运行失败', // 根节点加上告警事件
   })
 }
 
@@ -621,20 +635,19 @@ export function buildQualityRootTopology(alert) {
   /** 阈值根：告警红顶栏（与下游 waiting 橙区分）；运行失败根：同红系更深色 */
   const DQC_RUN_FAIL_RED = '#A8071A'
 
-  let impactStatus = 'failed'
-  let statusText = '质量监控异常'
+  let impactStatus = 'FAILURE'
+  let statusText = '失败'
   let statusColor
   if (runFailed) {
-    impactStatus = 'failed'
+    impactStatus = 'FAILURE'
     statusColor = DQC_RUN_FAIL_RED
-    statusText = '监控规则运行失败'
+    statusText = '失败'
   } else if (threshold) {
-    impactStatus = 'dqc_threshold'
-    statusText =
-      alert.severity === 'ERROR' ? '运行成功·已触发异常阈值' : '运行成功·阈值告警(WARN)'
+    impactStatus = 'SUCCESS'
+    statusText = '成功'
   } else {
-    impactStatus = alert.severity === 'ERROR' ? 'failed' : 'delayed'
-    statusText = alert.severity === 'ERROR' ? '质量监控异常(ERROR)' : '质量监控告警(WARN)'
+    impactStatus = alert.severity === 'ERROR' ? 'FAILURE' : 'WAITING_DEPEND'
+    statusText = alert.severity === 'ERROR' ? '失败' : '等待依赖'
   }
 
   const current = taskNode({
@@ -652,6 +665,7 @@ export function buildQualityRootTopology(alert) {
     depth: 0,
     isCore: true,
     errorSummary: (alert.logSnippet || '').slice(0, 100),
+    alertEvent: alert.monitorEvent || '数据质量拦截', // 根节点加上告警事件
   })
 
   return {
@@ -712,6 +726,10 @@ export function mockSummary(eventId, alertSnapshot) {
   const qualityRunFailed = isQuality && isQualityRunFailedEvent(alert)
   const qualityRunFailDownstreamDemo = isQuality && isQualityRunFailedDownstreamDemo(alert)
   const qualityThreshold = isQuality && isQualityThresholdEvent(alert)
+  
+  const isError = alert.severity === 'ERROR'
+  const isDqcErrorBlocked = isError && qualityThreshold
+  const isPolluted = !isError && qualityThreshold
 
   let qualityAi = `当前为数据质量类告警，请结合监控事件类型与拓扑核对根因与影响范围。`
   if (qualityRunFailed) {
@@ -727,10 +745,10 @@ export function mockSummary(eventId, alertSnapshot) {
       ruleContext = '（包含 order_amount空值校验 等 1 个强规则告警）'
     }
     
-    if (alert.severity === 'ERROR') {
-      qualityAi = `规则已执行完成，但触发异常阈值${ruleContext}（ERROR，强阻断推演）：下游 ${qualityDownCount} 个逻辑任务处于依赖等待，调度挂起；其中 ${qualityCoreCount} 个为核心任务。建议负责人 ${alert.owner || '相关同学'} 优先修复数据或规则并协调下游恢复。`
+    if (isError) {
+      qualityAi = `规则已执行完成，触发异常阈值${ruleContext}（ERROR，强阻断推演）：下游 ${qualityDownCount} 个逻辑任务处于依赖等待，调度挂起；其中 ${qualityCoreCount} 个为核心任务。建议负责人 ${alert.owner || '相关同学'} 优先修复数据或规则并协调下游恢复。`
     } else {
-      qualityAi = `规则已执行完成，但触发阈值告警${ruleContext}（WARN，未阻断推演）：下游任务仍在运行，存在数据污染风险（共 ${qualityDownCount} 个逻辑任务受影响，核心任务 ${qualityCoreCount} 个）。建议负责人 ${alert.owner || '相关同学'} 结合「全局影响清单」逐项确认。`
+      qualityAi = `规则已执行完成，触发阈值告警${ruleContext}（WARN，未阻断推演）：下游任务仍在运行，存在数据污染风险（共 ${qualityDownCount} 个逻辑任务受影响，核心任务 ${qualityCoreCount} 个）。建议负责人 ${alert.owner || '相关同学'} 结合「全局影响清单」逐项确认。`
     }
   }
 
@@ -755,10 +773,10 @@ export function mockSummary(eventId, alertSnapshot) {
       const slaFinishRiskLabel = slaL2?.slaFinishRiskLabel === true
       const devListStatuses =
         d === 1
-          ? ['waiting', 'running', 'success']
+          ? ['WAITING_DEPEND', 'RUNNING_EXECUTION', 'SUCCESS']
           : d === 2
-            ? ['waiting', 'running', 'success', 'failed', 'waiting', 'running', 'success']
-            : ['not_generated', 'success', 'running', 'not_generated', 'success', 'running', 'not_generated', 'success', 'running', 'not_generated', 'success', 'running', 'not_generated']
+            ? ['WAITING_DEPEND', 'RUNNING_EXECUTION', 'SUCCESS', 'FAILURE', 'WAITING_DEPEND', 'RUNNING_EXECUTION', 'SUCCESS']
+            : ['PENDING', 'SUCCESS', 'RUNNING_EXECUTION', 'PENDING', 'SUCCESS', 'RUNNING_EXECUTION', 'PENDING', 'SUCCESS', 'RUNNING_EXECUTION', 'PENDING', 'SUCCESS', 'RUNNING_EXECUTION', 'PENDING']
       devAffectedTasks.push({
         id: `impact_l${d}_${i}`,
         taskName,
@@ -784,17 +802,16 @@ export function mockSummary(eventId, alertSnapshot) {
         ? qualityThreshold || qualityRunFailDownstreamDemo
           ? Array.from({ length: 24 }).map((_, i) => {
               const taskId = QUAL_MOCK_DOWNSTREAM_IDS[i % QUAL_MOCK_DOWNSTREAM_IDS.length]
-              const isError = alert.severity === 'ERROR'
-              const warnStatuses = ['success', 'running', 'failed', 'waiting']
-              const status = isError ? 'waiting' : warnStatuses[i % warnStatuses.length]
+              const warnStatuses = ['SUCCESS', 'RUNNING_EXECUTION', 'FAILURE', 'WAITING_DEPEND']
+              const status = isDqcErrorBlocked ? 'WAITING_DEPEND' : warnStatuses[i % warnStatuses.length]
               return {
                 instanceId: String(8573921000 + i + 1),
                 taskId,
                 taskName: qualityMockTaskDisplayName(taskId),
                 scheduleBatch: alert.scheduleBatch || alert.triggerTime || '2026-04-02',
                 status,
-                isPolluted: qualityThreshold && !isError,
-                isDqcErrorBlocked: isError,
+                isPolluted: isPolluted,
+                isDqcErrorBlocked: isDqcErrorBlocked,
                 owner: i % 2 === 0 ? '张三(zhangsan)' : '赵六(zhaoliu)',
                 isCore: qualityTaskIsCore(taskId),
               }
@@ -835,6 +852,11 @@ export function mockSummary(eventId, alertSnapshot) {
             { name: '张三(zhangsan)', taskCount: isQuality ? (qualityThreshold ? 1 : 0) : 3 },
             { name: '李四(lisi)', taskCount: isQuality ? 0 : 2 },
             { name: '赵六(zhaoliu)', taskCount: isQuality ? (qualityThreshold ? 1 : 0) : 1 },
+            // 生成额外的 20+ 个负责人用于测试分页
+            ...Array.from({ length: 25 }).map((_, i) => ({
+              name: `测试用户${i + 1}(testuser${i + 1})`,
+              taskCount: Math.floor(Math.random() * 5) + 1
+            }))
           ]
       const seen = new Set()
       return rows.filter((r) => {
@@ -847,33 +869,75 @@ export function mockSummary(eventId, alertSnapshot) {
       ? []
       : (() => {
       const l2Rows = [
+        /** 仅配置启动 SLA */
         {
-          taskName: 'dws_business_model_l2_1',
+          taskName: 'demo_sla_start_only',
+          owner: '张三(zhangsan)',
+          instanceId: 'INS-SLA-START-ONLY-001',
           slaStartDeadline: '08:00',
-          predictedStartTime: '07:50',
+          actualStartTime: '08:40',
+          isStartBreached: true,
+          slaFinishDeadline: null,
+          actualFinishTime: null,
+          isFinishBreached: false,
+        },
+        /** 仅配置完成 SLA */
+        {
+          taskName: 'demo_sla_finish_only',
+          owner: '李四(lisi)',
+          instanceId: 'INS-SLA-FINISH-ONLY-001',
+          slaStartDeadline: null,
+          actualStartTime: null,
+          isStartBreached: false,
+          slaFinishDeadline: '10:00',
+          actualFinishTime: '10:45',
+          isFinishBreached: true,
+        },
+        /** 同时配置启动 + 完成 SLA（可控） */
+        {
+          taskName: 'demo_sla_both_safe',
+          owner: '赵六(zhaoliu)',
+          instanceId: 'INS-SLA-BOTH-SAFE-001',
+          slaStartDeadline: '08:00',
+          actualStartTime: '07:50',
           isStartBreached: false,
           slaFinishDeadline: '09:00',
-          predictedFinishTime: '09:45',
+          actualFinishTime: '08:45',
+          isFinishBreached: false,
+        },
+        {
+          taskName: 'dws_business_model_l2_1',
+          owner: '张三(zhangsan)',
+          instanceId: 'INS-DWS-L2-1001',
+          slaStartDeadline: '08:00',
+          actualStartTime: '07:50',
+          isStartBreached: false,
+          slaFinishDeadline: '09:00',
+          actualFinishTime: '09:45',
           isFinishBreached: true,
           slaFinishRiskLabel: true,
         },
         {
           taskName: 'dws_business_model_l2_2',
+          owner: '李四(lisi)',
+          instanceId: 'INS-DWS-L2-1002',
           slaStartDeadline: '08:00',
-          predictedStartTime: '07:50',
+          actualStartTime: '07:50',
           isStartBreached: false,
           slaFinishDeadline: '09:00',
-          predictedFinishTime: '09:40',
+          actualFinishTime: '09:40',
           isFinishBreached: true,
           slaFinishRiskLabel: true,
         },
         {
           taskName: 'dws_business_model_l2_4',
+          owner: '赵六(zhaoliu)',
+          instanceId: 'INS-DWS-L2-1004',
           slaStartDeadline: '08:00',
-          predictedStartTime: '08:30',
+          actualStartTime: '08:30',
           isStartBreached: true,
           slaFinishDeadline: '09:00',
-          predictedFinishTime: '09:45',
+          actualFinishTime: '09:45',
           isFinishBreached: true,
         },
       ]
@@ -883,20 +947,50 @@ export function mockSummary(eventId, alertSnapshot) {
         const pinned = SLA_DASHBOARD_L3_MOCK[n]
         const isStartBreached = pinned ? pinned.slaStartBreached : i % 3 === 0
         const isFinishBreached = pinned ? pinned.slaFinishBreached : i % 2 === 0
-        return {
+        const owners = ['张三(zhangsan)', '李四(lisi)', '赵六(zhaoliu)', '测试用户1(testuser1)']
+        /** 部分行仅配启动或仅配完成 SLA，便于验收三种配置形态 */
+        const mode = n % 7
+        const onlyStart = mode === 0
+        const onlyFinish = mode === 1
+        const base = {
           taskName,
+          owner: owners[i % owners.length],
+          instanceId: `INS-ADS-${String(n).padStart(4, '0')}-20250410`,
+        }
+        if (onlyStart) {
+          return {
+            ...base,
+            slaStartDeadline: '08:00',
+            actualStartTime: isStartBreached ? '08:30' : '07:50',
+            isStartBreached,
+            slaFinishDeadline: null,
+            actualFinishTime: null,
+            isFinishBreached: false,
+          }
+        }
+        if (onlyFinish) {
+          return {
+            ...base,
+            slaStartDeadline: null,
+            actualStartTime: null,
+            isStartBreached: false,
+            slaFinishDeadline: '09:00',
+            actualFinishTime: isFinishBreached ? '09:45' : '08:30',
+            isFinishBreached,
+          }
+        }
+        return {
+          ...base,
           slaStartDeadline: '08:00',
-          predictedStartTime: isStartBreached ? '08:30' : '07:50',
+          actualStartTime: isStartBreached ? '08:30' : '07:50',
           isStartBreached,
           slaFinishDeadline: '09:00',
-          predictedFinishTime: isFinishBreached ? '09:45' : '08:30',
+          actualFinishTime: isFinishBreached ? '09:45' : '08:30',
           isFinishBreached,
         }
       })
-      /** 列表不展示「可控」：仅保留启动或完成任一破线的 SLA 预估 */
-      return [...l2Rows, ...dashRows].filter(
-        (r) => r.isStartBreached === true || r.isFinishBreached === true
-      )
+      /** 列表展示所有 SLA 监控项（承诺时间 + 可选实际时间，无预计推演） */
+      return [...l2Rows, ...dashRows]
     })(),
     deductionResult: isQuality
       ? qualityRunFailed
@@ -906,7 +1000,7 @@ export function mockSummary(eventId, alertSnapshot) {
             ? 'weak'
             : 'broken'
           : 'broken'
-      : rootImpactStatus(alert) === 'failed'
+      : rootImpactStatus(alert) === 'FAILURE'
         ? 'broken'
         : 'timeout',
     deductionDetail: isQuality

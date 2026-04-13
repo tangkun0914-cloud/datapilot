@@ -55,7 +55,7 @@
               :msg-status="msg.status"
             />
 
-            <!-- 表名/负责人/描述由 Markdown 正文呈现，不再单独展示 TableDetailHeader 卡片，避免与下方引用块重复 -->
+            <!-- 单表详情：英文名/中文名/负责人由 Markdown 引用块流式呈现；表描述不在对话内展示。tableDetail 仅 fqn 等供收藏星标与 @ 候选 -->
 
             <!-- L3-2 用户消息气泡 -->
             <UserBubble 
@@ -166,11 +166,11 @@ const emit = defineEmits(['send', 'update:isShareMode', 'toggleTableFavorite', '
 
 const isTableFavorited = (fqn) => props.favoriteFqns.includes(fqn)
 
-/** 正文已出现 1A 占位则只在 Markdown 内挂载收藏，操作栏星标作流式未到占位前的后备 */
+/** 正文已出现 1A 占位则只在 Markdown 内挂载收藏，操作栏星标作正文未到占位前的后备 */
 const showMessageActionsTableFavorite = (msg) =>
   !!msg.tableDetail && !rawMarkdownHasTableActionsMarker(msg.content || '')
 
-/** 3C：fqn/收藏态仍来自消息上的 tableDetail；1A：由 replaceMapagentTableActionsMarker 在 MarkdownRenderer 内处理 */
+/** 3C：fqn/收藏态来自消息 tableDetail（无描述字段）；1A：由 MarkdownRenderer 内占位符注入收藏 */
 const tableFavoriteSlotForMsg = (msg) => {
   if (msg.role !== 'ai' || !msg.tableDetail) return null
   return {

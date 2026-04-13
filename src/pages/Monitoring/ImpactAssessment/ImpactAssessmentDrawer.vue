@@ -9,39 +9,86 @@
     @close="$emit('close')"
   >
     <template #title>
-      <div class="flex flex-col gap-1.5 py-0.5">
+      <div class="flex flex-col gap-2.5 py-1">
+        <!-- 第一行：核心标识与标题 -->
         <div class="flex items-center gap-3">
           <span 
-            class="rounded border px-2 py-0.5 text-xs font-bold uppercase"
-            :class="alert?.severity === 'ERROR' ? 'border-red-200 bg-red-50 text-red-500' : 'border-orange-200 bg-orange-50 text-orange-500'"
+            class="rounded border px-2 py-0.5 text-xs font-bold uppercase tracking-wide shadow-sm"
+            :class="alert?.severity === 'ERROR' ? 'border-red-200 bg-red-50 text-red-600' : 'border-orange-200 bg-orange-50 text-orange-600'"
           >
             {{ alert?.severity || 'WARN' }}
           </span>
-          <span class="text-lg font-bold text-slate-800">{{ alert?.title || '-' }}</span>
-          <span class="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-600">
-            来源：{{ alert?.source || '-' }}
-          </span>
+          <span class="text-[17px] font-bold text-slate-800 tracking-tight">{{ alert?.title || '-' }}</span>
+          
           <AlertStatusBadge :status="alertEventStatus" />
-          <span class="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-600">
-            负责人：{{ alert?.owner || '-' }}
-          </span>
-          <a-button v-if="!isSnapshot" type="text" size="small" :loading="refreshing" class="ml-auto" @click="handleRefresh">
+          
+          <div class="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs text-slate-600 shadow-sm">
+            <UserOutlined class="text-slate-400" />
+            <span>{{ alert?.owner || '-' }}</span>
+          </div>
+          
+          <a-button type="text" size="small" :loading="refreshing" class="ml-auto text-slate-500 hover:text-blue-600" @click="handleRefresh">
             <template #icon><ReloadOutlined /></template>
             刷新
           </a-button>
         </div>
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
-          <span>事件ID: {{ alert?.id || '-' }}</span>
-          <span v-if="alert?.monitorEvent">监控事件: {{ alert.monitorEvent }}</span>
-          <span v-if="alert?.triggeredAt">触发时间: {{ alert.triggeredAt }}</span>
+        
+        <!-- 第二行：详细元数据 -->
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px] text-slate-500">
+          <div class="flex items-center gap-1.5">
+            <span class="text-slate-400">事件ID:</span>
+            <span class="font-mono text-slate-700">{{ alert?.id || '-' }}</span>
+          </div>
+          <div class="h-3 w-px bg-slate-200"></div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-slate-400">来源:</span>
+            <span class="text-slate-700">{{ alert?.source || '-' }}</span>
+          </div>
+          <template v-if="alert?.monitorEvent">
+            <div class="h-3 w-px bg-slate-200"></div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-slate-400">监控事件:</span>
+              <span class="text-slate-700">{{ alert.monitorEvent }}</span>
+            </div>
+          </template>
+          <template v-if="alert?.scheduleCycle">
+            <div class="h-3 w-px bg-slate-200"></div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-slate-400">调度周期:</span>
+              <span class="text-slate-700">{{ alert.scheduleCycle }}</span>
+            </div>
+          </template>
+          <template v-if="alert?.scheduleBatch">
+            <div class="h-3 w-px bg-slate-200"></div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-slate-400">调度批次:</span>
+              <span class="font-mono text-slate-700">{{ alert.scheduleBatch }}</span>
+            </div>
+          </template>
+          <template v-if="alert?.triggeredAt">
+            <div class="h-3 w-px bg-slate-200"></div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-slate-400">触发时间:</span>
+              <span class="font-mono text-slate-700">{{ alert.triggeredAt }}</span>
+            </div>
+          </template>
         </div>
       </div>
     </template>
     <div class="war-room-body flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-      <!-- 快照模式 Banner -->
-      <div v-if="isSnapshot" class="shrink-0 border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
-        您正在查看历史影响评估快照<template v-if="snapshotTime">，数据截止于 {{ snapshotTime }}</template>
+      <!-- 终态提示 Banner -->
+      <div v-if="isTerminalState" class="shrink-0 bg-slate-50 px-4 py-2.5 border-b border-slate-200/80 z-10 flex items-center justify-center gap-2">
+        <div class="relative flex h-2 w-2 items-center justify-center">
+          <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-75"></span>
+          <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-indigo-500"></span>
+        </div>
+        <span class="text-[13px] text-slate-600">
+          当前告警已处于终态（<span class="font-semibold text-slate-800">{{ alertEventStatus === 'resolved' ? '已解决' : '误报' }}</span>），正在为您实时展示当前最新的拓扑与运行状态。
+          <span class="text-slate-300 mx-1.5">|</span>
+          <span class="text-slate-400">操作栏已禁用</span>
+        </span>
       </div>
+
       <div v-if="loadError && !loading" class="load-error-wrap flex min-h-[320px] flex-1 items-center justify-center px-6 py-10">
         <a-result status="error" title="影响评估数据加载失败" sub-title="请检查网络或稍后重试；Mock 模式请确认已开启 VITE_USE_MOCK。">
           <template #extra>
@@ -69,8 +116,12 @@
               :topology="canvasTopology"
               :branch-children-of="branchChildrenMap"
               :core-only="coreOnly"
+              :impact-level="impactLevel"
+              :project-space="projectSpace"
               :highlight-node-id="selectedNodeId"
               @update:core-only="onCoreOnly"
+              @update:impact-level="onImpactLevelChange"
+              @update:project-space="onProjectSpaceChange"
               @node-click="onNodeClick"
               @expand-branch="onExpandBranch"
               @collapse-branch="onCollapseBranch"
@@ -126,11 +177,10 @@
         </div>
         </div>
         <ActionBar
-          v-if="summary && alert && !loadError"
+          v-if="summary && alert && !loadError && !isTerminalState"
           :event-id="alert.id || ''"
           :alert-title="alert.title || ''"
           :summary="summary"
-          :mode="mode"
           :alert="alert"
         />
       </div>
@@ -141,12 +191,12 @@
 <script setup>
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
 import { message } from 'ant-design-vue'
-import { RightOutlined, LeftOutlined, ReloadOutlined } from '@ant-design/icons-vue'
+import { RightOutlined, LeftOutlined, ReloadOutlined, UserOutlined, InfoCircleFilled } from '@ant-design/icons-vue'
 import AlertStatusBadge from '../components/AlertStatusBadge.vue'
 import TopologyCanvas from './TopologyCanvas.vue'
 import AssessmentPanel from './AssessmentPanel.vue'
 import ActionBar from './components/ActionBar.vue'
-import { getImpactTopology, getImpactSummary, getSnapshot, getCorePath } from '@/services/Monitoring/impactService.js'
+import { getImpactTopology, getImpactSummary, getCorePath } from '@/services/Monitoring/impactService.js'
 import {
   expandImpactDirectChildren,
   getImpactBranchChildrenMap,
@@ -158,13 +208,13 @@ import { collapseDescendantsBranch } from './impactTopologyLazy.js'
 const props = defineProps({
   open: { type: Boolean, default: false },
   alert: { type: Object, default: null },
-  mode: { type: String, default: 'active' },
 })
 
 defineEmits(['close'])
 
 /** 告警事件状态：与列表同源字段，缺省时与列表兜底策略一致 */
 const alertEventStatus = computed(() => props.alert?.status || 'firing')
+const isTerminalState = computed(() => ['resolved', 'falsePositive'].includes(alertEventStatus.value))
 
 /** 与下方全局样式配合，让 body 在 flex 链里吃满高度，避免拓扑只显示半屏、底部留白 */
 const drawerBodyStyle = {
@@ -176,8 +226,6 @@ const drawerBodyStyle = {
   overflow: 'hidden',
 }
 
-const isSnapshot = computed(() => props.mode === 'snapshot')
-const snapshotTime = ref('')
 const refreshing = ref(false)
 
 const loading = ref(false)
@@ -194,6 +242,20 @@ const isTopologyEmpty = computed(() => {
   return nodes.length === 0
 })
 const coreOnly = ref(false)
+const impactLevel = ref('1')
+const projectSpace = ref('all')
+
+function onImpactLevelChange(val) {
+  impactLevel.value = val
+  // TODO: 触发后端重新加载或前端重新过滤，目前仅做 UI 示意
+  message.info(`已切换影响层级为：${val} 层`)
+}
+
+function onProjectSpaceChange(val) {
+  projectSpace.value = val
+  // TODO: 触发后端重新加载或前端重新过滤，目前仅做 UI 示意
+  message.info(`已切换项目空间为：${val === 'current' ? '仅当前空间' : '全部'}`)
+}
 
 /** Mock 下由本地子图规范推导 +/−；真实接口可改为 topology.lazyChildrenOf */
 const branchChildrenMap = computed(() => {
@@ -246,27 +308,12 @@ async function loadData() {
   selectedNodeId.value = null
   selectedNode.value = null
   try {
-    if (isSnapshot.value) {
-      const snap = await getSnapshot(props.alert.id)
-      if (!snap?.exists) {
-        message.info('该告警未进行过影响评估')
-        topology.value = null
-        summary.value = null
-        loading.value = false
-        loadingSummary.value = false
-        return
-      }
-      snapshotTime.value = snap.snapshotTime || ''
-      topology.value = snap.topology
-      summary.value = snap.summary
-    } else {
-      const [top, sum] = await Promise.all([
-        getImpactTopology(props.alert.id, {}, props.alert),
-        getImpactSummary(props.alert.id, props.alert),
-      ])
-      topology.value = top
-      summary.value = sum
-    }
+    const [top, sum] = await Promise.all([
+      getImpactTopology(props.alert.id, {}, props.alert),
+      getImpactSummary(props.alert.id, props.alert),
+    ])
+    topology.value = top
+    summary.value = sum
   } catch {
     loadError.value = true
     message.error('加载影响评估数据失败')
@@ -283,7 +330,7 @@ function retryLoad() {
 }
 
 async function handleRefresh() {
-  if (isSnapshot.value || !props.alert?.id) return
+  if (!props.alert?.id) return
   refreshing.value = true
   try {
     const [top, sum] = await Promise.all([

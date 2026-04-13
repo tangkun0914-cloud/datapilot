@@ -73,7 +73,7 @@ const props = defineProps({
   isDarkMode: { type: Boolean, default: false },
   hasSteps: { type: Boolean, default: false },
   /**
-   * 表收藏挂载：与流式 tableDetail（3C）配合；正文含 <!-- MAPAGENT:TABLE_ACTIONS -->（1A）时替换为挂载点并注入按钮
+   * 表收藏挂载：与消息级 tableDetail（3C，仅 fqn/中文名/负责人）配合；正文含 <!-- MAPAGENT:TABLE_ACTIONS -->（1A）时替换为挂载点并注入按钮
    */
   tableFavoriteSlot: {
     type: Object,

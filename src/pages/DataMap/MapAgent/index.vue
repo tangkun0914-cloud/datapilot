@@ -44,7 +44,12 @@
         </div>
 
         <!-- 欢迎态（复用老 Agent 欢迎页） -->
-        <WelcomeScreen v-if="!hasMessages" @send="handleSend" :is-dark-mode="agentStore.isDarkMode" />
+        <WelcomeScreen
+          v-if="!hasMessages"
+          @send="handleSend"
+          :is-dark-mode="agentStore.isDarkMode"
+          :frequent-tables="mapAgentMentionFrequentTables"
+        />
 
         <!-- 对话流态 -->
         <div v-else class="flex-1 flex flex-col h-full relative">
@@ -64,7 +69,7 @@
             @send="handleSend"
             @stop="handleStop"
             :is-dark-mode="agentStore.isDarkMode"
-            :session-tables="sessionMentionTables"
+            :frequent-tables="mapAgentMentionFrequentTables"
             :disabled="isGenerating"
           />
         </div>
@@ -89,12 +94,10 @@ import {
   MAP_AGENT_FAVORITE_MAX,
   MAP_AGENT_FAVORITE_TABLES_KEY,
   readMapAgentFavoriteFqnList,
-  notifyMapAgentFavoritesChanged
+  notifyMapAgentFavoritesChanged,
+  mapFqnListToWorkspaceFavorites
 } from '@/utils/mapAgentFavorites.js'
-import {
-  buildSessionMentionTableList,
-  DEFAULT_FREQUENT_MENTION_TABLES
-} from '@/utils/agentMentionTables.js'
+import { DEFAULT_FREQUENT_MENTION_TABLES } from '@/utils/agentMentionTables.js'
 
 const messages = ref([])
 const hasMessages = ref(false)
@@ -106,13 +109,25 @@ const isShareMode = ref(false)
 const favoriteFqnSet = ref(new Set())
 const favoriteFqnsList = computed(() => [...favoriteFqnSet.value])
 
+const defaultFrequentByFqn = computed(
+  () => new Map(DEFAULT_FREQUENT_MENTION_TABLES.map((t) => [t.fqn, t]))
+)
+
+/** 首页与输入框 @ 列表共用：有收藏则按收藏顺序展示（元数据优先命中内置演示表），否则用默认列表 */
+const mapAgentMentionFrequentTables = computed(() => {
+  const fqns = favoriteFqnsList.value
+  if (!fqns.length) return [...DEFAULT_FREQUENT_MENTION_TABLES]
+  return fqns.map((fqn) => {
+    const fromDef = defaultFrequentByFqn.value.get(fqn)
+    if (fromDef) return { ...fromDef }
+    const row = mapFqnListToWorkspaceFavorites([fqn])[0]
+    return { fqn: row.fqn, cnName: row.cnName, owner: '' }
+  })
+})
+
 const abortController = ref(null)
 const streamingAiMsgId = ref(null)
 const messageListRef = ref(null)
-
-const sessionMentionTables = computed(() =>
-  buildSessionMentionTableList(messages.value, DEFAULT_FREQUENT_MENTION_TABLES)
-)
 
 const isGenerating = computed(() =>
   messages.value.some((m) => m.role === 'ai' && (m.status === 'loading' || m.status === 'streaming'))
@@ -254,11 +269,12 @@ async function runStreamForUserText(text, aiMsgId) {
     signal: controller.signal,
     onTableDetail: (detail) => {
       const aiMsg = messages.value.find((m) => m.id === aiMsgId)
-      if (aiMsg && detail) {
-        aiMsg.tableDetail = {
-          ...detail,
-          fqn: stripLeadingAtForFqn(detail.fqn)
-        }
+      if (!aiMsg || !detail?.fqn) return
+      // 对话内不展示表描述；tableDetail 仅绑定 fqn/中文名/负责人（收藏与 @ 候选）
+      aiMsg.tableDetail = {
+        fqn: stripLeadingAtForFqn(detail.fqn),
+        cnName: detail.cnName ?? '',
+        owner: detail.owner ?? ''
       }
     },
     onStep: (stepInfo) => {

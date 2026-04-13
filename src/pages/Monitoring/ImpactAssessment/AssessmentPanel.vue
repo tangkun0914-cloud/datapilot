@@ -45,6 +45,11 @@
               <StatsAndSLA :summary="summary" />
             </div>
           </a-tab-pane>
+          <a-tab-pane key="sla" tab="SLA 监控状态">
+            <div class="tab-body overflow-y-auto p-4">
+              <SLAMonitor :summary="summary" />
+            </div>
+          </a-tab-pane>
           <a-tab-pane key="list" tab="全局影响清单">
             <div class="tab-body overflow-y-auto">
               <GlobalImpactList
@@ -70,6 +75,7 @@
 import { ref, watch, computed, onUnmounted } from 'vue'
 import GlobalImpactList from './components/GlobalImpactList.vue'
 import StatsAndSLA from './components/StatsAndSLA.vue'
+import SLAMonitor from './components/SLAMonitor.vue'
 import ErrorLogViewer from './components/ErrorLogViewer.vue'
 import CopilotAiAvatar from '@/components/Copilot/CopilotAiAvatar.vue'
 import { getAiAnalysis } from '@/services/Monitoring/impactService.js'

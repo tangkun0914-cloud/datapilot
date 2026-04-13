@@ -1,6 +1,5 @@
 <template>
   <div
-    v-if="mode !== 'snapshot'"
     class="action-bar flex flex-wrap items-center justify-end gap-2 border-t border-slate-200 bg-slate-50 px-4 py-3 shrink-0"
   >
     <a-tooltip title="该功能将在后续版本支持">
@@ -47,7 +46,6 @@ const props = defineProps({
   eventId: { type: String, default: '' },
   alertTitle: { type: String, default: '' },
   summary: { type: Object, default: null },
-  mode: { type: String, default: 'active' },
   alert: { type: Object, default: null },
 })
 

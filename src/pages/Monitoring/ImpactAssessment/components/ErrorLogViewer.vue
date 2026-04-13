@@ -33,7 +33,7 @@ const props = defineProps({
 
 const title = computed(() => props.selectedNode?.taskName || props.alert?.title || '')
 
-const NO_LOG_STATUSES = ['not_generated', 'pending', 'waiting']
+const NO_LOG_STATUSES = ['PENDING', 'WAITING_DEPEND', 'WAITING_THREAD', 'DELAY_EXECUTION']
 
 const isNodeNoLog = computed(() => {
   const st = props.selectedNode?.impactStatus

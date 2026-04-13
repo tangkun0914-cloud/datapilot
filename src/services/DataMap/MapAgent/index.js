@@ -6,6 +6,7 @@ export { getHistorySessions, getWorkspaceData, deleteAgentSession }
 
 /**
  * 发送消息并获取流式响应（千问风格：纯 Markdown 文本流）
+ * `onTableDetail` 载荷仅含 fqn / cnName / owner；地图 Agent 对话内不展示表描述，`onMessage` 的单表详情 Markdown 亦不应含「表描述」引用行。
  * @param {object} params
  * @param {AbortSignal} [params.signal]
  * @param {string[]} [params.mentionTables]

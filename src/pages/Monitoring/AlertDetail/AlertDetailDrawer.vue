@@ -12,36 +12,29 @@
     <div class="drawer-container" v-if="alert">
       <!-- Header -->
       <header class="drawer-header">
-        <div class="header-main">
-          <!-- 第一行：等级 +（标题、复制、状态徽章、责任人依次排列，间距统一） -->
-          <div class="header-line header-line-primary">
+        <div class="header-left">
+          <div class="header-title-row">
             <span class="severity-tag" :class="severityTagClass">
               {{ displaySeverity }}
             </span>
-            <div class="title-cluster">
-              <div class="title-with-copy">
-                <h2 class="alert-title">{{ alert.title }}</h2>
-                <CopyOutlined class="copy-icon" title="复制标题" @click.stop="handleCopyTitle" />
-              </div>
-              <AlertStatusBadge :status="alert.status" />
-              <span class="owner-inline">
-                <span class="owner-label">责任人：</span>
-                <span class="owner-value">{{ alert.owner }}</span>
-              </span>
-            </div>
+            <h2 class="alert-title">{{ alert.title }}</h2>
+            <CopyOutlined class="copy-icon" title="复制标题" @click.stop="handleCopyTitle" />
+            <AlertStatusBadge :status="alert.status" />
+            <span class="owner-inline">
+              <span class="owner-label">责任人：</span>
+              <span class="owner-value">{{ alert.owner }}</span>
+            </span>
           </div>
-          <!-- 第二行：事件 ID -->
-          <div class="header-line header-line-id">
+          <div class="header-subtitle-row">
             <span class="id-label">事件ID</span>
             <span class="id-value">{{ alert.id }}</span>
           </div>
         </div>
-        <div class="header-close">
+        <div class="header-right">
           <a-button
             v-if="!['resolved', 'falsePositive'].includes(alert.status)"
             type="primary"
-            size="small"
-            class="impact-entry-btn"
+            class="impact-entry-btn active-mode"
             @click="$emit('action', 'impact', alert)"
           >
             <template #icon><NodeIndexOutlined /></template>
@@ -49,16 +42,13 @@
           </a-button>
           <a-button
             v-if="['resolved', 'falsePositive'].includes(alert.status)"
-            size="small"
-            class="impact-entry-btn"
+            class="impact-entry-btn snapshot-mode"
             @click="$emit('action', 'impact-snapshot', alert)"
           >
-            <template #icon><HistoryOutlined /></template>
-            查看影响评估记录
+            <template #icon><NodeIndexOutlined /></template>
+            查看影响评估
           </a-button>
-          <a-button type="text" size="small" @click="$emit('close')">
-            <CloseOutlined />
-          </a-button>
+          <CloseOutlined class="close-icon" @click="$emit('close')" />
         </div>
       </header>
 
@@ -242,70 +232,36 @@ watch(
   align-items: flex-start;
   background: #fff;
   flex-shrink: 0;
+  gap: 16px;
 }
 
-.header-close {
-  margin-top: -4px;
-  margin-right: -8px;
-  display: flex;
-  flex-shrink: 0;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.impact-entry-btn {
-  margin-top: 2px;
-}
-
-.header-main {
+.header-left {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
   flex: 1;
 }
 
-/* 第一行：等级 + 标题簇（标题→复制→徽章→责任人，间距一致） */
-.header-line-primary {
+.header-title-row {
   display: flex;
+  align-items: center;
+  gap: 12px;
   flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 10px 12px;
 }
 
 .severity-tag {
   flex-shrink: 0;
   font-size: 12px;
-  padding: 1px 8px;
-  border-radius: 2px;
+  padding: 1px 6px;
+  border-radius: 4px;
   border: 1px solid;
   font-weight: 500;
   line-height: 20px;
-  margin-top: 6px;
-}
-
-.title-cluster {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 12px;
-  min-width: 0;
-  flex: 1 1 0;
 }
 
 .sev-error { color: #f5222d; background: #fff1f0; border-color: #ffa39e; }
 .sev-warn { color: #e6a23c; background: #fdf6ec; border-color: #f5dab1; }
-
-/* 标题 + 复制（复制 icon 常显） */
-.title-with-copy {
-  display: inline-flex;
-  align-items: flex-start;
-  gap: 8px;
-  flex: 1 1 200px;
-  min-width: 0;
-  max-width: 100%;
-  cursor: default;
-}
 
 .alert-title {
   font-size: 18px;
@@ -313,21 +269,19 @@ watch(
   color: #1e293b;
   margin: 0;
   line-height: 1.35;
-  word-break: break-word;
+  word-break: break-all;
   transition: color 0.2s ease;
 }
 
-.title-with-copy:hover .alert-title {
+.header-title-row:hover .alert-title {
   color: #1677ff;
 }
 
 .copy-icon {
   flex-shrink: 0;
-  margin-top: 5px;
   color: #94a3b8;
   cursor: pointer;
   font-size: 14px;
-  opacity: 1;
   transition: color 0.2s ease;
 }
 
@@ -335,48 +289,12 @@ watch(
   color: #1677ff;
 }
 
-/* 状态徽章、责任人：紧跟标题簇，与首行对齐 */
-.title-cluster :deep(.status-badge) {
-  flex-shrink: 0;
-  margin-top: 6px;
-}
-
-.owner-inline {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  flex: 0 1 auto;
-  min-width: 0;
-  max-width: 100%;
-  font-size: 12px;
-  line-height: 1.45;
-  color: #f5222d;
-  background: #fff1f0;
-  border: 1px solid #ffa39e;
-  padding: 2px 8px;
-  border-radius: 4px;
-  margin-top: 4px;
-}
-
-.owner-label {
-  flex-shrink: 0;
-  font-weight: 500;
-  color: #cf1322;
-}
-
-.owner-value {
-  word-break: break-all;
-}
-
-/* 第二行：事件 ID（无顶部分割线） */
-.header-line-id {
+.header-subtitle-row {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
   font-size: 13px;
   color: #64748b;
-  padding-top: 0;
 }
 
 .id-label {
@@ -386,9 +304,101 @@ watch(
 
 .id-value {
   font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-  font-size: 13px;
   color: #475569;
   word-break: break-all;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.owner-inline {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  font-size: 12px;
+  color: #f5222d;
+  background: #fff1f0;
+  border: 1px solid #ffa39e;
+  padding: 0 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.owner-label {
+  font-weight: 500;
+  color: #cf1322;
+}
+
+.owner-value {
+  word-break: break-all;
+}
+
+.impact-entry-btn {
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  height: 32px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.impact-entry-btn.active-mode {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  border: 1px solid transparent;
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.impact-entry-btn.active-mode:hover {
+  background: linear-gradient(135deg, #1d4ed8, #2563eb);
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.impact-entry-btn.active-mode:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+}
+
+.impact-entry-btn.snapshot-mode {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+.impact-entry-btn.snapshot-mode:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #1e293b;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.impact-entry-btn.snapshot-mode:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+.close-icon {
+  font-size: 16px;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  margin-left: 4px;
+  transition: color 0.2s ease;
+}
+
+.close-icon:hover {
+  color: #1e293b;
 }
 
 .drawer-body {

@@ -1,7 +1,7 @@
 # DataPilot 数据地图 Agent (千问风格版) SDD
 
-> **文档版本：** v1.1 (对应工程侧 Map Agent v2)
-> **更新时间：** 2026-04-06
+> **文档版本：** v1.2 (对应工程侧 Map Agent v2)
+> **更新时间：** 2026-04-08
 > **关联 PRD：** [DataMap-Agent-v1.0-PRD.md](./DataMap-Agent-v1.0-PRD.md)
 
 ---
@@ -57,7 +57,7 @@ src/
 │   │   ├── SuggestionChips.vue          # L3 追问建议标签组
 │   │   ├── MessageActions.vue           # L3 消息操作栏 (复制/点赞/点踩/重新生成/分享/收藏星标)
 │   │   ├── ConversationShareModal.vue   # L3 分享配置弹窗
-│   │   ├── TableDetailHeader.vue        # L3 表元数据结构化展示 (备用，v2 中表详情已融入 Markdown)
+│   │   ├── TableDetailHeader.vue        # L3 表元数据结构化展示 (备用；不含表描述，与正文职责分离)
 │   │   ├── useTableCopy.js              # Hook：向 Markdown 表格注入复制按钮
 │   │   └── injectTableFavoriteSlot.js   # Hook：向 Markdown 占位符注入收藏按钮
 │   └── constants/
@@ -132,11 +132,10 @@ src/
     { id: number, status: 'running' | 'success', text: string }
   ],
   suggestions: string[],   // 追问建议 (流结束时一次性下发)
-  tableDetail: {           // 表元数据 (仅单表详情响应时存在)
+  tableDetail: {           // 表元数据 (仅单表详情响应时存在)；不含表描述，且 Markdown 单表引用块亦不输出描述行
     fqn: string,           // 完整表名 (数据库.表名)
     cnName: string,        // 中文名
-    owner: string,         // 负责人
-    description: string    // 表描述
+    owner: string          // 负责人
   } | null
 }
 ```
@@ -260,7 +259,7 @@ Mock 层通过关键词匹配模拟 8 种意图场景，每种场景对应 PRD 3
 | 策略 | 触发条件 | 实现方式 | 适用场景 |
 |------|----------|----------|----------|
 | **策略 1A（Markdown 占位符）** | AI 回复的 Markdown 中包含 `<!-- MAPAGENT:TABLE_ACTIONS -->` 标记 | `injectTableFavoriteSlot.js` 在渲染后的 DOM 中找到 `.mapagent-table-actions-host`，注入收藏按钮 | 后端在 Markdown 正文中主动插入占位符 |
-| **策略 3C（消息元数据）** | AI 消息携带 `tableDetail` 字段且 Markdown 中无占位符 | `MessageActions.vue` 中的操作栏星标展示，对应该表的收藏状态 | 后端通过独立事件下发表元数据 |
+| **策略 3C（消息元数据）** | AI 消息携带 `tableDetail`（`fqn` / `cnName` / `owner`，无 `description`）且 Markdown 中无占位符 | `MessageActions.vue` 中的操作栏星标展示，对应该表的收藏状态 | 后端通过 `type: tableDetail` 事件下发；对话内不在 `text` 中输出表描述行 |
 
 - 两种策略可共存：正文内收藏按钮（策略 1A）和操作栏星标（策略 3C）独立运作。
 - **多表详情场景**（对应 PRD 3.4.2）：多意图回复中包含多张表详情时，每张表的正文内收藏按钮独立展示，操作栏星标不展示。

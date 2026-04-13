@@ -63,20 +63,17 @@
           :class="isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'"
         >
           <div class="px-3 py-2 text-xs font-medium border-b" :class="isDarkMode ? 'border-slate-700 text-slate-400' : 'border-gray-100 text-gray-500'">
-            {{ mentionSearchText ? '搜索结果' : '最近访问的表' }}
+            最近收藏
           </div>
           <div class="max-h-[240px] overflow-y-auto custom-scrollbar p-1">
-            <div v-if="isSearching" class="py-4 text-center text-sm flex items-center justify-center gap-2" :class="isDarkMode ? 'text-slate-500' : 'text-gray-400'">
-              <LoadingOutlined /> 搜索中...
-            </div>
-            <div v-else-if="filteredMentionList.length === 0" class="py-4 text-center text-sm" :class="isDarkMode ? 'text-slate-500' : 'text-gray-400'">
+            <div v-if="filteredMentionList.length === 0" class="py-4 text-center text-sm" :class="isDarkMode ? 'text-slate-500' : 'text-gray-400'">
               没有找到匹配的表
             </div>
             <div
               v-else
               v-for="(item, index) in filteredMentionList"
               :key="item.fqn"
-              class="flex items-start px-3 py-2.5 rounded-lg cursor-pointer transition-colors"
+              class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors"
               :class="[
                 selectedIndex === index
                   ? (isDarkMode ? 'bg-slate-700' : 'bg-gray-100')
@@ -85,30 +82,11 @@
               @click="selectMention(item)"
               @mouseenter="selectedIndex = index"
             >
-              <div class="flex flex-col min-w-0 flex-1 gap-1">
-                <div class="flex items-baseline gap-2 min-w-0 flex-wrap">
-                  <span
-                    class="font-mono text-[13px] font-semibold truncate"
-                    :class="isDarkMode ? 'text-slate-100' : 'text-slate-800'"
-                    :title="item.fqn"
-                  >{{ item.fqn }}</span>
-                  <span
-                    class="text-[13px] font-medium truncate"
-                    :class="isDarkMode ? 'text-slate-300' : 'text-slate-600'"
-                    :title="item.cnName"
-                  >{{ item.cnName }}</span>
-                </div>
-                <div
-                  class="text-[11px] leading-snug line-clamp-2"
-                  :class="isDarkMode ? 'text-slate-500' : 'text-slate-400'"
-                >
-                  <span>{{ item.desc || '暂无描述' }}</span>
-                  <span class="mx-1.5 opacity-50">·</span>
-                  <span class="inline-flex items-center gap-1 align-middle">
-                    <UserOutlined class="text-[11px] opacity-80 shrink-0" />
-                    <span>{{ item.owner || '未知(unknown)' }}</span>
-                  </span>
-                </div>
+              <div class="flex flex-col min-w-0 flex-1 gap-0.5">
+                <span class="font-mono text-[13px] font-semibold truncate" :class="isDarkMode ? 'text-slate-100' : 'text-slate-800'" :title="item.fqn">{{ item.fqn }}</span>
+                <span class="text-[12px] truncate" :class="isDarkMode ? 'text-slate-500' : 'text-slate-400'">
+                  {{ item.cnName || '—' }} <span class="mx-1 opacity-50">|</span> {{ item.owner || '—' }}
+                </span>
               </div>
             </div>
           </div>
@@ -136,15 +114,20 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, watch } from 'vue'
-import { ExperimentFilled, UserOutlined, LoadingOutlined } from '@ant-design/icons-vue'
+import { ref, computed, nextTick } from 'vue'
+import { ExperimentFilled } from '@ant-design/icons-vue'
 import PilotLogo from '@/components/Copilot/PilotLogo.vue'
-import { searchAssets } from '@/services/DataMap/searchService.js'
+import { DEFAULT_FREQUENT_MENTION_TABLES } from '@/utils/agentMentionTables.js'
 
-defineProps({
+const props = defineProps({
   isDarkMode: {
     type: Boolean,
     default: false
+  },
+  /** 最近收藏候选；默认内置 mock，地图 Agent 可传入本地收藏 */
+  frequentTables: {
+    type: Array,
+    default: () => [...DEFAULT_FREQUENT_MENTION_TABLES]
   }
 })
 
@@ -158,57 +141,20 @@ const showMentionList = ref(false)
 const mentionSearchText = ref('')
 const mentionStartIndex = ref(-1)
 const selectedIndex = ref(0)
-const isSearching = ref(false)
-const searchResults = ref([])
+function filterTablesByKeyword(list, kw) {
+  if (!kw) return list
+  const k = kw.toLowerCase()
+  return list.filter(
+    (t) =>
+      t.fqn.toLowerCase().includes(k) ||
+      (t.cnName && String(t.cnName).toLowerCase().includes(k))
+  )
+}
 
-// 默认常用表（冷启动展示）
-const defaultFrequentTables = [
-  { fqn: 'dm_trade.dws_order_summary_nd', cnName: '订单汇总表', owner: '张三(zhangsan)', desc: '包含每日订单量、GMV、客单价等核心交易指标汇总，T+1 更新。' },
-  { fqn: 'dm_trade.dwd_order_detail_di', cnName: '订单明细表', owner: '李四(lisi)', desc: '全渠道订单原子粒度明细，含订单状态、支付金额、优惠明细等。' },
-  { fqn: 'default.user_behavior_log', cnName: '用户行为日志表', owner: '王五(wangwu)', desc: '用户在 App 内的点击、浏览、曝光等行为日志，用于画像与推荐。' },
-  { fqn: 'dm_risk.dws_risk_order_intercept_nd', cnName: '风控拦截订单汇总表', owner: '赵六(zhaoliu)', desc: '每日被风控规则拦截的异常订单汇总，用于风控运营看数。' },
-  { fqn: 'dm_trade.dim_pay_type', cnName: '支付方式维表', owner: '郑十(zhengshi)', desc: '支付方式枚举与说明，如微信、支付宝、银行卡等，供订单分析关联。' },
-]
-
-let searchTimeout = null
-watch(mentionSearchText, async (newVal) => {
-  const kw = newVal.trim()
-  if (!kw) {
-    searchResults.value = []
-    isSearching.value = false
-    return
-  }
-  
-  isSearching.value = true
-  if (searchTimeout) clearTimeout(searchTimeout)
-  
-  searchTimeout = setTimeout(async () => {
-    try {
-      const res = await searchAssets({ q: kw, size: 20 })
-      const hits = res?.hits?.hits || []
-      searchResults.value = hits.map(hit => {
-        const source = hit._source || {}
-        return {
-          fqn: source.fullyQualifiedName || source.name || '',
-          cnName: source.displayName || '',
-          owner: source.owners?.[0]?.name || '',
-          desc: source.description || ''
-        }
-      })
-    } catch (e) {
-      console.error('Search failed:', e)
-      searchResults.value = []
-    } finally {
-      isSearching.value = false
-    }
-  }, 300)
-})
-
+/** 仅本地过滤，最多 10 条，不支持远程搜索 */
 const filteredMentionList = computed(() => {
-  if (!mentionSearchText.value.trim()) {
-    return defaultFrequentTables
-  }
-  return searchResults.value
+  const kw = mentionSearchText.value.trim()
+  return filterTablesByKeyword([...(props.frequentTables || [])], kw).slice(0, 10)
 })
 
 const triggerMention = () => {
@@ -261,12 +207,15 @@ const handleInput = (e) => {
 
 const handleKeyDown = (e) => {
   if (showMentionList.value) {
+    const n = filteredMentionList.value.length
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      selectedIndex.value = (selectedIndex.value + 1) % filteredMentionList.value.length
+      if (n === 0) return
+      selectedIndex.value = (selectedIndex.value + 1) % n
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
-      selectedIndex.value = (selectedIndex.value - 1 + filteredMentionList.value.length) % filteredMentionList.value.length
+      if (n === 0) return
+      selectedIndex.value = (selectedIndex.value - 1 + n) % n
     } else if (e.key === 'Enter') {
       e.preventDefault()
       if (filteredMentionList.value.length > 0) {

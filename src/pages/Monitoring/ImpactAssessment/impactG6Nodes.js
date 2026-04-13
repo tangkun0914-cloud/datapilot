@@ -4,21 +4,26 @@
 import G6 from '@antv/g6'
 
 const STATUS_THEME = {
-  success:       { color: '#52C41A', icon: '✓', text: '成功' },
-  failed:        { color: '#FF4D4F', icon: '×', text: '已失败' },
-  timeout:       { color: '#FF4D4F', icon: '！', text: '已超时' },
-  stopped:       { color: '#FF4D4F', icon: '×', text: '已停止' },
-  running:       { color: '#FA8C16', icon: '↻', text: '运行中' },
-  waiting:       { color: '#FA8C16', icon: '○', text: '依赖等待' },
-  delayed:       { color: '#FA8C16', icon: '○', text: '排队中' },
-  other:         { color: '#1890FF', icon: '○', text: '串行等待' },
-  pending:       { color: '#8c8c8c', icon: '○', text: '未运行' },
-  not_generated: { color: '#8c8c8c', icon: '○', text: '未生成' },
-  dqc_threshold: { color: '#FF4D4F', icon: '！', text: '阈值异常' },
+  SUCCESS:              { color: '#52C41A', icon: '✓', text: '成功' },
+  FORCED_SUCCESS:       { color: '#52C41A', icon: '✓', text: '强制成功' },
+  FAILURE:              { color: '#FF4D4F', icon: '×', text: '失败' },
+  NEED_FAULT_TOLERANCE: { color: '#FF4D4F', icon: '×', text: '需要容错' },
+  KILL:                 { color: '#FF4D4F', icon: '×', text: 'Kill' },
+  STOP:                 { color: '#FF4D4F', icon: '×', text: '停止' },
+  READY_STOP:           { color: '#FF4D4F', icon: '×', text: '准备停止' },
+  RUNNING_EXECUTION:    { color: '#FA8C16', icon: '○', text: '正在运行' },
+  DISPATCH:             { color: '#FA8C16', icon: '○', text: '派发中' },
+  SUBMITTED_SUCCESS:    { color: '#FA8C16', icon: '○', text: '提交成功' },
+  DELAY_EXECUTION:      { color: '#FA8C16', icon: '○', text: '延时执行' },
+  WAITING_DEPEND:       { color: '#FA8C16', icon: '○', text: '等待依赖' },
+  WAITING_THREAD:       { color: '#FA8C16', icon: '○', text: '等待线程' },
+  PAUSE:                { color: '#1890FF', icon: '⏸', text: '暂停' },
+  READY_PAUSE:          { color: '#1890FF', icon: '⏸', text: '准备暂停' },
+  PENDING:              { color: '#8c8c8c', icon: '○', text: '未运行' },
 }
 
 function themeFor(status) {
-  return STATUS_THEME[status] || STATUS_THEME.pending
+  return STATUS_THEME[status] || STATUS_THEME.PENDING
 }
 
 /**
@@ -48,10 +53,9 @@ function resolveSlaBreachTag(cfg) {
     }
   }
   if (f) {
-    const useFinishRisk = cfg.slaFinishRiskLabel === true
     return {
-      label: useFinishRisk ? 'SLA完成风险' : 'SLA完成破线',
-      w: useFinishRisk ? 66 : 68,
+      label: 'SLA完成破线',
+      w: 68,
       fill: '#fff1f0',
       stroke: '#ffa39e',
       color: '#cf1322',
@@ -99,6 +103,21 @@ function truncateWithEllipsis(text, maxWidth, fontSize) {
 /** 任务节点：顶栏状态 + 任务名 / 计划 / 负责人（可选核心标签） */
 export const IMPACT_TASK_NODE_SIZE = [260, 138]
 
+/**
+ * 告警事件类型标签（悬浮在右上角）
+ * 根据节点上的告警类型返回对应的 UI 配置
+ */
+function resolveAlertEventTag(cfg) {
+  if (!cfg.alertEvent) return null
+  
+  return {
+    label: cfg.alertEvent,
+    fill: '#fff1f0', // 极浅的红底
+    stroke: '#ffccc7', // 柔和的红边
+    color: '#cf1322', // 深红字
+  }
+}
+
 /** 绘制任务卡片及左右 +/- 锚点（供 draw / update 复用；changeData 后必须走 update 重绘才会刷新锚点） */
 function drawImpactTaskNode(cfg, group) {
   const [w, h] = IMPACT_TASK_NODE_SIZE
@@ -111,7 +130,7 @@ function drawImpactTaskNode(cfg, group) {
   const isRoot = cfg.isRootCause
 
   const statusText = cfg.statusText || t.text
-  const color = cfg.statusColor || t.color
+  const color = t.color // 忽略 cfg.statusColor，强制使用 themeFor 映射的标准颜色
 
   const shape = group.addShape('rect', {
     attrs: {
@@ -131,6 +150,55 @@ function drawImpactTaskNode(cfg, group) {
     name: 'main-box',
   })
 
+  // --- 方案一优化：右上角悬浮告警徽标（仅当前告警节点/根节点展示，叶子节点不展示） ---
+  const alertTagUi = (isCurrent || isRoot) ? resolveAlertEventTag(cfg) : null
+  if (alertTagUi) {
+    // 估算标签宽度：文字宽度 + 左右padding(12)
+    const textW = estimateCharWidth(alertTagUi.label, 11) * alertTagUi.label.length * 0.9
+    const tagW = Math.max(50, textW + 16)
+    const tagH = 20
+    // 悬浮在右上角，内嵌在顶栏里，稍微超出一点点
+    const tagX = cx + w - tagW + 6
+    const tagY = cy - 10
+    
+    // 背景胶囊
+    group.addShape('rect', {
+      attrs: {
+        x: tagX,
+        y: tagY,
+        width: tagW,
+        height: tagH,
+        radius: 4, // 稍微方正一点的圆角，而不是全圆胶囊
+        fill: alertTagUi.fill,
+        stroke: alertTagUi.stroke,
+        lineWidth: 1,
+        shadowColor: 'rgba(207, 19, 34, 0.1)',
+        shadowBlur: 4,
+        shadowOffsetY: 2,
+        cursor: 'pointer',
+      },
+      name: 'alert-event-tag-bg',
+      zIndex: 10, // 确保在最上层
+    })
+    
+    // 文字
+    group.addShape('text', {
+      attrs: {
+        x: tagX + tagW / 2,
+        y: tagY + tagH / 2,
+        text: alertTagUi.label,
+        fill: alertTagUi.color,
+        fontSize: 11,
+        fontWeight: 500,
+        textAlign: 'center',
+        textBaseline: 'middle',
+        cursor: 'pointer',
+      },
+      name: 'alert-event-tag-text',
+      zIndex: 11,
+    })
+  }
+
   group.addShape('rect', {
     attrs: {
       x: cx,
@@ -145,11 +213,14 @@ function drawImpactTaskNode(cfg, group) {
   })
 
   const headerPrefix = isRoot ? '🎯 ' : ''
+  // 过滤掉 (WARN) 和 (ERROR) 等告警等级字样
+  const cleanStatusText = String(statusText).replace(/\s*\((WARN|ERROR|INFO|CRITICAL)\)\s*/i, '')
+  
   group.addShape('text', {
     attrs: {
       x: cx + 14,
       y: cy + headerH / 2,
-      text: `${headerPrefix}${t.icon}  ${statusText}`,
+      text: `${headerPrefix}${t.icon}  ${cleanStatusText}`,
       fill: '#ffffff',
       fontSize: 13,
       fontWeight: 600,
@@ -159,19 +230,22 @@ function drawImpactTaskNode(cfg, group) {
     name: 'header-status',
   })
 
-  group.addShape('text', {
-    attrs: {
-      x: cx + w - 14,
-      y: cy + headerH / 2,
-      text: cfg.taskType || '-',
-      fill: 'rgba(255,255,255,0.9)',
-      fontSize: 12,
-      textAlign: 'end',
-      textBaseline: 'middle',
-      cursor: 'pointer',
-    },
-    name: 'header-type',
-  })
+  // 如果有悬浮告警标签，右侧的 taskType 就要隐藏或者挪位置，避免文字和标签重叠
+  if (!alertTagUi) {
+    group.addShape('text', {
+      attrs: {
+        x: cx + w - 14,
+        y: cy + headerH / 2,
+        text: cfg.taskType || '-',
+        fill: 'rgba(255,255,255,0.9)',
+        fontSize: 12,
+        textAlign: 'end',
+        textBaseline: 'middle',
+        cursor: 'pointer',
+      },
+      name: 'header-type',
+    })
+  }
 
   const padX = 14
   /** 右侧为 +/− 锚点留白，避免文字压到圆圈 */
@@ -473,12 +547,17 @@ export function registerImpactG6Nodes() {
   try {
     G6.registerNode('impact-task-node', {
       draw(cfg, group) {
-        return drawImpactTaskNode(cfg, group)
+        const shape = drawImpactTaskNode(cfg, group)
+        // 强制对 group 里的所有 shape 按 zIndex 排序，确保悬浮徽标在最上层
+        group.sort()
+        return shape
       },
       update(cfg, item) {
         const group = item.getContainer()
         group.clear()
         const keyShape = drawImpactTaskNode(cfg, group)
+        // 强制对 group 里的所有 shape 按 zIndex 排序，确保悬浮徽标在最上层
+        group.sort()
         item.set('keyShape', keyShape)
       },
       setState(name, value, item) {
@@ -487,7 +566,7 @@ export function registerImpactG6Nodes() {
         if (!box) return
         const model = item.getModel()
         const t = themeFor(model.impactStatus)
-        const color = model.statusColor || t.color
+        const color = t.color // 忽略 model.statusColor，强制使用 themeFor 映射的标准颜色
         const isCurrent = model.isCurrentNode
         const isRoot = model.isRootCause
 
